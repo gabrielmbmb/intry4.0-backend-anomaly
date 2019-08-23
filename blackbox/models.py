@@ -229,8 +229,6 @@ class AnomalyKMeans(AnomalyModel):
         self._kmeans.fit(data)
         self._distances = self.get_distance_by_point(data, self._kmeans.cluster_centers_, self._kmeans.labels_)
 
-        print(self._distances)
-
         if self.verbose:
             print('Calculating threshold value to flag an anomaly...')
 
@@ -403,6 +401,7 @@ class AnomalyOneClassSVM(AnomalyModel):
         predictions = self.predict(data)
         return predictions == -1
 
+
 class AnomalyGaussianDistribution(AnomalyModel):
     """
     Unsupervised anomaly detection model based on Gaussian Distribution. The model is trained with data that doesn't
@@ -410,7 +409,6 @@ class AnomalyGaussianDistribution(AnomalyModel):
     these values calculates the probability of a data point to belong to the distribution.
 
     Args:
-
         verbose (bool): verbose mode. Defaults to False.
     """
 
@@ -444,11 +442,33 @@ class AnomalyGaussianDistribution(AnomalyModel):
         self._probabilities = self.calculate_probability(data)
         (self._epsilon, _) = self.establish_threshold(labels, self._probabilities)
 
-    def predict(self):
-        pass
+    def predict(self, data) -> np.ndarray:
+        """
+        Calculates the probability of a data point to belong to the Gaussian Distribution.
 
-    def flag_anomaly(self):
-        pass
+        Args:
+            data (numpy.ndarray or pandas.DataFrame): data
+
+        Returns:
+            numpy.ndarray: probabilities.
+        """
+        if isinstance(data, pd.DataFrame):
+            data = data.values
+
+        return self.calculate_probability(data)
+
+    def flag_anomaly(self, data) -> List[bool]:
+        """
+        Flag the data point as an anomaly if the probability surpass epsilon (threshold).
+
+        Args:
+            data (numpy.ndarray or pandas.DataFrame): data to flag as an anomaly or not.
+
+        Returns:
+            list of bool: list of bool telling if a data point is an anomaly or not.
+        """
+        probabilities = self.predict(data)
+        return probabilities < self._epsilon
 
     def calculate_probability(self, data) -> np.ndarray:
         """
@@ -469,12 +489,12 @@ class AnomalyGaussianDistribution(AnomalyModel):
         for sample_index in range(num_samples):
             for feature_index in range(num_features):
                 # power of e
-                power_dividend = np.power(data[sample_index, feature_index] - self.mean[feature_index], 2)
-                power_divider = 2 * self.variance[feature_index]
+                power_dividend = np.power(data[sample_index, feature_index] - self._mean[feature_index], 2)
+                power_divider = 2 * self._variance[feature_index]
                 e_power = -1 * power_dividend / power_divider
 
                 # prefix multiplier
-                prefix_multiplier = 1 / np.sqrt(2 * np.pi * self.variance[feature_index])
+                prefix_multiplier = 1 / np.sqrt(2 * np.pi * self._variance[feature_index])
 
                 # probability
                 probability = prefix_multiplier * np.exp(e_power)
@@ -542,5 +562,3 @@ class AnomalyGaussianDistribution(AnomalyModel):
                 best_epsilon = epsilon
 
             return best_epsilon, best_f1
-
-
