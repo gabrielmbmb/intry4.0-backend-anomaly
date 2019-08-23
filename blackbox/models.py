@@ -132,7 +132,7 @@ class AnomalyPCAMahalanobis(AnomalyModel):
         data_distance = self.mahalanobis_distance(data_pca)
         return data_distance
 
-    def flag_anomaly(self, data) -> List[bool]:
+    def flag_anomaly(self, data) -> np.ndarray:
         """
         Flag the data points as anomaly if the calculated Mahalanobis distance surpass a established threshold.
 
@@ -140,7 +140,7 @@ class AnomalyPCAMahalanobis(AnomalyModel):
             data (numpy.ndarray or pandas.DataFrame): data to flag as anomalous or not anomalous.
 
         Returns:
-            list of bool: list of booleans telling if point is anomalous or not.
+            numpy.ndarray: list of booleans telling if point is anomalous or not.
         """
         distances = self.predict(data)
         return distances > self._threshold
@@ -251,7 +251,7 @@ class AnomalyKMeans(AnomalyModel):
         distances = self.get_distance_by_point(data, self._kmeans.cluster_centers_, data_labels)
         return distances
 
-    def flag_anomaly(self, data) -> List[bool]:
+    def flag_anomaly(self, data) -> np.ndarray:
         """
         Flag the data points as anomaly if the calculated distance between the point and its assigned cluster centroid
         surpass a established threshold.
@@ -260,7 +260,7 @@ class AnomalyKMeans(AnomalyModel):
             data (numpy.ndarray or pandas.DataFrame): data to flag as anomalous or not anomalous.
 
         Returns:
-            list of bool: list of booleans telling if point is anomalous or not.
+            numpy.ndarray: list of booleans telling if point is anomalous or not.
         """
         distances = self.predict(data)
         return distances > self._threshold
@@ -391,6 +391,9 @@ class AnomalyOneClassSVM(AnomalyModel):
 
         Args:
             data (numpy.ndarray or pandas.DataFrame): data
+
+        Returns:
+            numpy.ndarray: scores
         """
         return self._svm.predict(data)
 
@@ -464,7 +467,7 @@ class AnomalyGaussianDistribution(AnomalyModel):
 
         return self.calculate_probability(data)
 
-    def flag_anomaly(self, data) -> List[bool]:
+    def flag_anomaly(self, data) -> np.ndarray:
         """
         Flag the data point as an anomaly if the probability surpass epsilon (threshold).
 
@@ -472,7 +475,7 @@ class AnomalyGaussianDistribution(AnomalyModel):
             data (numpy.ndarray or pandas.DataFrame): data to flag as an anomaly or not.
 
         Returns:
-            list of bool: list of bool telling if a data point is an anomaly or not.
+            numpy.ndarray: list of bool telling if a data point is an anomaly or not.
         """
         probabilities = self.predict(data)
         return probabilities < self._epsilon
