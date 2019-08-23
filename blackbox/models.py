@@ -99,6 +99,7 @@ class AnomalyPCAMahalanobis(AnomalyModel):
         verbose (bool): verbose mode. Defaults to False.
     """
     def __init__(self, n_components=2, verbose=False) -> None:
+        super().__init__()
         self._pca = PCA(n_components=n_components, svd_solver='full')
         self._data = None
         self._distances = None
@@ -179,7 +180,7 @@ class AnomalyPCAMahalanobis(AnomalyModel):
 class AnomalyAutoencoder(AnomalyModel):
 
     def __init__(self, verbose=False):
-        pass
+        super().__init__()
 
     def train(self, data) -> None:
         pass
@@ -203,6 +204,7 @@ class AnomalyKMeans(AnomalyModel):
           verbose (bool): verbose mode. Defaults to False.
     """
     def __init__(self, verbose=False):
+        super().__init__()
         self.verbose = verbose
         self._kmeans = None
         self._n_clusters = None
@@ -362,6 +364,7 @@ class AnomalyOneClassSVM(AnomalyModel):
     """
 
     def __init__(self, outliers_fraction=0.01, gamma=0.01, verbose=False):
+        super().__init__()
         self._outliers_fraction = outliers_fraction
         self._gamma = gamma
         self._svm = OneClassSVM(nu=self._outliers_fraction, kernel='rbf', gamma=self._gamma)
@@ -413,6 +416,7 @@ class AnomalyGaussianDistribution(AnomalyModel):
     """
 
     def __init__(self, verbose=False):
+        super().__init__()
         self._mean = None
         self._variance = None
         self._epsilon = None
