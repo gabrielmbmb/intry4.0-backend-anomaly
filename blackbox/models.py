@@ -335,16 +335,19 @@ class AnomalyKMeans(AnomalyModel):
         Calculates the distance between a data point and its assigned cluster centroid.
 
         Args:
-            data (numpy.ndarray): data points.
+            data (numpy.ndarray or pandas.DataFrame): data points.
             clusters_centers (numpy.ndarray): cluster centroids.
             labels (numpy.ndarray): assigned cluster to every data point.
 
         Returns:
             list of float: distances.
         """
+        if isinstance(data, pd.DataFrame):
+            data = data.values
+
         distances = []
         for i in range(0, len(data)):
-            xa = np.array(data.iloc[i])
+            xa = np.array(data[i])
             xb = clusters_centers[labels[i] - 1]
             distances.append(np.linalg.norm(xa - xb))
 
