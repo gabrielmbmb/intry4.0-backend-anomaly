@@ -572,3 +572,57 @@ class AnomalyGaussianDistribution(AnomalyModel):
                 best_epsilon = epsilon
 
             return best_epsilon, best_f1
+
+
+class AnomalyIsolationForest(AnomalyModel):
+    """
+    Unsupervised anomaly detection model based on One Class Support Vector Machine. The model is trained with data that
+    doesn't contains anomalies. The Isolation Forest algorithm isolates observations by randomly selecting a feature and
+    then randomly selecting a split value between the maximum and the minimum values of the selected feature. Isolating
+    anomalies is easier because only a few conditions are needed to separate them from normal values.
+
+    Args:
+        outliers_fraction (float): outliers fraction. Defaults to 0.01 (3 standard deviations).
+        verbose (bool): verbose mode. Defaults to False.
+    """
+
+    def __init__(self, outliers_fraction=0.01, verbose=False):
+        super().__init__()
+        self._forest = IsolationForest(contamination=outliers_fraction, behaviour='new')
+        self._outliers_fraction = outliers_fraction
+        self.verbose = verbose
+
+    def train(self, data) -> None:
+        """
+        Trains the Isolation Forest Model.
+
+        Args:
+            data (numpy.ndarray or pandas.DataFrame): training data
+        """
+        if self.verbose:
+            print('Training the Isolation Forest model...')
+
+        self._forest.fit(data)
+
+    def predict(self, data) -> np.ndarray:
+        """
+        Predicts if the data points are anomalies or inliers.
+
+        Args:
+            data (numpy.ndarray or pandas.DataFrame): data to predict.
+
+        Returns:
+            numpy.ndarray: scores.
+        """
+        return self._forest.predict(data)
+
+    def flag_anomaly(self, data) -> np.ndarray:
+        """
+        Flag a data point as an anomaly or as an inlier. If the score from the predict method is negative, then it's an
+        anomaly, if it's positive then it's an inlier.
+
+        Returns:
+            numpy.ndarray: list containing bool values telling if data point is an anomaly or not.
+        """
+        scores = self.predict(data)
+        return scores < 0
