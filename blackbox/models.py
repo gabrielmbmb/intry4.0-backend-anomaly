@@ -3,10 +3,16 @@ import pandas as pd
 import pickle
 
 from abc import ABCMeta, abstractmethod
+
 from sklearn.decomposition import PCA
 from sklearn.cluster import KMeans
 from sklearn.svm import OneClassSVM
 from sklearn.ensemble import IsolationForest
+
+from keras import models
+from keras.layers import Dense
+from keras.regularizers import l2
+
 from typing import List, Tuple
 
 
@@ -181,18 +187,164 @@ class AnomalyPCAMahalanobis(AnomalyModel):
 
 
 class AnomalyAutoencoder(AnomalyModel):
+    """
+    Unsupervised anomaly detection model based on a Deep Neural Network of Autoencoder type. The model is trained with
+    data that doesn't contains anomalies. This kind of DNN compress or reduce the data from the input and then amplify
+    or reconstruct the data to the original size at the output. This way, the DNN will be generating new data very
+    similar to the original data. This characteristic is used to train the Autoencoder with data without anomalies. The
+    Autoencoder will be able to reconstruct data similar to the training data (value of loss function will be low) and
+    won't be able to reconstruct data with anomalies (value of loss function high).
 
-    def __init__(self, verbose=False):
+    Args:
+        activation (str): activation function that layers will have. Defaults to 'elu'.
+        kernel_initializer (str): kernel initializer that layers will have. Defaults to 'glorot_uniform'.
+        kernel_regularizer: kernel regularizer that layers will have. Defaults to None.
+        loss_function (str): loss function that the Autoencoder will have. Defaults to 'mse'.
+        optimizer (str): optimizer that the Autoencoder will have. Defaults to 'adam'.
+        epochs (int): number of times that all the batches will be processed during the Autoencoder training. Defaults
+            to 100.
+        batch_size (int): batch size. Defaults to 10.
+        validation_split (float): percentage of the training data that will be used for model validation. Defaults to
+            0.05.
+        std_dev_num (float): number of the standard deviation used to establish the threshold. Defaults to 3.
+        verbose (bool): verbose mode. Defaults to False.
+    """
+
+    def __init__(self, activation='elu', kernel_initializer='glorot_uniform', kernel_regularizer=None,
+                 loss_function='mse', optimizer='adam', epochs=100, batch_size=10, validation_split=0.05,
+                 std_dev_num=3, verbose=False):
         super().__init__()
 
+        # model parameters
+        self._activation = activation
+        self._kernel_initializer = kernel_initializer
+        if kernel_regularizer is None:
+            self._kernel_regularizer = l2(0.0)
+        else:
+            self._kernel_regularizer = kernel_regularizer
+        self._loss_function = loss_function
+        self._optimizer = optimizer
+
+        # training parameters
+        self._epochs = epochs
+        self._batch_size = batch_size
+        self._validation_split = validation_split
+
+        self._std_dev_num = std_dev_num
+
+        self._autoencoder = None
+        self.history = None
+        self._loss = None
+        self._threshold = None
+
+        self.verbose = verbose
+
     def train(self, data) -> None:
-        pass
+        """
+        Trains the Autoencoder.
 
-    def predict(self, data) -> None:
-        pass
+        Args:
+            data (numpy.ndarray or pandas.DataFrame): training data.
+        """
+        if isinstance(data, pd.DataFrame):
+            data = data.values
 
-    def flag_anomaly(self):
-        pass
+        self._autoencoder = self.build_autoencoder(n_inputs=data.shape[1])
+        self.history = self._autoencoder.fit(x=data, y=data, batch_size=self._batch_size, epochs=self._epochs,
+                                             validation_split=self._validation_split, shuffle=True)
+        predict = self._autoencoder.predict(data)
+        self._loss = self.mean_absolute_error(data, predict)
+        self._threshold = self.establish_threshold()
+
+    def predict(self, data) -> np.ndarray:
+        """
+        Tries to reconstruct the input.
+
+        Args:
+            data (numpy.ndarray or pandas.DataFrame): data
+
+        Returns:
+            numpy.ndarray: reconstructed inputs.
+        """
+        reconstructed_data = self._autoencoder.predict(data)
+        return reconstructed_data
+
+    def flag_anomaly(self, data) -> np.ndarray:
+        """
+        Flag a data point as an anomaly if the MAE (Mean Absolute Error) is higher than the established threshold.
+
+        Args:
+            data (numpy.ndarray or pandas.DataFrame): data
+
+        Returns:
+            numpy.ndarray: list containing bool values telling if data point is an anomaly or not.
+        """
+        predict = self._autoencoder.predict(data)
+        loss = self.mean_absolute_error(data, predict)
+        return loss > self._threshold
+
+    def build_autoencoder(self, n_inputs) -> models.Sequential:
+        """
+        Builds the model of an Autoencoder with 1 input layer, 3 hidden layers and 1 output layer.
+
+        Args:
+            n_inputs (int): number of inputs that the network will have (number of features)
+
+        Returns:
+            keras.engine.sequential.Sequential: Autoencoder model.
+        """
+        model = models.Sequential()
+
+        # encoder
+        model.add(Dense(units=10, activation=self._activation, kernel_initializer=self._kernel_initializer,
+                        kernel_regularizer=self._kernel_regularizer, input_shape=(n_inputs,)))
+
+        model.add(Dense(units=2, activation=self._activation, kernel_initializer=self._kernel_initializer))
+
+        # decoder
+        model.add(Dense(units=10, activation=self._activation, kernel_initializer=self._kernel_initializer))
+
+        # output layer
+        model.add(Dense(units=n_inputs, kernel_initializer=self._kernel_initializer))
+
+        # compile
+        model.compile(optimizer=self._optimizer, loss=self._loss_function)
+
+        return model
+
+    def establish_threshold(self) -> float:
+        """
+        Computes the threshold (value of the N standard deviation of the train loss distribution) that has to
+        surpass the calculated loss (MAE) of a point to be flagged as an anomaly.
+
+        Returns:
+            float: threshold.
+        """
+        mean = np.mean(self._loss, axis=0)
+        std = np.std(self._loss, axis=0)
+        threshold = self._std_dev_num * std + mean
+        return threshold
+
+    @staticmethod
+    def mean_absolute_error(data, predicted_data) -> np.ndarray:
+        """
+        Calculates the MAE (Mean Absolute Error).
+
+        Args:
+            data (numpy.ndarray or pandas.DataFrame): real data.
+            predicted_data (numpy.ndarray or pandas.DataFrame): predicted data.
+
+        Returns:
+            numpy.ndarray: mean absolute error.
+        """
+        if isinstance(data, pd.DataFrame):
+            data = data.values
+
+        if isinstance(predicted_data, pd.DataFrame):
+            predicted_data = predicted_data.values
+
+        mae = np.mean(np.abs(predicted_data - data), axis=1)
+        return mae
 
 
 class AnomalyKMeans(AnomalyModel):
