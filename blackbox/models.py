@@ -96,15 +96,17 @@ class AnomalyPCAMahalanobis(AnomalyModel):
 
     Args:
         n_components (int or float): number of components to which the data have to be reduced. Defaults to 2.
+        std_deviation_num (int): number of the standard deviation used to establish the threshold. Defaults to 3.
         verbose (bool): verbose mode. Defaults to False.
     """
-    def __init__(self, n_components=2, verbose=False) -> None:
+    def __init__(self, n_components=2, std_deviation_num=3, verbose=False) -> None:
         super().__init__()
         self._pca = PCA(n_components=n_components, svd_solver='full')
         self._data = None
         self._distances = None
         self._cov = None
         self._threshold = None
+        self._std_dev_num = std_deviation_num
         self.verbose = verbose
 
     def train(self, data) -> None:
