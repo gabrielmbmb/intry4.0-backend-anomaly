@@ -356,7 +356,7 @@ class AnomalyKMeans(AnomalyModel):
     anomaly.
 
     Args:
-          verbose (bool): verbose mode. Defaults to False.
+        verbose (bool): verbose mode. Defaults to False.
     """
     def __init__(self, verbose=False):
         super().__init__()
@@ -680,7 +680,6 @@ class AnomalyGaussianDistribution(AnomalyModel):
                 mu (numpy.ndarray): mean,
                 sigma^2 (numpy.ndarray): variance
         """
-        num_samples = data.shape[0]
         mu = np.mean(data, axis=0)
         sigma_squared = np.power(np.std(data, axis=0), 2)
 
