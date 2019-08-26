@@ -118,7 +118,7 @@ class AnomalyPCAMahalanobis(AnomalyModel):
         """
         self._data = self._pca.fit_transform(data)
         self._distances = self.mahalanobis_distance(self._data)
-        self.calculate_threshold()
+        self._threshold = self.calculate_threshold()
 
     def predict(self, data) -> np.ndarray:
         """
@@ -147,17 +147,18 @@ class AnomalyPCAMahalanobis(AnomalyModel):
         distances = self.predict(data)
         return distances > self._threshold
 
-    def calculate_threshold(self, k=3) -> None:
+    def calculate_threshold(self) -> float:
         """
-        Computes the threshold that has to surpass a distance of a point to be flagged as an anomaly.
-
-        Args:
-            k (int): standard deviations. Defaults to 3.
+        Computes the threshold (value of the N standard deviation of the train distance distribution) that has to
+        surpass a distance of a point to be flagged as an anomaly.
 
         Returns:
-            float: threshold value
+            float: threshold.
         """
-        self._threshold = np.mean(self._distances) * k
+        mean = np.mean(self._distances, axis=0)
+        std = np.std(self._distances, axis=0)
+        threshold = self._std_dev_num * std + mean
+        return threshold
 
     def mahalanobis_distance(self, x) -> np.ndarray:
         """
