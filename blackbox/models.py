@@ -37,12 +37,15 @@ class AnomalyModel(metaclass=ABCMeta):
         """This method should implement a metric to flag a data point as anomaly or not anomalous."""
         pass
 
-    def save_model(self, path=None) -> None:
+    def save_model(self, path=None) -> str:
         """
         Saves the trained model in a Pickle file. Only Class Attributes that start with '_' will be saved.
 
         Args:
             path (str): path to save the model. Defaults to './<Class Name>.pkl'
+
+        Returns:
+            str: path of the saved file.
         """
         if path is None:
             path = './' + self.__class__.__name__ + '.pkl'
@@ -63,6 +66,8 @@ class AnomalyModel(metaclass=ABCMeta):
             print('PicklingError: ', str(e))
         except Exception as e:
             print('An error has occurred when trying to write the file: ', str(e))
+
+        return path
 
     def load_model(self, path=None) -> None:
         """
