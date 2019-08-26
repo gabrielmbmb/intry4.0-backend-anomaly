@@ -1,8 +1,7 @@
 import os
 import numpy as np
 
-from .models import AnomalyAutoencoder, AnomalyOneClassSVM, AnomalyGaussianDistribution, AnomalyIsolationForest, \
-    AnomalyKMeans, AnomalyPCAMahalanobis, AnomalyModel
+from .models import AnomalyModel
 
 
 class NotAnomalyModelClass(Exception):
