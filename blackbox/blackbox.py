@@ -15,26 +15,32 @@ class BlackBoxAnomalyDetection:
 
     Args:
          verbose (bool): verbose mode. Defaults to False.
-    """
 
+    Raises:
+        NotAnomalyModelClass: when trying to add a model that is not an instance of AnomalyModel.
+    """
     def __init__(self, verbose=False):
-        self.models = []
+        self.models = {}
         self.verbose = verbose
 
-    def add_model(self, model) -> None:
+    def add_model(self, model, name=None) -> None:
         """
         Adds an Anomaly Detection Model to the blackbox.
 
         Args:
-            model (AnomalyModel):  Anomaly Detection Model.
+            model (AnomalyModel): Anomaly Detection Model.
+            name (str): name of the model. Defaults to '<ClassName>'.
         """
         if not isinstance(model, AnomalyModel):
             raise NotAnomalyModelClass('The model to be added is not an instance of blackbox.models.AnomalyModel!')
 
+        if name is None:
+            name = name.__class__.__name__
+
         if self.verbose:
             print('Adding model {} to the blackbox...'.format(model.__class__.__name__))
 
-        self.models.append(model)
+        self.models[name] = model
 
     def train_models(self, data) -> None:
         """
@@ -43,10 +49,13 @@ class BlackBoxAnomalyDetection:
         Args:
             data (numpy.ndarray or pandas.DataFrame): training data with no anomalies.
         """
-        for model in self.models:
+        for name, model in self.models.items():
             if self.verbose:
-                print('Training model {}...'.format(model.__class__.__name__))
+                print('Training model {}...'.format(name))
             model.train(data)
+
+        if self.verbose:
+            print('Models trained!')
 
     def flag_anomaly(self, data) -> np.ndarray:
         """
@@ -59,7 +68,7 @@ class BlackBoxAnomalyDetection:
             numpy.ndarray: list containing list of bool indicating if the data point is an anomaly.
         """
         results = []
-        for model in self.models:
+        for name, model in self.models.items():
             results.append(model.flag_anomaly(data))
 
         np_array = np.array(results)
@@ -79,8 +88,8 @@ class BlackBoxAnomalyDetection:
                 print('Directory {} does not exists. Creating...'.format(path_dir))
             os.mkdir(path_dir)
 
-        for model in self.models:
-            path = path_dir + '/' + model.__class__.__name__ + '.pkl'
+        for name, model in self.models.items():
+            path = path_dir + '/' + name + '.pkl'
             if self.verbose:
                 print('Saving model in {}'.format(path))
             model.save_model(path=path)
