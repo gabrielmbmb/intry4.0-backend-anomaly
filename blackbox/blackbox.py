@@ -1,4 +1,5 @@
 import os
+import pickle
 import numpy as np
 
 from .models import AnomalyModel
@@ -106,3 +107,41 @@ class BlackBoxAnomalyDetection:
             if self.verbose:
                 print('Loading model from {}'.format(path))
             model.load_model(path=path)
+
+    def save_blackbox(self, path='./blackbox.pkl') -> str:
+        """
+        Saves the entire Blackbox, that's means that all models will be saved in the same file and it will be easier to
+        load the Blackbox instead of loading every model one by one and then adding it to the Blackbox.
+
+        Args:
+            path (str): path to save the Blackbox. Defaults to './blackbox.pkl'
+
+        Returns:
+            str: path of the saved blackbox.
+        """
+
+        try:
+            pickle.dump(self.models, open(path, 'wb'))
+        except pickle.PicklingError as e:
+            print('PicklingError: ', str(e))
+        except Exception as e:
+            print('An error has occurred when trying to write the file: ', str(e))
+
+        return path
+
+    def load_blackbox(self, path='./blackbox.pkl') -> None:
+        """
+        Loads a Blackbox from a pickle file.
+
+        Args:
+            path (str): path from where to load the Blackbox. Defaults to './blackbox.pkl'.
+        """
+
+        try:
+            loaded_data = pickle.load(open(path, 'rb'))
+        except pickle.UnpicklingError as e:
+            print('UnpicklingError: ', e)
+        except Exception as e:
+            print('An error has occurred when trying to write the file: ', str(e))
+
+        self.models = loaded_data
