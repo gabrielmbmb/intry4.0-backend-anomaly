@@ -43,17 +43,22 @@ class BlackBoxAnomalyDetection:
 
         self.models[name] = model
 
-    def train_models(self, data) -> None:
+    def train_models(self, data, cb_func=None) -> None:
         """
         Trains the models in the blackbox.
 
         Args:
             data (numpy.ndarray or pandas.DataFrame): training data with no anomalies.
+            cb_func (function): callback function that will be executed when one model ends its training.
         """
+        model_n = 0
         for name, model in self.models.items():
             if self.verbose:
                 print('Training model {}...'.format(name))
             model.train(data)
+            model_n += 1
+            if cb_func:
+                cb_func(model_n / len(self.models))
 
         if self.verbose:
             print('Models trained!')
