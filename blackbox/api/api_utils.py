@@ -70,3 +70,33 @@ def add_entity_json(path, entity_id, path_entity_dir) -> Tuple[bool, str]:
         write_json(path, json_entities)
 
     return True, 'The entity {} was created'.format(entity_id)
+
+
+def build_url(url_root, base_endpoint, *args):
+    """
+    Builds the complete URL for an API endpoint.
+
+    Args:
+        url_root (str): root URL. i.e: 'http://localhost:5678'
+        base_endpoint (str): endpoint base. i.e: 'api/v1/anomaly'
+        *args: arbitrary number of strings that will be added to the end of the URL. i.e: 'api', 'anomaly' ->
+            'api/anomaly'
+
+    Returns:
+        str: the build URL.
+    """
+    complete_url = ''
+    if (url_root[-1] == '/' and base_endpoint[0] != '/') or (url_root[-1] != '/' and base_endpoint[0] == '/'):
+        complete_url = url_root + base_endpoint
+    elif url_root[-1] == '/' and base_endpoint[0] == '/':
+        complete_url = url_root[:-1] + base_endpoint
+    elif url_root[-1] != '/' and base_endpoint[0] != '/':
+        complete_url = url_root + '/' + base_endpoint
+
+    if complete_url[-1] == '/':
+        complete_url = complete_url[:-1]
+
+    for point in args:
+        complete_url = complete_url + '/' + point
+
+    return complete_url
