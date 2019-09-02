@@ -4,7 +4,7 @@ from datetime import datetime
 from flask import Flask, request
 from flask_restplus import Api, Resource, cors
 from werkzeug.utils import secure_filename
-from blackbox.api.api_utils import read_json, write_json, add_entity_json
+from blackbox.api.api_utils import read_json, write_json, add_entity_json, build_url
 from blackbox.api.async_tasks import train_blackbox
 
 # Create Flask App
