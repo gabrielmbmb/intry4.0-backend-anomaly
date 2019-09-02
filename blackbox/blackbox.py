@@ -2,7 +2,7 @@ import os
 import pickle
 import numpy as np
 
-from .models import AnomalyModel
+from blackbox.models import AnomalyModel
 
 
 class NotAnomalyModelClass(Exception):
@@ -141,6 +141,7 @@ class BlackBoxAnomalyDetection:
         Args:
             path (str): path from where to load the Blackbox. Defaults to './blackbox.pkl'.
         """
+        loaded_data = None
 
         try:
             loaded_data = pickle.load(open(path, 'rb'))
