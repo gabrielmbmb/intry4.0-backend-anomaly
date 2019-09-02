@@ -36,7 +36,7 @@ def write_json(path, data) -> None:
         json.dump(data, f)
 
 
-def add_entity_json(path, entity_id, path_entity_dir) -> Tuple[bool, str]:
+def add_entity_json(path_json, entity_id, path_entity_dir) -> Tuple[bool, str]:
     """
     Add an entity to the JSON file. If the JSON file is not created, then it will be created and add the entity will be
     added inside of it. If the entity already exist, the entity will not be created.
@@ -58,16 +58,16 @@ def add_entity_json(path, entity_id, path_entity_dir) -> Tuple[bool, str]:
         print('Error creating directory {} for entity {}. Aborting...'.format(path_entity_dir, entity_id))
         return False, 'The directory {} could not be created'.format(path_entity_dir)
 
-    json_entities = read_json(path)
+    json_entities = read_json(path_json)
     if not json_entities:
         entities = {entity_id: ENTITY_JSON_STRUCTURE}
-        write_json(path, entities)
+        write_json(path_json, entities)
     else:
         if entity_id in json_entities:
             return False, 'The entity {} already exists'.format(entity_id)
 
         json_entities[entity_id] = ENTITY_JSON_STRUCTURE
-        write_json(path, json_entities)
+        write_json(path_json, json_entities)
 
     return True, 'The entity {} was created'.format(entity_id)
 
