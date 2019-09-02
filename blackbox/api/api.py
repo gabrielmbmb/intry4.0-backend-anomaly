@@ -103,9 +103,8 @@ class Train(Resource):
         task = train_blackbox.apply_async(args=[entity_id, path_train_file, model_name])
 
         return {
-                   'message': 'The file was {} uploaded. Training model for entity {}.' \
-                              + 'You can see the progress in the url'.format(file.filename, entity_id),
-                   'task_url': 'url'
+                   'message': 'The file was {} uploaded. Training model for entity {}'.format(file.filename, entity_id),
+                   'task_status_url': build_url(request.url_root, settings.API_ANOMALY_ENDPOINT, 'task', task.id)
                }, 202
 
 
