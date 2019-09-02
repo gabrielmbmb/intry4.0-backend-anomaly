@@ -13,4 +13,5 @@ APP_PORT = os.environ.get('APP_PORT') or '5678'
 API_ANOMALY_ENDPOINT = os.environ.get('API_ANOMALY_ENDPOINT') or 'api/v1/anomaly'
 MODELS_ROUTE = os.environ.get('MODELS_ROUTE') or './models'
 MODELS_ROUTE_JSON = os.environ.get('MODELS_ROUTE_JSON') or os.path.join(MODELS_ROUTE, 'models.json')
-BROKER_URL = os.environ.get('BROKER_URL') or 'amqp://localhost'
+CELERY_BROKER_URL = os.environ.get('BROKER_URL') or 'redis://localhost:6379/0'
+CELERY_RESULT_BACKEND = os.environ.get('CELERY_RESULT_BACKEND') or 'redis://localhost:6379/0'
