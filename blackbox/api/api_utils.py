@@ -72,6 +72,46 @@ def add_entity_json(path_json, entity_id, path_entity_dir) -> Tuple[bool, str]:
     return True, 'The entity {} was created'.format(entity_id)
 
 
+def add_model_entity_json(path_json, entity_id, model_name, model_path, train_data_path) -> bool:
+    """
+    Adds a model of an entity to the JSON file.
+
+    Args:
+        path_json (str): JSON models file path.
+        entity_id (str): entity ID (Orion Context Broker).
+        model_name (str): model name.
+        model_path (str): path of the pickle file storing the Anomaly Detection model.
+        train_data_path (str): path of the file used to train the model.
+
+    Returns:
+        bool: indicating whether the model was added or not.
+
+    Raises:
+        FileNotFoundError: if the JSON file storing the entities and its models does not exist.
+    """
+    json_entities = read_json(path_json)
+    if not json_entities:
+        raise FileNotFoundError('File {} does not exists!'.format(path_json))
+
+    try:
+        entity_dict = json_entities[entity_id]
+    except KeyError as e:
+        print('Entity does not exist: ', e)
+        return False
+
+    if entity_dict['default'] is None:
+        entity_dict['default'] = model_name
+
+    entity_dict['models'][model_name] = {
+        'model_path': model_path,
+        'train_data_path': train_data_path
+    }
+
+    json_entities[entity_id] = entity_dict
+    write_json(path_json, json_entities)
+    return True
+
+
 def build_url(url_root, base_endpoint, *args):
     """
     Builds the complete URL for an API endpoint.
