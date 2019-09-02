@@ -194,9 +194,3 @@ class FileReader:
 
     def concat_batch(self) -> None:
         raise NotImplementedError('concat_batch function is not implemented yet!')
-
-
-class SQLReader:
-
-    def __init__(self):
-        pass
