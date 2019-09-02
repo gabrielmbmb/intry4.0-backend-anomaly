@@ -1,5 +1,6 @@
 import os
 import settings
+from datetime import datetime
 from flask import Flask, request
 from flask_restplus import Api, Resource, cors
 from werkzeug.utils import secure_filename
@@ -86,12 +87,20 @@ class Train(Resource):
         if not request.files:
             return {'error': 'No file was provided to train the model for the entity {}'.format(entity_id)}, 400
 
+        if request.args and 'name' in request.args:
+            model_name = request.args['name']
+        else:
+            date = datetime.now()
+            model_name = 'model_{}_{}-{}-{}-{}:{}'.format(entity_id, date.year, date.month, date.day, date.hour,
+                                                          date.minute)
+
         # save the file
         file = request.files['file']
         file.save(os.path.join(settings.MODELS_ROUTE, entity_id, 'train_data', secure_filename(file.filename)))
 
         # train the model
         train_blackbox()
+        task = train_blackbox.apply_async(args=[entity_id, path_train_file, model_name])
 
         return {
                    'message': 'The file was {} uploaded. Training model for entity {}.' \
