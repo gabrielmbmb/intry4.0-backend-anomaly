@@ -36,7 +36,7 @@ class BlackBoxAnomalyDetection:
             raise NotAnomalyModelClass('The model to be added is not an instance of blackbox.models.AnomalyModel!')
 
         if name is None:
-            name = name.__class__.__name__
+            name = model.__class__.__name__
 
         if self.verbose:
             print('Adding model {} to the blackbox...'.format(model.__class__.__name__))
