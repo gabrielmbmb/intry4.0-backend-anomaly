@@ -99,7 +99,7 @@ class Train(Resource):
         file.save(os.path.join(settings.MODELS_ROUTE, entity_id, 'train_data', secure_filename(file.filename)))
 
         # train the model
-        train_blackbox()
+        path_train_file = settings.MODELS_ROUTE + '/' + entity_id + '/train_data/' + file.filename
         task = train_blackbox.apply_async(args=[entity_id, path_train_file, model_name])
 
         return {
