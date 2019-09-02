@@ -12,7 +12,7 @@ app = Flask(settings.APP_NAME)
 api = Api(app, version=settings.APP_VERSION, title=settings.APP_NAME, description=settings.APP_DESC)
 
 # API Namespaces
-anomaly_ns = api.namespace('api/v1/anomaly', description='Anomaly Detection Operations')
+anomaly_ns = api.namespace(settings.API_ANOMALY_ENDPOINT, description='Anomaly Detection Operations')
 
 # API Routes
 @anomaly_ns.route('/')
