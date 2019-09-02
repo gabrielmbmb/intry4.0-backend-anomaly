@@ -20,6 +20,9 @@ class ModelsList(Resource):
     def get(self):
         """Returns a list of entities and its prediction models."""
         json_entities = read_json(settings.MODELS_ROUTE_JSON)
+        if not json_entities:
+            json_entities = {}
+
         return json_entities, 200
 
 
