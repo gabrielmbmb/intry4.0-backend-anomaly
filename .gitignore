@@ -137,3 +137,6 @@ dmypy.json
 
 # redis
 redis-stable/
+
+# models
+models/
