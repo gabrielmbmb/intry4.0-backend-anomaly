@@ -2,7 +2,7 @@ import os
 import json
 from typing import Tuple
 
-ENTITY_JSON_STRUCTURE = {"default": None, "models": {}}
+ENTITY_JSON_STRUCTURE = {"attrs": None, "default": None, "models": {}}
 
 
 def read_json(path):
@@ -36,15 +36,16 @@ def write_json(path, data) -> None:
         json.dump(data, f)
 
 
-def add_entity_json(path_json, entity_id, path_entity_dir) -> Tuple[bool, str]:
+def add_entity_json(path_json, entity_id, path_entity_dir, attrs) -> Tuple[bool, str]:
     """
     Add an entity to the JSON file. If the JSON file is not created, then it will be created and add the entity will be
     added inside of it. If the entity already exist, the entity will not be created.
 
     Args:
-        path (str): JSON models file path.
+        path_json (str): JSON models file path.
         entity_id (str): entity ID (Orion Context Broker)
         path_entity_dir (str): path of the entity directory.
+        attrs (list of str): attributes of the entity (same name as in Orion Context Broker).
 
     Returns:
         bool: indicates if the entity was created.
@@ -60,14 +61,15 @@ def add_entity_json(path_json, entity_id, path_entity_dir) -> Tuple[bool, str]:
 
     json_entities = read_json(path_json)
     if not json_entities:
-        entities = {entity_id: ENTITY_JSON_STRUCTURE}
-        write_json(path_json, entities)
+        json_entities = {entity_id: ENTITY_JSON_STRUCTURE}
     else:
         if entity_id in json_entities:
             return False, 'The entity {} already exists'.format(entity_id)
 
         json_entities[entity_id] = ENTITY_JSON_STRUCTURE
-        write_json(path_json, json_entities)
+
+    json_entities[entity_id]['attrs'] = attrs
+    write_json(path_json, json_entities)
 
     return True, 'The entity {} was created'.format(entity_id)
 
