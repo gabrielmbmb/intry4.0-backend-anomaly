@@ -4,7 +4,7 @@ from datetime import datetime
 from flask import Flask, request
 from flask_restplus import Api, Resource, cors
 from werkzeug.utils import secure_filename
-from blackbox.api.api_utils import read_json, write_json, add_entity_json, build_url
+from blackbox.api.api_utils import read_json, write_json, add_entity_json, build_url, update_entity_json
 from blackbox.api.async_tasks import train_blackbox, predict_blackbox
 
 # Create Flask App
@@ -73,6 +73,49 @@ class Machine(Resource):
 
         write_json(settings.MODELS_ROUTE_JSON, json_entities)
         return {'message': 'The entity {} has been removed'.format(entity_id)}, 200
+
+
+@anomaly_ns.route('/entity/update/<string:entity_id>')
+@anomaly_ns.param('entity_id', 'Orion Context Broker (FIWARE) entity ID')
+class UpdateEntity(Resource):
+    @cors.crossdomain(origin='*')
+    def post(self, entity_id):
+        """Updates an entity"""
+        if not request.json:
+            return {
+                        'error': 'No payload was sent'
+                   }, 400
+
+        json_ = request.json
+        new_entity_id = None
+        default = None
+        attrs = None
+        models = None
+
+        if 'new_entity_id' in json_:
+            new_entity_id = json_['new_entity_id']
+
+        if 'default' in json_:
+            default = json_['default']
+
+        if 'attrs' in json_:
+            attrs = json_['attrs']
+
+        if 'models' in json_:
+            models = json_['models']
+
+        updated, messages = update_entity_json(entity_id, settings.MODELS_ROUTE_JSON, new_entity_id, default, attrs,
+                                               models)
+
+        if not updated:
+            return {
+                        'error': 'The entity was not updated',
+                        'messages': messages
+                   }, 400
+
+        return {
+                   'messages': messages
+               }, 200
 
 
 @anomaly_ns.route('/train/<string:entity_id>')
