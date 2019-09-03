@@ -140,6 +140,10 @@ class Train(Resource):
 
         # save the file
         file = request.files['file']
+        filename, ext = os.path.splitext(file.filename)
+        if ext != '.csv':
+            return {'error': 'The file is not a .csv file'}, 400
+
         file.save(os.path.join(settings.MODELS_ROUTE, entity_id, 'train_data', secure_filename(file.filename)))
 
         # train the model
