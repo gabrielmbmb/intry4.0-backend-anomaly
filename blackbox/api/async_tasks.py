@@ -61,4 +61,4 @@ def predict_blackbox(entity_id, model_path, predict_data):
     predict_data = np.array([predict_data])
     predictions = model.flag_anomaly(predict_data)
     print(predictions)
-    return {'current': 100, 'total': 100, 'status': 'TASK ENDED'}
+    return {'current': 100, 'total': 100, 'status': 'TASK ENDED', 'results': predictions}
