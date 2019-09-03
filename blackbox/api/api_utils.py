@@ -13,7 +13,7 @@ def read_json(path):
         path (str): path of the JSON file.
 
     Returns:
-        dict with the content of the JSON file or None if the JSON couldn't be read.
+        dict: dict with the content of the JSON file or None if the JSON couldn't be read.
     """
     try:
         json_ = json.load(open(path, 'r'))
