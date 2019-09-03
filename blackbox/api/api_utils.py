@@ -114,6 +114,84 @@ def add_model_entity_json(path_json, entity_id, model_name, model_path, train_da
     return True
 
 
+def update_entity_json(entity_id, path_json, new_entity_id=None,
+                       default=None, attrs=None, models=None) -> Tuple[bool, List[str]]:
+    """
+    Updates an entity stored in the JSON file.
+
+    Args:
+        entity_id (str): entity ID (Orion Context Broker).
+        path_json (str): path of the JSON file storing the entities info.
+        new_entity_id (str): new entity ID (Orion Context Broker) that will replace entity_id. Defaults to None.
+        default (str): new default model. Defaults to None.
+        attrs (list of str): new attributes of the entity (same name as in Orion Context Broker).
+        models (dict): new models. Defaults to None.
+
+    Returns:
+        tuple: bool which indicates if the entity was updated and list of str containing descriptive messages.
+
+    Raises:
+        FileNotFoundError: if the JSON file storing the entities and its models does not exist.
+    """
+    json_entities = read_json(path_json)
+    if not json_entities:
+        raise FileNotFoundError('File {} does not exists!'.format(path_json))
+
+    messages = []
+    updated = False
+
+    if entity_id not in json_entities:
+        messages.append('The entity does not exist.')
+        return updated, messages
+
+    entity = json_entities[entity_id]
+
+    if default:
+        if isinstance(default, str):
+            if default in entity['models']:
+                entity['default'] = default
+                messages.append('The parameter default has been updated.')
+                updated = True
+            else:
+                messages.append(
+                    'The model {} does not exists for entity {} and cannot be set as default model'.format(default,
+                                                                                                           entity_id))
+        else:
+            messages.append('The parameter default has to be an str.')
+
+    if attrs:
+        if isinstance(attrs, list):
+            entity['attrs'] = attrs
+            messages.append('The parameter attrs has been updated.')
+            updated = True
+        else:
+            messages.append('The parameter attrs has to be a list of str.')
+
+    if models:
+        if isinstance(models, dict):
+            entity['models'] = models
+            messages.append('The parameter models has been updated.')
+            updated = True
+        else:
+            messages.append('The parameter models has to be a dict.')
+
+    json_entities[entity_id] = entity
+
+    if new_entity_id:
+        if isinstance(new_entity_id, str):
+            json_entities[new_entity_id] = entity
+            json_entities.pop(entity_id, None)
+            messages.append('The parameter entity_id has been updated.')
+            updated = True
+        else:
+            messages.append('The parameter new_entity_id has to be an str')
+
+    if updated:
+        write_json(path_json, json_entities)
+
+    return updated, messages
+
+
 def build_url(url_root, base_endpoint, *args):
     """
     Builds the complete URL for an API endpoint.
