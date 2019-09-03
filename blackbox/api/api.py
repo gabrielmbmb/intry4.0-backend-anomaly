@@ -46,11 +46,17 @@ class Machine(Resource):
 
     @cors.crossdomain(origin='*')
     def post(self, entity_id):
-        """Creates an entity in the JSON file."""
-        if not request.json['attrs']:
-            return {'error': 'No payload with entity attributes was send'}, 400
+        """Creates an entity"""
+        if not request.json:
+            return {'error': 'No payload was send'}, 400
 
-        attrs = request.json['attrs']
+        try:
+            attrs = request.json['attrs']
+        except KeyError:
+            return {'error': 'No payload with attrs was send'}, 400
+
+        if not isinstance(attrs, list):
+            return {'error': 'attrs has to be a list with strings inside'}, 400
 
         created, msg = add_entity_json(settings.MODELS_ROUTE_JSON, entity_id,
                                        os.path.join(settings.MODELS_ROUTE, entity_id), attrs)
