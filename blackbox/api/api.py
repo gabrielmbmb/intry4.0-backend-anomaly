@@ -5,7 +5,7 @@ from flask import Flask, request
 from flask_restplus import Api, Resource, cors
 from werkzeug.utils import secure_filename
 from blackbox.api.api_utils import read_json, write_json, add_entity_json, build_url
-from blackbox.api.async_tasks import train_blackbox
+from blackbox.api.async_tasks import train_blackbox, predict_blackbox
 
 # Create Flask App
 app = Flask(settings.APP_NAME)
@@ -27,7 +27,7 @@ class ModelsList(Resource):
         return json_entities, 200
 
 
-@anomaly_ns.route('/<string:entity_id>')
+@anomaly_ns.route('/entity/<string:entity_id>')
 @anomaly_ns.param('entity_id', 'Orion Context Broker (FIWARE) entity ID')
 class Machine(Resource):
 
@@ -47,8 +47,13 @@ class Machine(Resource):
     @cors.crossdomain(origin='*')
     def post(self, entity_id):
         """Creates an entity in the JSON file."""
+        if not request.json['attrs']:
+            return {'error': 'No payload with entity attributes was send'}, 400
+
+        attrs = request.json['attrs']
+
         created, msg = add_entity_json(settings.MODELS_ROUTE_JSON, entity_id,
-                                       os.path.join(settings.MODELS_ROUTE, entity_id))
+                                       os.path.join(settings.MODELS_ROUTE, entity_id), attrs)
         if not created:
             return {'error': msg}, 400
 
@@ -78,11 +83,7 @@ class Train(Resource):
         """Trains a Blackbox model for an entity with the data uploaded."""
         json_entities = read_json(settings.MODELS_ROUTE_JSON)
         if not json_entities or entity_id not in json_entities:
-            created, msg = add_entity_json(settings.MODELS_ROUTE_JSON, entity_id,
-                                           os.path.join(settings.MODELS_ROUTE, entity_id))
-
-            if not created:
-                return {'error': msg}, 400
+            return {'error': 'The entity does not exist!'}, 400
 
         if not request.files:
             return {'error': 'No file was provided to train the model for the entity {}'.format(entity_id)}, 400
@@ -112,7 +113,77 @@ class Train(Resource):
 class Predict(Resource):
     @cors.crossdomain(origin='*')
     def post(self):
-        pass
+        """Endpoint to receive data from Orion Context Broker (FIWARE) and predict if it's an anomaly."""
+        if not request.json:
+            return {'error': 'No payload in request'}, 400
+
+        print(request.json)
+
+        data = request.json['data'][0]
+        entity_id = data['id']
+        json_entities = read_json(settings.MODELS_ROUTE_JSON)
+        if entity_id not in json_entities:
+            return {'error': 'The entity does not exists'}, 400
+
+        entity = json_entities[entity_id]
+        if (entity['default'] is None and len(entity['models']) == 0) or (len(entity['models']) == 0):
+            return {'error': 'The entity has not trained models'}, 400
+
+        default = entity['default']
+        if default is None:  # if the default model is not set, take the first model from the dict of models
+            entity_models = entity['models']
+            first_model = list(entity_models.keys())[0]
+            model_path = entity_models[first_model]['model_path']
+        else:
+            model_path = entity['models'][default]['model_path']
+
+        predict_data = []
+        for attr in entity['attrs']:
+            predict_data.append(data[attr]['value'])
+
+        task = predict_blackbox.apply_async(args=[entity_id, model_path, predict_data])
+
+        return {
+                    'message': 'The prediction for {} is being made...',
+                    'task_status_url': build_url(request.url_root, settings.API_ANOMALY_ENDPOINT, 'task', task.id)
+               }, 202
+
+
+@anomaly_ns.route('/task/<string:task_id>')
+class TaskStatus(Resource):
+    @cors.crossdomain(origin='*')
+    def get(self, task_id):
+        task = train_blackbox.AsyncResult(task_id)
+        if task.state == 'PENDING':
+            response = {
+                'state': task.state,
+                'current': 0,
+                'total': 100,
+                'status': 'Pending...'
+            }
+        elif task.state != 'FAILURE':
+            response = {
+                'state': task.state,
+                'current': task.info.get('current', 0),
+                'total': task.info.get('total', 100),
+                'status': task.info.get('status', '')
+            }
+            if 'result' in task.info:
+                response['result'] = task.info['result']
+        else:
+            response = {
+                'state': task.state,
+                'current': 100,
+                'total': 100,
+                'status': str(task.info)
+            }
+
+        return response, 200
+
+
+@anomaly_ns.errorhandler
+def handle_root_exception(error):
+    return {'error': error}, 404
 
 
 if __name__ == '__main__':
