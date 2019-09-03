@@ -180,7 +180,12 @@ class Predict(Resource):
 
         predict_data = []
         for attr in entity['attrs']:
-            predict_data.append(data[attr]['value'])
+            try:
+                predict_data.append(data[attr]['value'])
+            except KeyError:
+                return {
+                            'error': 'The attr {} was not in the sent attrs'.format(attr)
+                       }, 400
 
         task = predict_blackbox.apply_async(args=[entity_id, model_path, predict_data])
 
