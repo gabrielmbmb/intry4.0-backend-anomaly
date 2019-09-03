@@ -49,16 +49,21 @@ class BlackBoxAnomalyDetection:
 
         Args:
             data (numpy.ndarray or pandas.DataFrame): training data with no anomalies.
-            cb_func (function): callback function that will be executed when one model ends its training.
+            cb_func (function): callback function that will be executed when the training starts for a model. Progress
+                and a message will be passed to this function. Defaults to None.
         """
         model_n = 0
         for name, model in self.models.items():
+            if cb_func:
+                progress = (model_n / len(self.models)) * 100
+                message = 'Training model ' + name
+                cb_func(progress, message)
+
             if self.verbose:
                 print('Training model {}...'.format(name))
+
             model.train(data)
             model_n += 1
-            if cb_func:
-                cb_func(model_n / len(self.models))
 
         if self.verbose:
             print('Models trained!')
