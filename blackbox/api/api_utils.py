@@ -1,6 +1,6 @@
 import os
 import json
-from typing import Tuple
+from typing import Tuple, List
 
 ENTITY_JSON_STRUCTURE = {"attrs": None, "default": None, "models": {}}
 
@@ -48,7 +48,7 @@ def add_entity_json(path_json, entity_id, path_entity_dir, attrs) -> Tuple[bool,
         attrs (list of str): attributes of the entity (same name as in Orion Context Broker).
 
     Returns:
-        bool: indicates if the entity was created.
+        tuple: bool which indicates if the entity was created and str which is a descriptive message.
     """
     try:
         os.makedirs(os.path.join(path_entity_dir, 'train_data'))
