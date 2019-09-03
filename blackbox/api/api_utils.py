@@ -114,7 +114,7 @@ def add_model_entity_json(path_json, entity_id, model_name, model_path, train_da
     return True
 
 
-def update_entity_json(entity_id, path_json, new_entity_id=None,
+def update_entity_json(entity_id, path_json, path_models, new_entity_id=None,
                        default=None, attrs=None, models=None) -> Tuple[bool, List[str]]:
     """
     Updates an entity stored in the JSON file.
@@ -122,6 +122,7 @@ def update_entity_json(entity_id, path_json, new_entity_id=None,
     Args:
         entity_id (str): entity ID (Orion Context Broker).
         path_json (str): path of the JSON file storing the entities info.
+        path_models (str): path where the models are stored.
         new_entity_id (str): new entity ID (Orion Context Broker) that will replace entity_id. Defaults to None.
         default (str): new default model. Defaults to None.
         attrs (list of str): new attributes of the entity (same name as in Orion Context Broker).
@@ -178,13 +179,17 @@ def update_entity_json(entity_id, path_json, new_entity_id=None,
     json_entities[entity_id] = entity
 
     if new_entity_id:
-        if isinstance(new_entity_id, str):
-            json_entities[new_entity_id] = entity
-            json_entities.pop(entity_id, None)
-            messages.append('The parameter entity_id has been updated.')
-            updated = True
+        if new_entity_id in json_entities:
+            messages.append('An entity already exist with id {}'.format(new_entity_id))
         else:
-            messages.append('The parameter new_entity_id has to be an str')
+            if isinstance(new_entity_id, str):
+                json_entities[new_entity_id] = entity
+                json_entities.pop(entity_id, None)
+                os.rename(os.path.join(path_models, entity_id), os.path.join(path_models, new_entity_id))
+                messages.append('The parameter entity_id has been updated.')
+                updated = True
+            else:
+                messages.append('The parameter new_entity_id has to be an str')
 
     if updated:
         write_json(path_json, json_entities)
