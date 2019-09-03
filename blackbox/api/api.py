@@ -2,7 +2,8 @@ import os
 import settings
 from datetime import datetime
 from flask import Flask, request
-from flask_restplus import Api, Resource, cors
+from flask_restplus import Api, Resource, cors, fields
+from werkzeug.datastructures import FileStorage
 from werkzeug.utils import secure_filename
 from blackbox.api.api_utils import read_json, write_json, add_entity_json, build_url, update_entity_json
 from blackbox.api.async_tasks import train_blackbox, predict_blackbox
@@ -14,8 +15,34 @@ api = Api(app, version=settings.APP_VERSION, title=settings.APP_NAME, descriptio
 # API Namespaces
 anomaly_ns = api.namespace(settings.API_ANOMALY_ENDPOINT, description='Anomaly Detection Operations')
 
+# API parsers
+file_parser = anomaly_ns.parser()
+file_parser.add_argument('file', type=FileStorage, required=True, location='files', help='CSV training file')
+
+# API Models
+entity_attrs_model = anomaly_ns.model('attrs', {
+    'attrs': fields.List(fields.String(), description='New entity attributes', required=True)
+})
+
+update_entity_model = anomaly_ns.model('model', {
+    'model_path': fields.String(description='Path of the model', required=False),
+    'train_data_path': fields.String(description='Path of the training data', required=False),
+})
+
+update_entity_models = anomaly_ns.model('models', {
+    'model': fields.Nested(update_entity_model)
+})
+
+update_entity = anomaly_ns.model('entity', {
+    'new_entity_id': fields.String(description='New entity id', required=False),
+    'default': fields.String(description='New default model', required=False),
+    'attrs': fields.List(fields.String(), description='New entity attributes', required=False),
+    'models': fields.Nested(update_entity_models)
+})
+
 # API Routes
 @anomaly_ns.route('/')
+@anomaly_ns.route('/entities')
 class ModelsList(Resource):
     @cors.crossdomain(origin='*')
     def get(self):
@@ -29,11 +56,12 @@ class ModelsList(Resource):
 
 @anomaly_ns.route('/entity/<string:entity_id>')
 @anomaly_ns.param('entity_id', 'Orion Context Broker (FIWARE) entity ID')
-class Machine(Resource):
-
+class Entity(Resource):
     @cors.crossdomain(origin='*')
+    @anomaly_ns.response(200, 'Success')
+    @anomaly_ns.response(400, 'Entity or JSON file does not exist')
     def get(self, entity_id):
-        """Return an entity and its prediction models."""
+        """Return an entity"""
         json_entities = read_json(settings.MODELS_ROUTE_JSON)
         if not json_entities:
             return {'error': 'The JSON file does not exist'}, 400
@@ -45,6 +73,9 @@ class Machine(Resource):
         return {entity_id: entity_data}, 200
 
     @cors.crossdomain(origin='*')
+    @anomaly_ns.doc(body=entity_attrs_model)
+    @anomaly_ns.response(200, 'Success')
+    @anomaly_ns.response(400, 'No payload, unable to create the entity or validation error')
     def post(self, entity_id):
         """Creates an entity"""
         if not request.json:
@@ -66,26 +97,10 @@ class Machine(Resource):
         return {'message': msg}, 200
 
     @cors.crossdomain(origin='*')
-    def delete(self, entity_id):
-        """Deletes an entity."""
-        json_entities = read_json(settings.MODELS_ROUTE_JSON)
-        if not json_entities:
-            return {'error': 'The JSON file storing entities does not exist'}, 400
-
-        if entity_id not in json_entities:
-            return {'error': 'The entity {} does not exist'.format(entity_id)}, 400
-
-        json_entities.pop(entity_id, False)
-
-        write_json(settings.MODELS_ROUTE_JSON, json_entities)
-        return {'message': 'The entity {} has been removed'.format(entity_id)}, 200
-
-
-@anomaly_ns.route('/entity/update/<string:entity_id>')
-@anomaly_ns.param('entity_id', 'Orion Context Broker (FIWARE) entity ID')
-class UpdateEntity(Resource):
-    @cors.crossdomain(origin='*')
-    def post(self, entity_id):
+    @anomaly_ns.doc(body=update_entity)
+    @anomaly_ns.response(200, 'Success')
+    @anomaly_ns.response(400, 'No payload, unable to write or validation error')
+    def put(self, entity_id):
         """Updates an entity"""
         if not request.json:
             return {
@@ -110,8 +125,8 @@ class UpdateEntity(Resource):
         if 'models' in json_:
             models = json_['models']
 
-        updated, messages = update_entity_json(entity_id, settings.MODELS_ROUTE_JSON, new_entity_id, default, attrs,
-                                               models)
+        updated, messages = update_entity_json(entity_id, settings.MODELS_ROUTE_JSON, settings.MODELS_ROUTE,
+                                               new_entity_id, default, attrs, models)
 
         if not updated:
             return {
@@ -123,11 +138,31 @@ class UpdateEntity(Resource):
                    'messages': messages
                }, 200
 
+    @cors.crossdomain(origin='*')
+    @anomaly_ns.response(200, 'Success')
+    @anomaly_ns.response(400, 'Entity or JSON file does not exist')
+    def delete(self, entity_id):
+        """Deletes an entity."""
+        json_entities = read_json(settings.MODELS_ROUTE_JSON)
+        if not json_entities:
+            return {'error': 'The JSON file storing entities does not exist'}, 400
+
+        if entity_id not in json_entities:
+            return {'error': 'The entity {} does not exist'.format(entity_id)}, 400
+
+        json_entities.pop(entity_id, False)
+
+        write_json(settings.MODELS_ROUTE_JSON, json_entities)
+        return {'message': 'The entity {} has been removed'.format(entity_id)}, 200
+
 
 @anomaly_ns.route('/train/<string:entity_id>')
 @anomaly_ns.param('entity_id', 'Orion Context Broker (FIWARE) entity ID')
 class Train(Resource):
     @cors.crossdomain(origin='*')
+    @anomaly_ns.expect(file_parser)
+    @anomaly_ns.response(202, 'Success')
+    @anomaly_ns.response(400, 'Entity or JSON file does not exist or no training file provided')
     def post(self, entity_id):
         """Trains a Blackbox model for an entity with the data uploaded."""
         json_entities = read_json(settings.MODELS_ROUTE_JSON)
@@ -165,6 +200,8 @@ class Train(Resource):
 @anomaly_ns.route('/predict')
 class Predict(Resource):
     @cors.crossdomain(origin='*')
+    @anomaly_ns.response(202, 'Success')
+    @anomaly_ns.response(400, 'No payload, the entity or the JSON file does not exist or an attr is missing')
     def post(self):
         """Endpoint to receive data from Orion Context Broker (FIWARE) and predict if it's an anomaly."""
         if not request.json:
@@ -206,9 +243,12 @@ class Predict(Resource):
 
 
 @anomaly_ns.route('/task/<string:task_id>')
+@anomaly_ns.param('task_id', 'Celery task id')
 class TaskStatus(Resource):
     @cors.crossdomain(origin='*')
+    @anomaly_ns.response(200, 'Success')
     def get(self, task_id):
+        """Gets the status of a task"""
         task = train_blackbox.AsyncResult(task_id)
         if task.state == 'PENDING':
             response = {
