@@ -163,7 +163,7 @@ class Predict(Resource):
         data = request.json['data'][0]
         entity_id = data['id']
         json_entities = read_json(settings.MODELS_ROUTE_JSON)
-        if entity_id not in json_entities:
+        if not json_entities or entity_id not in json_entities:
             return {'error': 'The entity does not exists'}, 400
 
         entity = json_entities[entity_id]
