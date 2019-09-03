@@ -160,8 +160,6 @@ class Predict(Resource):
         if not request.json:
             return {'error': 'No payload in request'}, 400
 
-        print(request.json)
-
         data = request.json['data'][0]
         entity_id = data['id']
         json_entities = read_json(settings.MODELS_ROUTE_JSON)
