@@ -24,14 +24,24 @@ def read_json(path):
     return json_
 
 
-def write_json(path, data) -> None:
+def write_json(path, data,  sort=False) -> None:
     """
     Write a JSON file in the specified path.
 
     Args:
         path (str): path of the JSON file to be created.
         data (dict): data that is going to be written in the JSON file.
+        sort (bool): indicates if the JSON has to be sorted by key before writing it.
     """
+    if sort:
+        keys_sorted = sorted(data)
+
+        new_json = {}
+        for key in keys_sorted:
+            new_json[key] = data[key]
+
+        data = new_json
+
     with open(path, 'w') as f:
         json.dump(data, f)
 
@@ -69,7 +79,7 @@ def add_entity_json(path_json, entity_id, path_entity_dir, attrs) -> Tuple[bool,
         json_entities[entity_id] = ENTITY_JSON_STRUCTURE
 
     json_entities[entity_id]['attrs'] = attrs
-    write_json(path_json, json_entities)
+    write_json(path_json, json_entities, sort=True)
 
     return True, 'The entity {} was created'.format(entity_id)
 
@@ -110,7 +120,7 @@ def add_model_entity_json(path_json, entity_id, model_name, model_path, train_da
     }
 
     json_entities[entity_id] = entity_dict
-    write_json(path_json, json_entities)
+    write_json(path_json, json_entities, sort=True)
     return True
 
 
@@ -192,7 +202,7 @@ def update_entity_json(entity_id, path_json, path_models, new_entity_id=None,
                 messages.append('The parameter new_entity_id has to be an str')
 
     if updated:
-        write_json(path_json, json_entities)
+        write_json(path_json, json_entities, sort=True)
 
     return updated, messages
 

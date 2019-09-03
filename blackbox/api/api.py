@@ -152,7 +152,7 @@ class Entity(Resource):
 
         json_entities.pop(entity_id, False)
 
-        write_json(settings.MODELS_ROUTE_JSON, json_entities)
+        write_json(settings.MODELS_ROUTE_JSON, json_entities, sort=True)
         return {'message': 'The entity {} has been removed'.format(entity_id)}, 200
 
 
