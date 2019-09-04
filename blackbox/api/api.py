@@ -85,6 +85,8 @@ class Entity(Resource):
             attrs = request.json['attrs']
         except KeyError:
             return {'error': 'No payload with attrs was send'}, 400
+        except TypeError:
+            return {'error': 'No payload with attrs was send'}, 400
 
         if not isinstance(attrs, list):
             return {'error': 'attrs has to be a list with strings inside'}, 400
