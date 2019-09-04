@@ -77,13 +77,9 @@ def predict_blackbox(entity_id, date, model_path, predict_data):
     results = {
         "entity_id": entity_id,
         "date": date,
-        "predictions": {
-            "PCAMahalanobis": predictions[0],
-            "Autoencoder": predictions[1],
-            "KMeans": predictions[2],
-            "OneClassSVM": predictions[3],
-            "IsolationForest": predictions[4],
-            "GaussianDistribution": predictions[5],
-        }
     }
+    n_model = 0
+    for model_name, model in model.models.items():
+        results[model_name] = predictions[n_model]
+        n_model += 1
     return {'current': 100, 'total': 100, 'status': 'TASK ENDED', 'results': results}
