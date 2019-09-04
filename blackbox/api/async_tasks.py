@@ -56,6 +56,19 @@ def train_blackbox(self, entity_id, filename, model_name):
 
 @celery_app.task()
 def predict_blackbox(entity_id, model_path, predict_data):
+    """
+    Flag a data point received from Orion Context Broker (FIWARE component) as an anomaly or not using an already
+    trained model loaded from a pickle file.
+
+    Args:
+        entity_id (str): Orion Context Broker (FIWARE component) entity ID
+        date (str): date of the new received data.
+        model_path (str): path of the trained model.
+        predict_data (list): values to predict.
+
+    Returns:
+        dict: status of the task with the results of the prediction.
+    """
     model = BlackBoxAnomalyDetection(verbose=True)
     model.load_blackbox(model_path)
     predict_data = np.array([predict_data])
