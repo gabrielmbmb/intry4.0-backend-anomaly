@@ -286,7 +286,3 @@ class TaskStatus(Resource):
 @anomaly_ns.errorhandler
 def handle_root_exception(error):
     return {'error': error}, 404
-
-
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5678)
