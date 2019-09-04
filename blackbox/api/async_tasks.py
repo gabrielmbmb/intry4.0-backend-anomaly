@@ -30,9 +30,8 @@ def train_blackbox(self, entity_id, filename, model_name):
         self.update_state(state='PROGRESS', meta={'current': progress, 'total': 100, 'status': message})
 
     # read CSV file
-    # reader = CSVReader(filename)
-    # data = reader.get_df()
-    data = pd.read_csv(filename, index_col=0)
+    reader = CSVReader(filename)
+    data = reader.get_df()
 
     # create and train Blackbox model
     model = BlackBoxAnomalyDetection(verbose=True)
