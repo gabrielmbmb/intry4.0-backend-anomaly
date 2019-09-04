@@ -1,5 +1,6 @@
 import os
 import settings
+from dateutil import parser
 from datetime import datetime
 from flask import Flask, request
 from flask_restplus import Api, Resource, cors, fields
@@ -230,13 +231,16 @@ class Predict(Resource):
         predict_data = []
         for attr in entity['attrs']:
             try:
+                date = data[attr]['metadata']['dateModified']['value']
                 predict_data.append(data[attr]['value'])
             except KeyError:
                 return {
                             'error': 'The attr {} was not in the sent attrs'.format(attr)
                        }, 400
 
-        task = predict_blackbox.apply_async(args=[entity_id, model_path, predict_data])
+        # parse date
+        date = parser.parse(date).strftime("%Y-%m-%d %H:%M:%S")
+        task = predict_blackbox.apply_async(args=[entity_id, date, model_path, predict_data])
 
         return {
                     'message': 'The prediction for {} is being made...',
