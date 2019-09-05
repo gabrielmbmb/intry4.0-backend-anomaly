@@ -206,6 +206,38 @@ def update_entity_json(entity_id, path_json, path_models, new_entity_id=None,
 
     return updated, messages
 
+def delete_entity_json(entity_id, path_json, path_models, path_trash) -> Tuple[bool, str]:
+    """
+    Deletes an entity from the JSON storing the entities and its models. The directory of the entity will be moved
+    to the deleted entities folder.
+
+    Args:
+        entity_id (str): entity ID (Orion Context Broker).
+        path_json (str): path of the JSON file storing the entities info.
+        path_models (str): path where the models are stored.
+        path_trash (str): path where the directory of the deleted entities will be stored.
+
+    Returns:
+        tuple: tuple containing one bool indicating if the entity was deleted and str that is a descriptive message.
+    """
+    if not os.path.exists(path_trash):
+        os.mkdir(path_trash)
+
+    json_entities = read_json(path_json)
+    if not json_entities:
+        raise FileNotFoundError('File {} does not exists!'.format(path_json))
+
+    if entity_id not in json_entities:
+        return False, 'The entity {} does not exists.'.format(entity_id)
+
+    json_entities.pop(entity_id, False)
+    write_json(path_json, json_entities)
+
+    # move the dir of the entity to the trash folder
+    os.rename(path_models + '/' + entity_id, path_trash + '/' + entity_id)
+
+    return True, 'The entity {} was deleted and its directory was moved to {}'.format(entity_id, path_trash)
+
 
 def build_url(url_root, base_endpoint, *args):
     """

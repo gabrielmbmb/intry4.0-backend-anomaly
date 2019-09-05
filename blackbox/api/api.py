@@ -6,7 +6,8 @@ from flask import Flask, request
 from flask_restplus import Api, Resource, cors, fields
 from werkzeug.datastructures import FileStorage
 from werkzeug.utils import secure_filename
-from blackbox.api.api_utils import read_json, write_json, add_entity_json, build_url, update_entity_json
+from blackbox.api.api_utils import read_json, write_json, add_entity_json, build_url, update_entity_json, \
+    delete_entity_json
 from blackbox.api.async_tasks import train_blackbox, predict_blackbox
 
 # Todo: add logging to the Flask API
@@ -148,17 +149,15 @@ class Entity(Resource):
     @anomaly_ns.response(400, 'Entity or JSON file does not exist')
     def delete(self, entity_id):
         """Deletes an entity."""
-        json_entities = read_json(settings.MODELS_ROUTE_JSON)
-        if not json_entities:
-            return {'error': 'The JSON file storing entities does not exist'}, 400
+        deleted, msg = delete_entity_json(entity_id, settings.MODELS_ROUTE_JSON, settings.MODELS_ROUTE,
+                                          settings.MODELS_ROUTE_TRASH)
 
-        if entity_id not in json_entities:
-            return {'error': 'The entity {} does not exist'.format(entity_id)}, 400
+        if not deleted:
+            return {
+                        'error': msg
+                   }, 400
 
-        json_entities.pop(entity_id, False)
-
-        write_json(settings.MODELS_ROUTE_JSON, json_entities, sort=True)
-        return {'message': 'The entity {} has been removed'.format(entity_id)}, 200
+        return {'message': msg}, 200
 
 
 @anomaly_ns.route('/train/<string:entity_id>')
