@@ -8,7 +8,6 @@ if os.path.exists(dotenv_path):
 APP_DEBUG = 'True' == os.getenv('APP_DEBUG', 'False')
 APP_NAME = os.getenv('APP_NAME', 'PLATINUM - Blackbox Anomaly Detection')
 APP_DESC = os.getenv('APP_DESC', 'A simple API to call the Blackbox Anomaly Detection model.')
-APP_VERSION = os.getenv('APP_VERSION', '1.0')
 APP_HOST = os.getenv('APP_HOST', 'localhost')
 APP_PORT = os.getenv('APP_PORT', '5678')
 API_ANOMALY_ENDPOINT = os.getenv('API_ANOMALY_ENDPOINT', 'api/v1/anomaly')

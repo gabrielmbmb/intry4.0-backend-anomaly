@@ -11,7 +11,7 @@ from blackbox.api.async_tasks import train_blackbox, predict_blackbox
 
 # Create Flask App
 app = Flask(settings.APP_NAME)
-api = Api(app, version=settings.APP_VERSION, title=settings.APP_NAME, description=settings.APP_DESC)
+api = Api(app, version='1.0', title=settings.APP_NAME, description=settings.APP_DESC)
 
 # API Namespaces
 anomaly_ns = api.namespace(settings.API_ANOMALY_ENDPOINT, description='Anomaly Detection Operations')
