@@ -9,6 +9,8 @@ from werkzeug.utils import secure_filename
 from blackbox.api.api_utils import read_json, write_json, add_entity_json, build_url, update_entity_json
 from blackbox.api.async_tasks import train_blackbox, predict_blackbox
 
+# Todo: add logging to the Flask API
+
 # Create Flask App
 app = Flask(settings.APP_NAME)
 api = Api(app, version='1.0', title=settings.APP_NAME, description=settings.APP_DESC)

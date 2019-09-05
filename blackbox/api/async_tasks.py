@@ -9,6 +9,9 @@ from blackbox.models import AnomalyPCAMahalanobis, AnomalyAutoencoder, AnomalyKM
 from blackbox.csv_reader import CSVReader
 import pandas as pd
 
+# Todo: add logging to tasks
+# Todo: send the predictions results to somewhere (not defined yet)
+
 celery_app = Celery(APP_NAME, broker=CELERY_BROKER_URL, backend=CELERY_RESULT_BACKEND)
 
 # Tasks
