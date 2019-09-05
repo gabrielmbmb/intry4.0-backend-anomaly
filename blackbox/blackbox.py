@@ -3,6 +3,7 @@ import pickle
 import numpy as np
 
 from blackbox.models import AnomalyModel
+from sklearn.preprocessing import MinMaxScaler
 
 
 class NotAnomalyModelClass(Exception):
@@ -23,6 +24,7 @@ class BlackBoxAnomalyDetection:
     def __init__(self, verbose=False):
         self.models = {}
         self.verbose = verbose
+        self.scaler = None
 
     def add_model(self, model, name=None) -> None:
         """
@@ -43,6 +45,27 @@ class BlackBoxAnomalyDetection:
 
         self.models[name] = model
 
+    def scale_data(self, data) -> np.ndarray:
+        """
+        Scales the data before training or making a prediction with a Min Max Scaler which is sensitive to outliers. The
+        first time that the function is called, the scaler will be fitted with the data passed. Then, the trained scaler
+        will be used to scale the data.
+
+        Args:
+            data (numpy.ndarray or pandas.DataFrame): data to be scaled.
+
+        Returns:
+            numpy.ndarray: scaled data.
+        """
+        if self.scaler is None:
+            scaler = MinMaxScaler()
+            scaled_data = scaler.fit_transform(data)
+            self.scaler = scaler
+            return scaled_data
+
+        scaled_data = self.scaler.transform(data)
+        return scaled_data
+
     def train_models(self, data, cb_func=None) -> None:
         """
         Trains the models in the blackbox.
@@ -52,6 +75,8 @@ class BlackBoxAnomalyDetection:
             cb_func (function): callback function that will be executed when the training starts for a model. Progress
                 and a message will be passed to this function. Defaults to None.
         """
+        data = self.scale_data(data)
+
         model_n = 0
         for name, model in self.models.items():
             if cb_func:
