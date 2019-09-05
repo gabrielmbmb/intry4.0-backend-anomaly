@@ -151,7 +151,7 @@ class BlackBoxAnomalyDetection:
         try:
             loaded_data = pickle.load(open(path, 'rb'))
         except pickle.UnpicklingError as e:
-            print('UnpicklingError: ', e)
+            print('UnpicklingError: ', str(e))
         except Exception as e:
             print('An error has occurred when trying to write the file: ', str(e))
 
