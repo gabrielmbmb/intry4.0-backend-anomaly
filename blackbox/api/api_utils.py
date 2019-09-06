@@ -157,6 +157,14 @@ def update_entity_json(entity_id, path_json, path_models, new_entity_id=None,
 
     entity = json_entities[entity_id]
 
+    if models:
+        if isinstance(models, dict):
+            entity['models'] = models
+            messages.append('The parameter models has been updated.')
+            updated = True
+        else:
+            messages.append('The parameter models has to be a dict.')
+
     if default:
         if isinstance(default, str):
             if default in entity['models']:
@@ -178,14 +186,6 @@ def update_entity_json(entity_id, path_json, path_models, new_entity_id=None,
         else:
             messages.append('The parameter attrs has to be a list of str.')
 
-    if models:
-        if isinstance(models, dict):
-            entity['models'] = models
-            messages.append('The parameter models has been updated.')
-            updated = True
-        else:
-            messages.append('The parameter models has to be a dict.')
-
     json_entities[entity_id] = entity
 
     if new_entity_id:
@@ -205,6 +205,7 @@ def update_entity_json(entity_id, path_json, path_models, new_entity_id=None,
         write_json(path_json, json_entities, sort=True)
 
     return updated, messages
+
 
 def delete_entity_json(entity_id, path_json, path_models, path_trash) -> Tuple[bool, str]:
     """
