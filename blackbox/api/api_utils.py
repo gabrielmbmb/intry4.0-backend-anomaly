@@ -18,7 +18,6 @@ def read_json(path):
     try:
         json_ = json.load(open(path, 'r'))
     except FileNotFoundError as e:
-        print('The file does not exists:', e)
         json_ = None
 
     return json_
