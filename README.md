@@ -1,6 +1,7 @@
 # PLATINUM - Blackbox Anomaly Detection
 
 [![made-with-python](https://img.shields.io/badge/Made%20with-Python-1f425f.svg)](https://www.python.org/)
+[![Build Status](https://travis-ci.com/gabrielmbmb/platinum-blackbox-anomaly.svg?token=Ym8dypMsw2NFNbxtSMrV&branch=master)](https://travis-ci.com/gabrielmbmb/platinum-blackbox-anomaly)
 
 This package is a 'Blackbox' model that implements several Machine Learning algorithms to flag as anomalous or not the
 data received from the Orion Context Broker (FIWARE component) and is part of the PLATINUM project.
