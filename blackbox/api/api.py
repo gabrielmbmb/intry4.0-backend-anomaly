@@ -11,6 +11,7 @@ from blackbox.api.api_utils import read_json, add_entity_json, build_url, update
 from blackbox.api.async_tasks import train_blackbox, predict_blackbox
 
 # Todo: add logging to the Flask API
+# Todo: add descriptions to API methods
 
 # Create Flask App
 app = Flask(settings.APP_NAME)
@@ -44,11 +45,13 @@ update_entity = anomaly_ns.model('entity', {
     'models': fields.Nested(update_entity_models)
 })
 
+
 # API Routes
 @anomaly_ns.route('/')
 @anomaly_ns.route('/entities')
 class ModelsList(Resource):
     @cors.crossdomain(origin='*')
+    @anomaly_ns.doc(responses={200: 'Success'})
     def get(self):
         """Returns a list of entities and its prediction models."""
         json_entities = read_json(settings.MODELS_ROUTE_JSON)
@@ -62,8 +65,7 @@ class ModelsList(Resource):
 @anomaly_ns.param('entity_id', 'Orion Context Broker (FIWARE) entity ID')
 class Entity(Resource):
     @cors.crossdomain(origin='*')
-    @anomaly_ns.response(200, 'Success')
-    @anomaly_ns.response(400, 'Entity or JSON file does not exist')
+    @anomaly_ns.doc(responses={200: 'Success', 400: 'Entity or JSON file does not exist'})
     def get(self, entity_id):
         """Return an entity"""
         json_entities = read_json(settings.MODELS_ROUTE_JSON)
@@ -77,9 +79,8 @@ class Entity(Resource):
         return {entity_id: entity_data}, 200
 
     @cors.crossdomain(origin='*')
-    @anomaly_ns.doc(body=entity_attrs_model)
-    @anomaly_ns.response(200, 'Success')
-    @anomaly_ns.response(400, 'No payload, unable to create the entity or validation error')
+    @anomaly_ns.doc(body=entity_attrs_model,
+                    responses={200: 'Success', 400: 'No payload, unable to create the entity or validation error'})
     def post(self, entity_id):
         """Creates an entity"""
         if not request.json:
@@ -103,14 +104,13 @@ class Entity(Resource):
         return {'message': msg}, 200
 
     @cors.crossdomain(origin='*')
-    @anomaly_ns.doc(body=update_entity)
-    @anomaly_ns.response(200, 'Success')
-    @anomaly_ns.response(400, 'No payload, unable to write or validation error')
+    @anomaly_ns.doc(body=update_entity,
+                    responses={200: 'Success', 400: 'No payload, unable to write or validation error'})
     def put(self, entity_id):
         """Updates an entity"""
         if not request.json:
             return {
-                        'error': 'No payload was sent'
+                       'error': 'No payload was sent'
                    }, 400
 
         json_ = request.json
@@ -136,8 +136,8 @@ class Entity(Resource):
 
         if not updated:
             return {
-                        'error': 'The entity was not updated',
-                        'messages': messages
+                       'error': 'The entity was not updated',
+                       'messages': messages
                    }, 400
 
         return {
@@ -145,8 +145,7 @@ class Entity(Resource):
                }, 200
 
     @cors.crossdomain(origin='*')
-    @anomaly_ns.response(200, 'Success')
-    @anomaly_ns.response(400, 'Entity or JSON file does not exist')
+    @anomaly_ns.doc(responses={200: 'Success', 400: 'Entity or JSON file does not exist'})
     def delete(self, entity_id):
         """Deletes an entity."""
         deleted, msg = delete_entity_json(entity_id, settings.MODELS_ROUTE_JSON, settings.MODELS_ROUTE,
@@ -154,7 +153,7 @@ class Entity(Resource):
 
         if not deleted:
             return {
-                        'error': msg
+                       'error': msg
                    }, 400
 
         return {'message': msg}, 200
@@ -164,9 +163,8 @@ class Entity(Resource):
 @anomaly_ns.param('entity_id', 'Orion Context Broker (FIWARE) entity ID')
 class Train(Resource):
     @cors.crossdomain(origin='*')
+    @anomaly_ns.doc(responses={200: 'Success', 400: 'Entity or JSON file does not exist or no training file provided'})
     @anomaly_ns.expect(file_parser)
-    @anomaly_ns.response(202, 'Success')
-    @anomaly_ns.response(400, 'Entity or JSON file does not exist or no training file provided')
     def post(self, entity_id):
         """Trains a Blackbox model for an entity with the data uploaded."""
         json_entities = read_json(settings.MODELS_ROUTE_JSON)
@@ -204,8 +202,8 @@ class Train(Resource):
 @anomaly_ns.route('/predict')
 class Predict(Resource):
     @cors.crossdomain(origin='*')
-    @anomaly_ns.response(202, 'Success')
-    @anomaly_ns.response(400, 'No payload, the entity or the JSON file does not exist or an attr is missing')
+    @anomaly_ns.doc(
+        responses={202: 'Success', 400: 'No payload, the entity or the JSON file does not exist or an attr is missing'})
     def post(self):
         """Endpoint to receive data from Orion Context Broker (FIWARE) and predict if it's an anomaly."""
         if not request.json:
@@ -236,7 +234,7 @@ class Predict(Resource):
                 predict_data.append(data[attr]['value'])
             except KeyError:
                 return {
-                            'error': 'The attr {} was not in the sent attrs'.format(attr)
+                           'error': 'The attr {} was not in the sent attrs'.format(attr)
                        }, 400
 
         # parse date
@@ -244,8 +242,8 @@ class Predict(Resource):
         task = predict_blackbox.apply_async(args=[entity_id, date, model_path, predict_data])
 
         return {
-                    'message': 'The prediction for {} is being made...',
-                    'task_status_url': build_url(request.url_root, settings.API_ANOMALY_ENDPOINT, 'task', task.id)
+                   'message': 'The prediction for {} is being made...',
+                   'task_status_url': build_url(request.url_root, settings.API_ANOMALY_ENDPOINT, 'task', task.id)
                }, 202
 
 
@@ -253,7 +251,7 @@ class Predict(Resource):
 @anomaly_ns.param('task_id', 'Celery task id')
 class TaskStatus(Resource):
     @cors.crossdomain(origin='*')
-    @anomaly_ns.response(200, 'Success')
+    @anomaly_ns.doc(responses={200: 'Success'})
     def get(self, task_id):
         """Gets the status of a task"""
         task = train_blackbox.AsyncResult(task_id)
