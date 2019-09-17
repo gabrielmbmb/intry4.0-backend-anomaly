@@ -51,9 +51,11 @@ update_entity = anomaly_ns.model('entity', {
 @anomaly_ns.route('/entities')
 class ModelsList(Resource):
     @cors.crossdomain(origin='*')
-    @anomaly_ns.doc(responses={200: 'Success'})
+    @anomaly_ns.doc(responses={200: 'Success'},
+                    description="Return the list of created entities and for each entity its attributes, "
+                                "default model and trained models.")
     def get(self):
-        """Returns a list of entities and its prediction models."""
+        """Returns a list of entities"""
         json_entities = read_json(settings.MODELS_ROUTE_JSON)
         if not json_entities:
             json_entities = {}
@@ -65,7 +67,8 @@ class ModelsList(Resource):
 @anomaly_ns.param('entity_id', 'Orion Context Broker (FIWARE) entity ID')
 class Entity(Resource):
     @cors.crossdomain(origin='*')
-    @anomaly_ns.doc(responses={200: 'Success', 400: 'Entity or JSON file does not exist'})
+    @anomaly_ns.doc(responses={200: 'Success', 400: 'Entity or JSON file does not exist'},
+                    description='Returns an entity and its attributes, default model and trained models.')
     def get(self, entity_id):
         """Return an entity"""
         json_entities = read_json(settings.MODELS_ROUTE_JSON)
@@ -80,7 +83,12 @@ class Entity(Resource):
 
     @cors.crossdomain(origin='*')
     @anomaly_ns.doc(body=entity_attrs_model,
-                    responses={200: 'Success', 400: 'No payload, unable to create the entity or validation error'})
+                    responses={200: 'Success', 400: 'No payload, unable to create the entity or validation error'},
+                    description="Creates an entity with the specified entity_id which has to be the same as in Orion "
+                                "Context Broker (OCB, FIWARE). It is necessary to specify the name of the attributes "
+                                "which the API will receive from OCB in order to make the predictions. The number of "
+                                "the attributes has to be exactly the same as the number of attributes in the training "
+                                "dataset.")
     def post(self, entity_id):
         """Creates an entity"""
         if not request.json:
@@ -105,7 +113,11 @@ class Entity(Resource):
 
     @cors.crossdomain(origin='*')
     @anomaly_ns.doc(body=update_entity,
-                    responses={200: 'Success', 400: 'No payload, unable to write or validation error'})
+                    responses={200: 'Success', 400: 'No payload, unable to write or validation error'},
+                    description="Updates an entity with the specified entity_id. The new values of the entity has to "
+                                "be specified in the payload. It's mandatory to specify every value. If the "
+                                "new_entity_id is specified, it must not exist already. If the default model is "
+                                "updated it must exist in the list of trained model for the specified entity.")
     def put(self, entity_id):
         """Updates an entity"""
         if not request.json:
@@ -145,9 +157,11 @@ class Entity(Resource):
                }, 200
 
     @cors.crossdomain(origin='*')
-    @anomaly_ns.doc(responses={200: 'Success', 400: 'Entity or JSON file does not exist'})
+    @anomaly_ns.doc(responses={200: 'Success', 400: 'Entity or JSON file does not exist'},
+                    description="Deletes an entity from the API list and moves its trained models and training data "
+                                "to the trash directory from the API.")
     def delete(self, entity_id):
-        """Deletes an entity."""
+        """Deletes an entity"""
         deleted, msg = delete_entity_json(entity_id, settings.MODELS_ROUTE_JSON, settings.MODELS_ROUTE,
                                           settings.MODELS_ROUTE_TRASH)
 
@@ -163,10 +177,14 @@ class Entity(Resource):
 @anomaly_ns.param('entity_id', 'Orion Context Broker (FIWARE) entity ID')
 class Train(Resource):
     @cors.crossdomain(origin='*')
-    @anomaly_ns.doc(responses={200: 'Success', 400: 'Entity or JSON file does not exist or no training file provided'})
     @anomaly_ns.expect(file_parser)
+    @anomaly_ns.doc(responses={200: 'Success', 400: 'Entity or JSON file does not exist or no training file provided'},
+                    description="Trains a Blackbox Anomaly Detection Model for an entity with the specified entity_id. "
+                                "The entity has to be already created. The Blackbox Model will be trained with the "
+                                "uploaded file. The process of training will be asynchronous and an URL will be "
+                                "returned in order to see the training progress.")
     def post(self, entity_id):
-        """Trains a Blackbox model for an entity with the data uploaded."""
+        """Trains a Blackbox model"""
         json_entities = read_json(settings.MODELS_ROUTE_JSON)
         if not json_entities or entity_id not in json_entities:
             return {'error': 'The entity does not exist!'}, 400
@@ -203,9 +221,13 @@ class Train(Resource):
 class Predict(Resource):
     @cors.crossdomain(origin='*')
     @anomaly_ns.doc(
-        responses={202: 'Success', 400: 'No payload, the entity or the JSON file does not exist or an attr is missing'})
+        responses={202: 'Success', 400: 'No payload, the entity or the JSON file does not exist or an attr is missing'},
+        description="This endpoint will receive the data from Orion Context Broker (FIWARE), i.e this endpoint has to "
+                    "be specified in the HTTP URL field of a OCB subscription (OCB will make a POST to this endpoint)."
+                    " With the data received from an entity, a prediction will be made using the default pre-trained "
+                    "model for the entity.")
     def post(self):
-        """Endpoint to receive data from Orion Context Broker (FIWARE) and predict if it's an anomaly."""
+        """Endpoint to receive data and predict if it's an anomaly."""
         if not request.json:
             return {'error': 'No payload in request'}, 400
 
@@ -251,7 +273,10 @@ class Predict(Resource):
 @anomaly_ns.param('task_id', 'Celery task id')
 class TaskStatus(Resource):
     @cors.crossdomain(origin='*')
-    @anomaly_ns.doc(responses={200: 'Success'})
+    @anomaly_ns.doc(responses={200: 'Success'},
+                    description="Returns the progress of the task specifying the state, the current progress, the "
+                                "total progress that has to be reached and the status. Also, if the task has ended "
+                                "a result will be returned too.")
     def get(self, task_id):
         """Gets the status of a task"""
         task = train_blackbox.AsyncResult(task_id)
