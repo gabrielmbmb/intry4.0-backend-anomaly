@@ -11,6 +11,7 @@ from pygments.formatters.terminal import TerminalFormatter
 DEFAULT_FIWARE_HOST = 'http://localhost:1026'
 DEFAULT_BLACKBOX_HOST = 'http://localhost:5678'
 DEFAULT_FIWARE_SERVICE = 'sensores'
+DEFAULT_FIWARE_SERVICE_PATH = '/'
 DEFAULT_TYPE = 'Machine'
 
 
@@ -19,15 +20,18 @@ DEFAULT_TYPE = 'Machine'
               help='Indicates where the operation has to be done.')
 @click.option('--blackbox_url', '-ah', default=DEFAULT_BLACKBOX_HOST, help='URL of Blackbox API')
 @click.option('--fiware_url', '-fh', default=DEFAULT_FIWARE_HOST, help='URL of Orion Context Broker (FIWARE)')
-@click.option('--fw_service', '-fs', default=DEFAULT_FIWARE_SERVICE, help='Orion Context Broker service path')
+@click.option('--fw_service', '-fs', default=DEFAULT_FIWARE_SERVICE, help='Orion Context Broker service')
+@click.option('--fw_service_path', '-fsp', default=DEFAULT_FIWARE_SERVICE_PATH,
+              help='Orion Context Broker service path')
 @click.option('--entity_type', '-et', default=DEFAULT_TYPE, help='Type of the entity')
 @click.pass_context
-def entity(ctx, on, blackbox_url, fiware_url, fw_service, entity_type):
+def entity(ctx, on, blackbox_url, fiware_url, fw_service, fw_service_path, entity_type):
     ctx.ensure_object(dict)
     ctx.obj['ON'] = on
     ctx.obj['BLACKBOX_HOST'] = blackbox_url
     ctx.obj['FIWARE_HOST'] = fiware_url
     ctx.obj['FIWARE_SERVICE'] = fw_service
+    ctx.obj['FIWARE_SERVICE_PATH'] = fw_service_path
     ctx.obj['TYPE'] = entity_type
 
 
@@ -109,7 +113,7 @@ def create_entity(ctx, entity_id, attrs):
         headers = {
             'Content-Type': 'application/json',
             'fiware-service': ctx.obj['FIWARE_SERVICE'],
-            'fiware-servicepath': '/',
+            'fiware-servicepath': ctx.obj['FIWARE_SERVICE_PATH'],
         }
         try:
             response = requests.post(url=url, headers=headers, json=data)
@@ -146,7 +150,7 @@ def delete_entity(ctx, entity_id):
     # deletes an entity in Orion Context Broker
     if ctx.obj['ON'] == 'fiware' or ctx.obj['ON'] == 'both':
         url = ctx.obj['FIWARE_HOST'] + '/v2/entities/' + entity_id
-        headers = {'fiware-service': ctx.obj['FIWARE_SERVICE'], 'fiware-servicepath': '/'}
+        headers = {'fiware-service': ctx.obj['FIWARE_SERVICE'], 'fiware-servicepath': ctx.obj['FIWARE_SERVICE_PATH']}
         try:
             response = requests.delete(url=url, headers=headers)
             click.echo('[FIWARE] STATUS_CODE: {}'.format(response.status_code))
@@ -186,7 +190,7 @@ def update_entity(ctx, attrs):
         headers = {
             'Content-Type': 'application/json',
             'fiware-service': ctx.obj['FIWARE_SERVICE'],
-            'fiware-servicepath': '/'
+            'fiware-servicepath': ctx.obj['FIWARE_SERVICE_PATH']
         }
         try:
             response = requests.post(url=url, headers=headers, json=attr_dict)
@@ -218,7 +222,7 @@ def get_entities(ctx, entity_id):
         entity_id (str): Orion Context Broker (FIWARE) entity id
     """
     url = ctx.obj['FIWARE_HOST'] + '/v2/entities/' + entity_id
-    headers = {'fiware-service': ctx.obj['FIWARE_SERVICE'], 'fiware-servicepath': '/'}
+    headers = {'fiware-service': ctx.obj['FIWARE_SERVICE'], 'fiware-servicepath': ctx.obj['FIWARE_SERVICE_PATH']}
     try:
         response = requests.get(url=url, headers=headers)
         click.echo('[FIWARE] STATUS_CODE: {}, JSON: {}'.format(response.status_code, beautify_json(response.json())))
