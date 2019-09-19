@@ -243,33 +243,91 @@ def get_entities(ctx, entity_id):
 #################
 
 @entity.command('create_subs')
-@click.argument('entity_id')
+@click.argument('id_pattern')
 @click.argument('url')
 @click.argument('attrs', nargs=-1)
-def create_subs(entity_id, url, attrs):
+@click.pass_context
+def create_subs(ctx, id_pattern, url, attrs):
     """
     Create a subscription for an entity in Orion Context Broker.
 
     Args:
-        entity_id (str): Orion Context Broker (FIWARE) entity id
+        ctx (object): click object
+        id_pattern (str): Orion Context Broker (FIWARE) entity id
         url (str): URL where Orion Context Broker will make an HTTP POST.
         attrs (list of str): names of the attrs that will be send when there is a change in its value.
     """
-    click.echo(entity_id)
-    click.echo(url)
-    click.echo(attrs)
+    subscription = {
+        "description": "Notify Anomaly Prediction API of changes in urn:ngsi-ld:Machine:001",
+        "subject": {
+            "entities": [{"idPattern": id_pattern}],
+            "condition": {
+                "attrs": attrs,
+            }
+        },
+        "notification": {
+            "http": {
+                "url": url
+            },
+            "attrs": attrs,
+            "metadata": ["dateCreated", "dateModified"]
+        },
+    }
+
+    url = ctx.obj['FIWARE_HOST'] + '/v2/subscriptions'
+    headers = {
+        'Content-Type': 'application/json',
+        'fiware-service': ctx.obj['FIWARE_SERVICE'],
+        'fiware-servicepath': ctx.obj['FIWARE_SERVICE_PATH']
+    }
+
+    try:
+        response = requests.post(url=url, headers=headers, json=subscription)
+        click.echo('[FIWARE] STATUS_CODE: {}'.format(response.status_code))
+    except requests.exceptions.ConnectionError:
+        click.echo('Error connecting with Orion Context Broker')
 
 
 @entity.command('delete_subs')
 @click.argument('subscription_id')
-def create_subs(subscription_id):
-    click.echo(subscription_id)
+@click.pass_context
+def delete_subs(ctx, subscription_id):
+    """
+    Deletes the subscription with subscription_id in Orion Context Broker.
+
+    Args:
+        ctx (object): click object.
+        subscription_id (str): Orion Context Broker (FIWARE) subscription id.
+    """
+    url = ctx.obj['FIWARE_HOST'] + '/v2/subscriptions/' + subscription_id
+    headers = {'fiware-service': ctx.obj['FIWARE_SERVICE'], 'fiware-servicepath': ctx.obj['FIWARE_SERVICE_PATH']}
+
+    try:
+        response = requests.delete(url=url, headers=headers)
+        click.echo('[FIWARE] STATUS_CODE: {}'.format(response.status_code))
+    except requests.exceptions.ConnectionError:
+        click.echo('Error connecting with Orion Context Broker')
 
 
 @entity.command('get_subs')
 @click.argument('subscription_id', default='')
-def get_subs(subscription_id):
-    click.echo(subscription_id)
+@click.pass_context
+def get_subs(ctx, subscription_id):
+    """
+    Gets the subscription created in Orion Context Broker or the specified subscription with subscription_id.
+
+    Args:
+        ctx (object): click object
+        subscription_id (str): Orion Context Broker (FIWARE) subscription id.
+    """
+    url = ctx.obj['FIWARE_HOST'] + '/v2/subscriptions/' + subscription_id
+    headers = {'fiware-service': ctx.obj['FIWARE_SERVICE'], 'fiware-servicepath': ctx.obj['FIWARE_SERVICE_PATH']}
+
+    try:
+        response = requests.get(url=url, headers=headers)
+        click.echo('[FIWARE] STATUS_CODE: {}, JSON: {}'.format(response.status_code, beautify_json(response.json())))
+    except requests.exceptions.ConnectionError:
+        click.echo('Error connecting with Orion Context Broker')
 
 
 if __name__ == '__main__':
