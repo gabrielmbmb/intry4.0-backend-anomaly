@@ -16,7 +16,8 @@ def read_json(path):
         dict: dict with the content of the JSON file or None if the JSON couldn't be read.
     """
     try:
-        json_ = json.load(open(path, 'r'))
+        with open(path, 'r') as f:
+            json_ = json.load(f)
     except FileNotFoundError as e:
         json_ = None
 
