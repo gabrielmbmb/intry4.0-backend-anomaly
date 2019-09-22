@@ -21,6 +21,7 @@ class BlackBoxAnomalyDetection:
     Raises:
         NotAnomalyModelClass: when trying to add a model that is not an instance of AnomalyModel.
     """
+
     def __init__(self, verbose=False):
         self.models = {}
         self.verbose = verbose
@@ -159,7 +160,8 @@ class BlackBoxAnomalyDetection:
         """
 
         try:
-            pickle.dump(self.models, open(path, 'wb'))
+            with open(path, 'wb') as f:
+                pickle.dump(self.models, f)
         except pickle.PicklingError as e:
             print('PicklingError: ', str(e))
         except Exception as e:
@@ -177,7 +179,8 @@ class BlackBoxAnomalyDetection:
         loaded_data = None
 
         try:
-            loaded_data = pickle.load(open(path, 'rb'))
+            with open(path, 'rb') as f:
+                loaded_data = pickle.load(f)
         except pickle.UnpicklingError as e:
             print('UnpicklingError: ', str(e))
         except Exception as e:

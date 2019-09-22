@@ -61,7 +61,8 @@ class AnomalyModel(metaclass=ABCMeta):
             print('Saving model to {}'.format(path))
 
         try:
-            pickle.dump(data_to_pickle, open(path, 'wb'))
+            with open(path, 'wb') as f:
+                pickle.dump(data_to_pickle, f)
         except pickle.PicklingError as e:
             print('PicklingError: ', str(e))
         except Exception as e:
@@ -85,7 +86,8 @@ class AnomalyModel(metaclass=ABCMeta):
             print('Loading model from {}'.format(path))
 
         try:
-            loaded_data = pickle.load(open(path, 'rb'))
+            with open(path, 'rb') as f:
+                loaded_data = pickle.load(f)
         except pickle.UnpicklingError as e:
             print('UnpicklingError: ', str(e))
         except Exception as e:
@@ -110,6 +112,7 @@ class AnomalyPCAMahalanobis(AnomalyModel):
         std_deviation_num (int): number of the standard deviation used to establish the threshold. Defaults to 3.
         verbose (bool): verbose mode. Defaults to False.
     """
+
     def __init__(self, n_components=2, std_deviation_num=3, verbose=False) -> None:
         super().__init__()
         self._pca = PCA(n_components=n_components, svd_solver='full')
@@ -363,6 +366,7 @@ class AnomalyKMeans(AnomalyModel):
     Args:
         verbose (bool): verbose mode. Defaults to False.
     """
+
     def __init__(self, verbose=False):
         super().__init__()
         self.verbose = verbose
