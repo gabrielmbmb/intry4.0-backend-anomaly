@@ -118,15 +118,14 @@ class TestFlaskApi(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTrue(os.path.exists('./models/trash/' + entity_id))
 
-    def test_train_entity(self):
-        """Test training a Blackbox model for an entity"""
-        # entity_id = 'urn:ngsi-ld:Machine:001'
-        # self.app.post(self.API_ANOMALY_ENDPOINT + '/entity/' + entity_id,
-        #               json={"attrs": ["Bearing1", "Bearing2", "Bearing3", "Bearing4"]})
-        #
-        # response = self.app.post(self.API_ANOMALY_ENDPOINT + '/train/' + entity_id,
-        #                          content_type='multipart/form-data',
-        #                          data={'file': open('./tests/train_data.csv', 'rb')})
-        #
-        # self.assertEqual(response.status_code, 202)
-        pass
+    # def test_train_entity(self):
+    #     """Test training a Blackbox model for an entity"""
+    #     entity_id = 'urn:ngsi-ld:Machine:001'
+    #     self.app.post(self.API_ANOMALY_ENDPOINT + '/entity/' + entity_id,
+    #                   json={"attrs": ["Bearing1", "Bearing2", "Bearing3", "Bearing4"]})
+    #
+    #     response = self.app.post(self.API_ANOMALY_ENDPOINT + '/train/' + entity_id,
+    #                              content_type='multipart/form-data',
+    #                              data={'file': open('./tests/train_data.csv', 'rb')})
+    #
+    #     self.assertEqual(response.status_code, 202)
