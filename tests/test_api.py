@@ -9,7 +9,6 @@ class TestFlaskApi(TestCase):
     """Test Flask API"""
 
     API_ANOMALY_ENDPOINT = '/api/v1/anomaly'
-    TEST_MODELS_PATH = './tests/models'
     TEST_MODELS_JSON_PATH = './models/models.json'
 
     def setUp(self):
@@ -18,7 +17,7 @@ class TestFlaskApi(TestCase):
     def tearDown(self):
         shutil.rmtree('./models')
 
-    def test_create_entity(self) :
+    def test_create_entity(self):
         """Test if an entity is correctly created"""
         entity_id = 'urn:ngsi-ld:Machine:001'
         response = self.app.post(self.API_ANOMALY_ENDPOINT + '/entity/' + entity_id, json={"attrs": ["Bearing1"]})
@@ -118,3 +117,15 @@ class TestFlaskApi(TestCase):
         response = self.app.delete(self.API_ANOMALY_ENDPOINT + '/entity/' + entity_id)
         self.assertEqual(response.status_code, 200)
         self.assertTrue(os.path.exists('./models/trash/' + entity_id))
+
+    def test_train_entity(self):
+        """Test training a Blackbox model for an entity"""
+        entity_id = 'urn:ngsi-ld:Machine:001'
+        self.app.post(self.API_ANOMALY_ENDPOINT + '/entity/' + entity_id,
+                      json={"attrs": ["Bearing1", "Bearing2", "Bearing3", "Bearing4"]})
+
+        response = self.app.post(self.API_ANOMALY_ENDPOINT + '/train/' + entity_id,
+                                 content_type='multipart/form-data',
+                                 data={'file': open('./tests/train_data.csv', 'rb')})
+
+        self.assertEqual(response.status_code, 202)
