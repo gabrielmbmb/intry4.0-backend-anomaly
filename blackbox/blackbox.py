@@ -98,11 +98,14 @@ class BlackBoxAnomalyDetection:
         Determines if a data point is an anomaly or not using the models in the blackbox.
 
         Args:
-            data (numpy.ndarray or pandas.DataFrame): data.
+            data (numpy.ndarray or pandas.DataFrame or list): data.
 
         Returns:
             numpy.ndarray: list containing list of bool indicating if the data point is an anomaly.
         """
+        if isinstance(data, list):
+            data = np.array(data)
+
         results = []
         for name, model in self.models.items():
             results.append(model.flag_anomaly(data))
