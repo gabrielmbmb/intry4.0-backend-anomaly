@@ -2,6 +2,7 @@
 
 [![made-with-python](https://img.shields.io/badge/Made%20with-Python-1f425f.svg)](https://www.python.org/)
 [![Build Status](https://travis-ci.com/gabrielmbmb/platinum-blackbox-anomaly.svg?token=Ym8dypMsw2NFNbxtSMrV&branch=master)](https://travis-ci.com/gabrielmbmb/platinum-blackbox-anomaly)
+[![codecov](https://codecov.io/gh/gabrielmbmb/platinum-blackbox-anomaly/branch/master/graph/badge.svg?token=lAfRL6ePBZ)](https://codecov.io/gh/gabrielmbmb/platinum-blackbox-anomaly)
 
 This package is a 'Blackbox' model that implements several Machine Learning algorithms to flag as anomalous or not the
 data received from the Orion Context Broker (FIWARE component) and is part of the PLATINUM project.
@@ -156,7 +157,9 @@ will receive data when the value of an attribute changes:
                 "description": "Notify Anomaly Prediction API of changes in urn:ngsi-ld:Machine:001",
                 "subject": {
                 "entities": [
-                    "urn:ngsi-ld:Machine:001"
+                    {
+                        "idPattern": "urn:ngsi-ld:Machine:001"
+                    }
                 ],
                 "condition": {
                   "attrs": [
