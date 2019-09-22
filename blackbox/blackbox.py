@@ -141,10 +141,10 @@ class BlackBoxAnomalyDetection:
             path_dir (str): path to the directory storing the saved models. Defaults to './saved_models'.
         """
         for model in self.models:
-            path = path_dir + '/' + model.__class__.__name__ + '.pkl'
+            path = path_dir + '/' + self.models[model].__class__.__name__ + '.pkl'
             if self.verbose:
                 print('Loading model from {}'.format(path))
-            model.load_model(path=path)
+            self.models[model].load_model(path=path)
 
     def save_blackbox(self, path='./blackbox.pkl') -> str:
         """
