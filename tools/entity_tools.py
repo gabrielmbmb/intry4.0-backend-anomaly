@@ -221,21 +221,30 @@ def get_entities(ctx, entity_id):
         ctx (object): click object
         entity_id (str): Orion Context Broker (FIWARE) entity id
     """
-    url = ctx.obj['FIWARE_HOST'] + '/v2/entities/' + entity_id
-    headers = {'fiware-service': ctx.obj['FIWARE_SERVICE'], 'fiware-servicepath': ctx.obj['FIWARE_SERVICE_PATH']}
-    try:
-        response = requests.get(url=url, headers=headers)
-        click.echo('[FIWARE] STATUS_CODE: {}, JSON: {}'.format(response.status_code, beautify_json(response.json())))
-    except requests.exceptions.ConnectionError:
-        click.echo('Error connecting with Orion Context Broker')
+    # get entities from Orion Context Broker
+    if ctx.obj['ON'] == 'fiware' or ctx.obj['ON'] == 'both':
+        url = ctx.obj['FIWARE_HOST'] + '/v2/entities/' + entity_id
+        headers = {'fiware-service': ctx.obj['FIWARE_SERVICE'], 'fiware-servicepath': ctx.obj['FIWARE_SERVICE_PATH']}
+        try:
+            response = requests.get(url=url, headers=headers)
+            click.echo(
+                '[FIWARE] STATUS_CODE: {}, JSON: {}'.format(response.status_code, beautify_json(response.json())))
+        except requests.exceptions.ConnectionError:
+            click.echo('Error connecting with Orion Context Broker')
 
-    url = ctx.obj['BLACKBOX_HOST'] + '/api/v1/anomaly/entity/' + entity_id
-    try:
-        response = requests.get(url=url)
-        click.echo(
-            '[BLACKBOX API] STATUS_CODE: {}, MSG: {}'.format(response.status_code, beautify_json(response.json())))
-    except requests.exceptions.ConnectionError:
-        click.echo('Error connecting with Blackbox API')
+    # get entities from Blackbox
+    if ctx.obj['ON'] == 'blackbox' or ctx.obj['ON'] == 'both':
+        if entity_id != '':
+            url = ctx.obj['BLACKBOX_HOST'] + '/api/v1/anomaly/entity/' + entity_id
+        else:
+            url = ctx.obj['BLACKBOX_HOST'] + '/api/v1/anomaly/entities'
+
+        try:
+            response = requests.get(url=url)
+            click.echo(
+                '[BLACKBOX API] STATUS_CODE: {}, MSG: {}'.format(response.status_code, beautify_json(response.json())))
+        except requests.exceptions.ConnectionError:
+            click.echo('Error connecting with Blackbox API')
 
 
 #################
