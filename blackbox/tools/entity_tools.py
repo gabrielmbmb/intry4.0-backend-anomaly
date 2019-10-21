@@ -25,7 +25,7 @@ DEFAULT_TYPE = 'Machine'
               help='Orion Context Broker service path')
 @click.option('--entity_type', '-et', default=DEFAULT_TYPE, help='Type of the entity')
 @click.pass_context
-def entity(ctx, on, blackbox_url, fiware_url, fw_service, fw_service_path, entity_type):
+def tools(ctx, on, blackbox_url, fiware_url, fw_service, fw_service_path, entity_type):
     ctx.ensure_object(dict)
     ctx.obj['ON'] = on
     ctx.obj['BLACKBOX_HOST'] = blackbox_url
@@ -86,7 +86,7 @@ def beautify_json(json_data) -> dict:
     return highlighted_json
 
 
-@entity.command('create_entity')
+@tools.command('create_entity')
 @click.argument('entity_id')
 @click.argument('attrs', nargs=-1)
 @click.pass_context
@@ -133,7 +133,7 @@ def create_entity(ctx, entity_id, attrs):
             click.echo('Error connecting with Blackbox API')
 
 
-@entity.command('delete_entity')
+@tools.command('delete_entity')
 @click.argument('entity_id')
 @click.pass_context
 def delete_entity(ctx, entity_id):
@@ -168,7 +168,7 @@ def delete_entity(ctx, entity_id):
             click.echo('Error connecting with Blackbox API')
 
 
-@entity.command('update_entity')
+@tools.command('update_entity')
 @click.argument('attrs', nargs=-1)
 @click.pass_context
 def update_entity(ctx, attrs):
@@ -210,7 +210,7 @@ def update_entity(ctx, attrs):
             click.echo('Error connecting with Blackbox API')
 
 
-@entity.command('get_entity')
+@tools.command('get_entity')
 @click.argument('entity_id', default='')
 @click.pass_context
 def get_entities(ctx, entity_id):
@@ -251,7 +251,7 @@ def get_entities(ctx, entity_id):
 # SUBSCRIPTIONS #
 #################
 
-@entity.command('create_subs')
+@tools.command('create_subs')
 @click.argument('id_pattern')
 @click.argument('url')
 @click.argument('attrs', nargs=-1)
@@ -297,7 +297,7 @@ def create_subs(ctx, id_pattern, url, attrs):
         click.echo('Error connecting with Orion Context Broker')
 
 
-@entity.command('delete_subs')
+@tools.command('delete_subs')
 @click.argument('subscription_id')
 @click.pass_context
 def delete_subs(ctx, subscription_id):
@@ -318,7 +318,7 @@ def delete_subs(ctx, subscription_id):
         click.echo('Error connecting with Orion Context Broker')
 
 
-@entity.command('get_subs')
+@tools.command('get_subs')
 @click.argument('subscription_id', default='')
 @click.pass_context
 def get_subs(ctx, subscription_id):
@@ -340,4 +340,4 @@ def get_subs(ctx, subscription_id):
 
 
 if __name__ == '__main__':
-    entity()
+    tools()
