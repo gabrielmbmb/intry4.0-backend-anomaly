@@ -1,13 +1,12 @@
 import numpy as np
-from settings import MODELS_ROUTE, MODELS_ROUTE_JSON
+from blackbox.settings import MODELS_ROUTE, MODELS_ROUTE_JSON
 from celery import Celery
-from settings import APP_NAME, CELERY_BROKER_URL, CELERY_RESULT_BACKEND
+from blackbox.settings import APP_NAME, CELERY_BROKER_URL, CELERY_RESULT_BACKEND
 from blackbox.api.api_utils import add_model_entity_json
 from blackbox.blackbox import BlackBoxAnomalyDetection
 from blackbox.models import AnomalyPCAMahalanobis, AnomalyAutoencoder, AnomalyKMeans, AnomalyIsolationForest, \
     AnomalyGaussianDistribution, AnomalyOneClassSVM
 from blackbox.csv_reader import CSVReader
-import pandas as pd
 
 # Todo: add logging to tasks
 # Todo: send the predictions results to somewhere (not defined yet)

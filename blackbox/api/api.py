@@ -1,5 +1,5 @@
 import os
-import settings
+from blackbox import settings
 from dateutil import parser
 from datetime import datetime
 from flask import Flask, request
@@ -15,7 +15,7 @@ from blackbox.api.async_tasks import train_blackbox, predict_blackbox
 
 # Create Flask App
 app = Flask(settings.APP_NAME)
-api = Api(app, version='1.0', title=settings.APP_NAME, description=settings.APP_DESC)
+api = Api(app, version='0.0.1', title=settings.APP_NAME, description=settings.APP_DESC, doc='/swagger')
 
 # API Namespaces
 anomaly_ns = api.namespace(settings.API_ANOMALY_ENDPOINT, description='Anomaly Detection Operations')
@@ -309,4 +309,16 @@ class TaskStatus(Resource):
 
 @anomaly_ns.errorhandler
 def handle_root_exception(error):
-    return {'error': error}, 404
+    """Namespace error handler"""
+    return {'error': str(error)}, getattr(error, 'code', 500)
+
+
+def run_api():
+    """
+    Runs the API with the configuration inside the config file.
+    """
+    app.run(host=settings.APP_HOST, port=settings.APP_PORT, debug=settings.APP_DEBUG)
+
+
+if __name__ == '__main__':
+    run_api()

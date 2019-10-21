@@ -13,6 +13,22 @@ Install the Python packages that are required:
 
     pip install -r requirements.txt
 
+Then, you can install the PLATINUM - Blackbox Anomaly Detection package:
+
+    pip install .
+
+Alternatively, you can install the package with setuptools:
+
+    python setup.py install --record platinum-blackbox-files.txt
+    
+If you installed the package with pip and you want to uninstall it:
+
+    pip uninstall platinum-anomaly-detection
+    
+If you installed the package with setuptools:
+
+    xargs rm -rf < platinum-blackbox-files.txr
+
 ## Running the app
 
 Once you have installed all the necessaries Python packages you will have to run the Redis server that is required for
@@ -30,7 +46,7 @@ Run the Celery worker from parent directory:
     
 Finally run the APP:
 
-    python main.py
+    blackbox
     
 ## Settings
 
