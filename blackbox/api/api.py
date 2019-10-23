@@ -8,7 +8,7 @@ from werkzeug.datastructures import FileStorage
 from werkzeug.utils import secure_filename
 from blackbox.api.api_utils import read_json, add_entity_json, build_url, update_entity_json, \
     delete_entity_json
-from blackbox.api.async_tasks import train_blackbox, predict_blackbox
+from blackbox.api.worker import celery_app
 
 # Todo: add logging to the Flask API
 # Todo: add descriptions to API methods
@@ -209,7 +209,7 @@ class Train(Resource):
 
         # train the model
         path_train_file = settings.MODELS_ROUTE + '/' + entity_id + '/train_data/' + file.filename
-        task = train_blackbox.apply_async(args=[entity_id, path_train_file, model_name])
+        task = celery_app.send_task('tasks.train', args=[entity_id, path_train_file, model_name])
 
         return {
                    'message': 'The file was {} uploaded. Training model for entity {}'.format(file.filename, entity_id),
@@ -261,7 +261,7 @@ class Predict(Resource):
 
         # parse date
         date = parser.parse(date).strftime("%Y-%m-%d %H:%M:%S")
-        task = predict_blackbox.apply_async(args=[entity_id, date, model_path, predict_data])
+        task = celery_app.send_task(args=[entity_id, date, model_path, predict_data])
 
         return {
                    'message': 'The prediction for {} is being made...',
@@ -279,7 +279,7 @@ class TaskStatus(Resource):
                                 "a result will be returned too.")
     def get(self, task_id):
         """Gets the status of a task"""
-        task = train_blackbox.AsyncResult(task_id)
+        task = celery_app.AsyncResult(task_id)
         if task.state == 'PENDING':
             response = {
                 'state': task.state,

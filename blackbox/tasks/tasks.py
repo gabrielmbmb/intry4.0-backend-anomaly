@@ -1,7 +1,6 @@
 import numpy as np
-from blackbox.settings import MODELS_ROUTE, MODELS_ROUTE_JSON
+from blackbox import settings
 from celery import Celery
-from blackbox.settings import APP_NAME, CELERY_BROKER_URL, CELERY_RESULT_BACKEND
 from blackbox.api.api_utils import add_model_entity_json
 from blackbox.blackbox import BlackBoxAnomalyDetection
 from blackbox.models import AnomalyPCAMahalanobis, AnomalyAutoencoder, AnomalyKMeans, AnomalyIsolationForest, \
@@ -11,10 +10,13 @@ from blackbox.csv_reader import CSVReader
 # Todo: add logging to tasks
 # Todo: send the predictions results to somewhere (not defined yet)
 
-celery_app = Celery(APP_NAME, broker=CELERY_BROKER_URL, backend=CELERY_RESULT_BACKEND)
+celery_app = Celery('tasks',
+                    broker=settings.CELERY_BROKER_URL,
+                    backend=settings.CELERY_RESULT_BACKEND)
+
 
 # Tasks
-@celery_app.task(bind=True)
+@celery_app.task(name='tasks.train', bind=True)
 def train_blackbox(self, entity_id, filename, model_name):
     """
     Celery's task which will read the training data and train the Blackbox model for the specified entity.
@@ -28,6 +30,7 @@ def train_blackbox(self, entity_id, filename, model_name):
     Returns:
         dict: status of the task.
     """
+
     def cb_function(progress, message):
         self.update_state(state='PROGRESS', meta={'current': progress, 'total': 100, 'status': message})
 
@@ -46,16 +49,16 @@ def train_blackbox(self, entity_id, filename, model_name):
     model.train_models(data, cb_func=cb_function)
 
     # save the model
-    model_path = MODELS_ROUTE + '/' + entity_id + '/' + model_name + '.pkl'
+    model_path = settings.MODELS_ROUTE + '/' + entity_id + '/' + model_name + '.pkl'
     model.save_blackbox(model_path)
 
     # add the model to the JSON
-    add_model_entity_json(MODELS_ROUTE_JSON, entity_id, model_name, model_path, filename)
+    add_model_entity_json(settings.MODELS_ROUTE_JSON, entity_id, model_name, model_path, filename)
 
     return {'current': 100, 'total': 100, 'status': 'TASK ENDED'}
 
 
-@celery_app.task()
+@celery_app.task(name='tasks.predict')
 def predict_blackbox(entity_id, date, model_path, predict_data):
     """
     Flag a data point received from Orion Context Broker (FIWARE component) as an anomaly or not using an already
