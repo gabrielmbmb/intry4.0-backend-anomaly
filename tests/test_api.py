@@ -9,13 +9,14 @@ class TestFlaskApi(TestCase):
     """Test Flask API"""
 
     API_ANOMALY_ENDPOINT = '/api/v1/anomaly'
-    TEST_MODELS_JSON_PATH = './models/models.json'
+    TEST_MODELS_JSON_PATH = os.path.expanduser('~/blackbox/models/models.json')
 
     def setUp(self):
         self.app = app.test_client()
 
     def tearDown(self):
-        shutil.rmtree('./models')
+        os.chdir(os.path.expanduser('~'))
+        shutil.rmtree('./blackbox')
 
     def test_create_entity(self):
         """Test if an entity is correctly created"""
@@ -116,7 +117,7 @@ class TestFlaskApi(TestCase):
         self.app.post(self.API_ANOMALY_ENDPOINT + '/entity/' + entity_id, json={"attrs": ["Bearing1"]})
         response = self.app.delete(self.API_ANOMALY_ENDPOINT + '/entity/' + entity_id)
         self.assertEqual(response.status_code, 200)
-        self.assertTrue(os.path.exists('./models/trash/' + entity_id))
+        self.assertTrue(os.path.exists(os.path.expanduser('~/blackbox/models/trash/') + entity_id))
 
     # def test_train_entity(self):
     #     """Test training a Blackbox model for an entity"""
