@@ -15,8 +15,10 @@ class TestFlaskApi(TestCase):
         self.app = app.test_client()
 
     def tearDown(self):
+        dirpath = os.getcwd()
         os.chdir(os.path.expanduser('~'))
         shutil.rmtree('./blackbox')
+        os.chdir(dirpath)
 
     def test_create_entity(self):
         """Test if an entity is correctly created"""
