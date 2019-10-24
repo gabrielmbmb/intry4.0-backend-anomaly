@@ -9,6 +9,8 @@ data received from the Orion Context Broker (FIWARE component) and is part of th
 
 ## Getting started
 
+### Python installation
+
 Install the Python packages that are required:
 
     pip install -r requirements.txt
@@ -27,9 +29,11 @@ If you installed the package with pip and you want to uninstall it:
     
 If you installed the package with setuptools:
 
-    xargs rm -rf < platinum-blackbox-files.txr
-
+    xargs rm -rf < platinum-blackbox-files.txt
+    
 ## Running the app
+
+### With Python
 
 Once you have installed all the necessaries Python packages you will have to run the Redis server that is required for
 Celery:
@@ -47,6 +51,16 @@ Run the Celery worker from parent directory:
 Finally run the APP:
 
     blackbox
+    
+### With Docker
+
+The application can be run using the Docker Compose file which includes all the services required.
+
+    docker-compose up
+    
+Additionally, the docker image of the Blackbox Anomaly Detection can be build using the following command:
+
+    docker build -t <tag_name_you_like> .
     
 ## Settings
 
