@@ -16,7 +16,7 @@ setuptools.setup(
     entry_points={
         'console_scripts': [
             'blackbox = blackbox.api.api:run_api',
-            'blackbox-tools = blackbox.tools.entity_tools:tools'
+            'blackbox-tools = tools.blackbox_tools:tools'
         ]
     },
     classifiers=[
