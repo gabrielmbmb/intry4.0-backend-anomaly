@@ -1,1 +1,7 @@
 .env
+tests/
+.gitignore
+.travis.yml
+docker-compose.yml
+README.md
+run-redis.sh
