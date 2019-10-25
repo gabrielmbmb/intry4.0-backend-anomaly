@@ -8,7 +8,7 @@ from blackbox.api.api_utils import read_json
 class TestFlaskApi(TestCase):
     """Test Flask API"""
 
-    API_ANOMALY_ENDPOINT = '/api/v1/anomaly'
+    API_ANOMALY_ENDPOINT = '/api/v1'
     TEST_MODELS_JSON_PATH = os.path.expanduser('~/blackbox/models/models.json')
 
     def setUp(self):
@@ -23,7 +23,7 @@ class TestFlaskApi(TestCase):
     def test_create_entity(self):
         """Test if an entity is correctly created"""
         entity_id = 'urn:ngsi-ld:Machine:001'
-        response = self.app.post(self.API_ANOMALY_ENDPOINT + '/entity/' + entity_id, json={"attrs": ["Bearing1"]})
+        response = self.app.post(self.API_ANOMALY_ENDPOINT + '/entities/' + entity_id, json={"attrs": ["Bearing1"]})
 
         self.assertEqual(response.status_code, 200)
 
@@ -38,7 +38,7 @@ class TestFlaskApi(TestCase):
     def test_get_entity(self):
         """Test getting an entity from the JSON file"""
         entity_id = 'urn:ngsi-ld:Machine:001'
-        self.app.post(self.API_ANOMALY_ENDPOINT + '/entity/' + entity_id, json={"attrs": ["Bearing1"]})
+        self.app.post(self.API_ANOMALY_ENDPOINT + '/entities/' + entity_id, json={"attrs": ["Bearing1"]})
 
         entity = {
             entity_id: {
@@ -50,21 +50,21 @@ class TestFlaskApi(TestCase):
             }
         }
 
-        response = self.app.get(self.API_ANOMALY_ENDPOINT + '/entity/' + entity_id)
+        response = self.app.get(self.API_ANOMALY_ENDPOINT + '/entities/' + entity_id)
         self.assertEqual(response.status_code, 200)
         self.assertDictEqual(response.json, entity)
 
     def test_create_entity_already_existing(self):
         """Test creating an entity which already exists"""
         entity_id = 'urn:ngsi-ld:Machine:001'
-        self.app.post(self.API_ANOMALY_ENDPOINT + '/entity/' + entity_id, json={"attrs": ["Bearing1"]})
-        response = self.app.post(self.API_ANOMALY_ENDPOINT + '/entity/' + entity_id, json={"attrs": ["Bearing1"]})
+        self.app.post(self.API_ANOMALY_ENDPOINT + '/entities/' + entity_id, json={"attrs": ["Bearing1"]})
+        response = self.app.post(self.API_ANOMALY_ENDPOINT + '/entities/' + entity_id, json={"attrs": ["Bearing1"]})
         self.assertEqual(response.status_code, 400)
 
     def test_update_entity(self):
         """Test if an entity is correctly updated"""
         entity_id = 'urn:ngsi-ld:Machine:001'
-        self.app.post(self.API_ANOMALY_ENDPOINT + '/entity/' + entity_id, json={"attrs": ["Bearing1"]})
+        self.app.post(self.API_ANOMALY_ENDPOINT + '/entities/' + entity_id, json={"attrs": ["Bearing1"]})
 
         new_entity_id = 'urn:ngsi-ld:Machine:999'
         data_update = {
@@ -82,7 +82,7 @@ class TestFlaskApi(TestCase):
             }
         }
 
-        response = self.app.put(self.API_ANOMALY_ENDPOINT + '/entity/' + entity_id, json=data_update)
+        response = self.app.put(self.API_ANOMALY_ENDPOINT + '/entities/' + entity_id, json=data_update)
         self.assertEqual(response.status_code, 200)
 
         json_entities = read_json(self.TEST_MODELS_JSON_PATH)
@@ -104,20 +104,20 @@ class TestFlaskApi(TestCase):
     def test_update_entity_id_already_exist(self):
         """Test updating an entity id with one that already exists"""
         entity_id = 'urn:ngsi-ld:Machine:001'
-        self.app.post(self.API_ANOMALY_ENDPOINT + '/entity/' + entity_id, json={"attrs": ["Bearing1"]})
+        self.app.post(self.API_ANOMALY_ENDPOINT + '/entities/' + entity_id, json={"attrs": ["Bearing1"]})
 
         entity_id_2 = 'urn:ngsi-ld:Machine:002'
-        self.app.post(self.API_ANOMALY_ENDPOINT + '/entity/' + entity_id_2, json={"attrs": ["Bearing1"]})
+        self.app.post(self.API_ANOMALY_ENDPOINT + '/entities/' + entity_id_2, json={"attrs": ["Bearing1"]})
 
         data_update = {"new_entity_id": entity_id}
-        response = self.app.put(self.API_ANOMALY_ENDPOINT + '/entity/' + entity_id, json=data_update)
+        response = self.app.put(self.API_ANOMALY_ENDPOINT + '/entities/' + entity_id, json=data_update)
         self.assertEqual(response.status_code, 400)
 
     def test_delete_entity(self):
         """Test if an entity is correctly deleted"""
         entity_id = 'urn:ngsi-ld:Machine:001'
-        self.app.post(self.API_ANOMALY_ENDPOINT + '/entity/' + entity_id, json={"attrs": ["Bearing1"]})
-        response = self.app.delete(self.API_ANOMALY_ENDPOINT + '/entity/' + entity_id)
+        self.app.post(self.API_ANOMALY_ENDPOINT + '/entities/' + entity_id, json={"attrs": ["Bearing1"]})
+        response = self.app.delete(self.API_ANOMALY_ENDPOINT + '/entities/' + entity_id)
         self.assertEqual(response.status_code, 200)
         self.assertTrue(os.path.exists(os.path.expanduser('~/blackbox/models/trash/') + entity_id))
 

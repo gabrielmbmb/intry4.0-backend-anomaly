@@ -24,7 +24,7 @@ def read_json(path):
     return json_
 
 
-def write_json(path, data,  sort=False) -> None:
+def write_json(path, data, sort=False) -> None:
     """
     Write a JSON file in the specified path.
 

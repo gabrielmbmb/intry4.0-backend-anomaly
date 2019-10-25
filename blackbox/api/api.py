@@ -9,9 +9,9 @@ from werkzeug.utils import secure_filename
 from blackbox.api.api_utils import read_json, add_entity_json, build_url, update_entity_json, \
     delete_entity_json
 from blackbox.api.worker import celery_app
+from blackbox.blackbox import BlackBoxAnomalyDetection
 
 # Todo: add logging to the Flask API
-# Todo: add descriptions to API methods
 
 # Create Flask App
 app = Flask(settings.APP_NAME)
@@ -25,8 +25,9 @@ file_parser = anomaly_ns.parser()
 file_parser.add_argument('file', type=FileStorage, required=True, location='files', help='CSV training file')
 
 # API Models
-entity_attrs_model = anomaly_ns.model('attrs', {
-    'attrs': fields.List(fields.String(), description='New entity attributes', required=True)
+new_entity_model = anomaly_ns.model('new_entity', {
+    'attrs': fields.List(fields.String(), description='New entity attributes expected to train the models.',
+                         required=True)
 })
 
 update_entity_model = anomaly_ns.model('model', {
@@ -38,18 +39,46 @@ update_entity_models = anomaly_ns.model('models', {
     'model': fields.Nested(update_entity_model)
 })
 
-update_entity = anomaly_ns.model('entity', {
+update_entity = anomaly_ns.model('update_entity', {
     'new_entity_id': fields.String(description='New entity id', required=False),
     'default': fields.String(description='New default model', required=False),
     'attrs': fields.List(fields.String(), description='New entity attributes', required=False),
-    'models': fields.Nested(update_entity_models)
+    'models': fields.Nested(update_entity_model)
 })
 
 
 # API Routes
-@anomaly_ns.route('/')
+@anomaly_ns.route('/models')
+class AvailableModels(Resource):
+    @anomaly_ns.doc(responses={200: 'Success'},
+                    description='Returns the list of available models for Anomaly Detection')
+    def get(self):
+        """Returns available models"""
+        return {
+                   'available_models': BlackBoxAnomalyDetection.AVAILABLE_MODELS
+               }, 200
+
+
+@anomaly_ns.route('/models/<string:model_name>')
+@anomaly_ns.param('model_name', 'Name of anomaly detection model')
+class AnomalyModel(Resource):
+    @anomaly_ns.doc(responses={200: 'Success', 400: 'Model does not exist'},
+                    description='Return the description of the model.')
+    def get(self, model_name):
+        """Returns model description"""
+        if model_name not in BlackBoxAnomalyDetection.AVAILABLE_MODELS:
+            return {
+                       'error': 'Model does not exist.'
+                   }, 400
+
+        return {
+                   'model': model_name,
+                   'description': 'Not implemented yet!'
+               }, 200
+
+
 @anomaly_ns.route('/entities')
-class ModelsList(Resource):
+class EntitiesList(Resource):
     @cors.crossdomain(origin='*')
     @anomaly_ns.doc(responses={200: 'Success'},
                     description="Return the list of created entities and for each entity its attributes, "
@@ -63,7 +92,7 @@ class ModelsList(Resource):
         return json_entities, 200
 
 
-@anomaly_ns.route('/entity/<string:entity_id>')
+@anomaly_ns.route('/entities/<string:entity_id>')
 @anomaly_ns.param('entity_id', 'Orion Context Broker (FIWARE) entity ID')
 class Entity(Resource):
     @cors.crossdomain(origin='*')
@@ -82,7 +111,7 @@ class Entity(Resource):
         return {entity_id: entity_data}, 200
 
     @cors.crossdomain(origin='*')
-    @anomaly_ns.doc(body=entity_attrs_model,
+    @anomaly_ns.doc(body=new_entity_model,
                     responses={200: 'Success', 400: 'No payload, unable to create the entity or validation error'},
                     description="Creates an entity with the specified entity_id which has to be the same as in Orion "
                                 "Context Broker (OCB, FIWARE). It is necessary to specify the name of the attributes "
@@ -96,13 +125,13 @@ class Entity(Resource):
 
         try:
             attrs = request.json['attrs']
+
+            if not isinstance(attrs, list):
+                return {'error': 'attrs has to be a list with strings inside'}, 400
         except KeyError:
             return {'error': 'No payload with attrs was send'}, 400
         except TypeError:
             return {'error': 'No payload with attrs was send'}, 400
-
-        if not isinstance(attrs, list):
-            return {'error': 'attrs has to be a list with strings inside'}, 400
 
         created, msg = add_entity_json(settings.MODELS_ROUTE_JSON, entity_id,
                                        os.path.join(settings.MODELS_ROUTE, entity_id), attrs)

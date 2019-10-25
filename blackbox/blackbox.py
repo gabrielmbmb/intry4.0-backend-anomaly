@@ -22,6 +22,15 @@ class BlackBoxAnomalyDetection:
         NotAnomalyModelClass: when trying to add a model that is not an instance of AnomalyModel.
     """
 
+    AVAILABLE_MODELS = [
+        'PCAMahalanobis',
+        'Autoencoder',
+        'KMeans',
+        'OneClassSVM',
+        'GaussianDistribution',
+        'IsolationForest'
+    ]
+
     def __init__(self, verbose=False):
         self.models = {}
         self.verbose = verbose
