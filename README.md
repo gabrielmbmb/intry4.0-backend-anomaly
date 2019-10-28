@@ -46,7 +46,7 @@ Redis won't be necessary.
 
 Run the Celery worker from parent directory:
 
-    celery -A blackbox.api.async_tasks worker -l info
+    celery -A blackbox.tasks.tasks worker -l info
     
 Finally run the APP:
 
