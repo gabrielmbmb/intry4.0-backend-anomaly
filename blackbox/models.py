@@ -16,6 +16,8 @@ from keras.regularizers import l2
 from typing import List, Tuple
 
 
+# TODO: imports inside classes
+
 class AnomalyModel(metaclass=ABCMeta):
     """Abstract base class for anomaly detection model."""
 

@@ -212,6 +212,7 @@ class Train(Resource):
                                 "The entity has to be already created. The Blackbox Model will be trained with the "
                                 "uploaded file. The process of training will be asynchronous and an URL will be "
                                 "returned in order to see the training progress.")
+    # TODO: let specify the models to be used.
     def post(self, entity_id):
         """Trains a Blackbox model"""
         json_entities = read_json(settings.MODELS_ROUTE_JSON)
