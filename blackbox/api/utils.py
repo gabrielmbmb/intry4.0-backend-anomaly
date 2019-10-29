@@ -1,5 +1,6 @@
 import os
 import json
+from datetime import datetime
 from typing import Tuple, List
 
 ENTITY_JSON_STRUCTURE = {"attrs": None, "default": None, "models": {}}
@@ -84,7 +85,8 @@ def add_entity_json(path_json, entity_id, path_entity_dir, attrs) -> Tuple[bool,
     return True, 'The entity {} was created'.format(entity_id)
 
 
-def add_model_entity_json(path_json, entity_id, model_name, model_path, train_data_path) -> bool:
+def add_model_entity_json(path_json, entity_id, model_name, model_path, train_data_path, models,
+                          input_arguments) -> bool:
     """
     Adds a model of an entity to the JSON file.
 
@@ -94,6 +96,9 @@ def add_model_entity_json(path_json, entity_id, model_name, model_path, train_da
         model_name (str): model name.
         model_path (str): path of the pickle file storing the Anomaly Detection model.
         train_data_path (str): path of the file used to train the model.
+        models (list of str): contains the names of the Anomaly Detection models that are inside the Blackbox.
+        input_arguments (list of str): name of the inputs variables of the Blackbox model.
+
 
     Returns:
         bool: indicating whether the model was added or not.
@@ -115,6 +120,8 @@ def add_model_entity_json(path_json, entity_id, model_name, model_path, train_da
         entity_dict['default'] = model_name
 
     entity_dict['models'][model_name] = {
+        'input_arguments': input_arguments,
+        'models': models,
         'model_path': model_path,
         'train_data_path': train_data_path
     }
@@ -235,7 +242,9 @@ def delete_entity_json(entity_id, path_json, path_models, path_trash) -> Tuple[b
     write_json(path_json, json_entities)
 
     # move the dir of the entity to the trash folder
-    os.rename(path_models + '/' + entity_id, path_trash + '/' + entity_id)
+    date = datetime.now()
+    date_string = '{}-{}-{}-{}:{}'.format(date.year, date.month, date.day, date.hour, date.minute)
+    os.rename(path_models + '/' + entity_id, path_trash + '/' + entity_id + '_' + date_string)
 
     return True, 'The entity {} was deleted and its directory was moved to {}'.format(entity_id, path_trash)
 
