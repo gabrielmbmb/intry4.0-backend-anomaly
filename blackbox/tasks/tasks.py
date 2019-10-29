@@ -1,7 +1,7 @@
 import numpy as np
 from blackbox import settings
 from celery import Celery
-from blackbox.api.api_utils import add_model_entity_json
+from blackbox.api.utils import add_model_entity_json
 from blackbox.blackbox import BlackBoxAnomalyDetection
 from blackbox.models import AnomalyPCAMahalanobis, AnomalyAutoencoder, AnomalyKMeans, AnomalyIsolationForest, \
     AnomalyGaussianDistribution, AnomalyOneClassSVM
@@ -17,7 +17,7 @@ celery_app = Celery('tasks',
 
 # Tasks
 @celery_app.task(name='tasks.train', bind=True)
-def train_blackbox(self, entity_id, filename, model_name):
+def train_blackbox(self, entity_id, filename, model_name, models, input_arguments):
     """
     Celery's task which will read the training data and train the Blackbox model for the specified entity.
 
@@ -26,6 +26,9 @@ def train_blackbox(self, entity_id, filename, model_name):
         entity_id (str): Orion Context Broker (FIWARE component) entity ID
         filename (str): path of the file which will be used for training the model.
         model_name (str): model name which will be used to refer to the Blackbox trained model.
+        models (list of str): list of strings containing the name of anomaly prediction models
+            that are going to be used.
+        input_arguments (list of str): name of the inputs variables of the Blackbox model.
 
     Returns:
         dict: status of the task.
@@ -40,12 +43,25 @@ def train_blackbox(self, entity_id, filename, model_name):
 
     # create and train Blackbox model
     model = BlackBoxAnomalyDetection(verbose=True)
-    model.add_model(AnomalyPCAMahalanobis())
-    model.add_model(AnomalyAutoencoder())
-    model.add_model(AnomalyKMeans())
-    model.add_model(AnomalyOneClassSVM())
-    model.add_model(AnomalyIsolationForest())
-    model.add_model(AnomalyGaussianDistribution())
+
+    if BlackBoxAnomalyDetection.AVAILABLE_MODELS[0] in models:
+        model.add_model(AnomalyPCAMahalanobis())
+
+    if BlackBoxAnomalyDetection.AVAILABLE_MODELS[1] in models:
+        model.add_model(AnomalyAutoencoder())
+
+    if BlackBoxAnomalyDetection.AVAILABLE_MODELS[2] in models:
+        model.add_model(AnomalyKMeans())
+
+    if BlackBoxAnomalyDetection.AVAILABLE_MODELS[3] in models:
+        model.add_model(AnomalyOneClassSVM())
+
+    if BlackBoxAnomalyDetection.AVAILABLE_MODELS[4] in models:
+        model.add_model(AnomalyIsolationForest())
+
+    if BlackBoxAnomalyDetection.AVAILABLE_MODELS[5] in models:
+        model.add_model(AnomalyGaussianDistribution())
+
     model.train_models(data, cb_func=cb_function)
 
     # save the model
@@ -53,7 +69,8 @@ def train_blackbox(self, entity_id, filename, model_name):
     model.save_blackbox(model_path)
 
     # add the model to the JSON
-    add_model_entity_json(settings.MODELS_ROUTE_JSON, entity_id, model_name, model_path, filename)
+    add_model_entity_json(settings.MODELS_ROUTE_JSON, entity_id, model_name, model_path, filename, models,
+                          input_arguments)
 
     return {'current': 100, 'total': 100, 'status': 'TASK ENDED'}
 
@@ -82,8 +99,8 @@ def predict_blackbox(entity_id, date, model_path, predict_data):
         "entity_id": entity_id,
         "date": date,
     }
-    n_model = 0
-    for model_name, model in model.models.items():
-        results[model_name] = predictions[n_model]
-        n_model += 1
+
+    for n_model, model in enumerate(model.models.items()):
+        results[model[0]] = predictions[n_model]
+
     return {'current': 100, 'total': 100, 'status': 'TASK ENDED', 'results': results}

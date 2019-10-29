@@ -6,7 +6,7 @@ from flask import Flask, request
 from flask_restplus import Api, Resource, cors, fields
 from werkzeug.datastructures import FileStorage
 from werkzeug.utils import secure_filename
-from blackbox.api.api_utils import read_json, add_entity_json, build_url, update_entity_json, \
+from blackbox.api.utils import read_json, add_entity_json, build_url, update_entity_json, \
     delete_entity_json
 from blackbox.api.worker import celery_app
 from blackbox.blackbox import BlackBoxAnomalyDetection
@@ -258,7 +258,8 @@ class Train(Resource):
 
         # train the model
         path_train_file = settings.MODELS_ROUTE + '/' + entity_id + '/train_data/' + file.filename
-        task = celery_app.send_task('tasks.train', args=[entity_id, path_train_file, model_name])
+        task = celery_app.send_task('tasks.train',
+                                    args=[entity_id, path_train_file, model_name, models, input_arguments])
 
         return {
                    'message': 'The file was {} uploaded. Training model for entity {}'.format(file.filename, entity_id),
@@ -293,13 +294,12 @@ class Predict(Resource):
         default = entity['default']
         if default is None:  # if the default model is not set, take the first model from the dict of models
             entity_models = entity['models']
-            first_model = list(entity_models.keys())[0]
-            model_path = entity_models[first_model]['model_path']
+            model = list(entity_models.keys())[0]
         else:
-            model_path = entity['models'][default]['model_path']
+            model = entity['models'][default]
 
         predict_data = []
-        for attr in entity['attrs']:
+        for attr in model['input_arguments']:
             try:
                 date = data[attr]['metadata']['dateModified']['value']
                 predict_data.append(data[attr]['value'])
