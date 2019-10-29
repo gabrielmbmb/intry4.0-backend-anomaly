@@ -1,5 +1,8 @@
 language: python
 
+services:
+  - docker
+
 python:
   - "3.5"
   - "3.6"
@@ -10,6 +13,7 @@ cache: pip
 before_install:
   - python --version
   - pip install --upgrade pip
+  - docker build -t platinum/blackbox:0.0.1 .
 
 install:
   - pip install -r requirements.txt
