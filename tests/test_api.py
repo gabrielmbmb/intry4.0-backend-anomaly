@@ -1,8 +1,9 @@
 import os
 import shutil
 from unittest import TestCase
+from datetime import datetime
 from blackbox.api.api import app
-from blackbox.api.api_utils import read_json
+from blackbox.api.utils import read_json
 
 
 class TestFlaskApi(TestCase):
@@ -119,7 +120,9 @@ class TestFlaskApi(TestCase):
         self.app.post(self.API_ANOMALY_ENDPOINT + '/entities/' + entity_id, json={"attrs": ["Bearing1"]})
         response = self.app.delete(self.API_ANOMALY_ENDPOINT + '/entities/' + entity_id)
         self.assertEqual(response.status_code, 200)
-        self.assertTrue(os.path.exists(os.path.expanduser('~/blackbox/models/trash/') + entity_id))
+        date = datetime.now()
+        date_string = '{}-{}-{}-{}:{}'.format(date.year, date.month, date.day, date.hour, date.minute)
+        self.assertTrue(os.path.exists(os.path.expanduser('~/blackbox/models/trash/') + entity_id + '_' + date_string))
 
     # def test_train_entity(self):
     #     """Test training a Blackbox model for an entity"""
