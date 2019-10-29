@@ -21,8 +21,13 @@ api = Api(app, version='0.0.1', title=settings.APP_NAME, description=settings.AP
 anomaly_ns = api.namespace(settings.API_ANOMALY_ENDPOINT, description='Anomaly Detection Operations')
 
 # API parsers
-file_parser = anomaly_ns.parser()
-file_parser.add_argument('file', type=FileStorage, required=True, location='files', help='CSV training file')
+train_parser = anomaly_ns.parser()
+train_parser.add_argument('file', type=FileStorage, required=True, location='files', help='CSV training file')
+train_parser.add_argument('input_arguments', required=True,
+                          help='List of input arguments for Anomaly Detection models separated by a comma')
+train_parser.add_argument('name', help='Optional name for the Blackbox model')
+train_parser.add_argument('models',
+                          help='List of the models that are going to be inside the Blackbox separated by a comma')
 
 # API Models
 new_entity_model = anomaly_ns.model('new_entity', {
