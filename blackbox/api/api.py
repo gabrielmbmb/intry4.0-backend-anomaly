@@ -206,13 +206,15 @@ class Entity(Resource):
 @anomaly_ns.param('entity_id', 'Orion Context Broker (FIWARE) entity ID')
 class Train(Resource):
     @cors.crossdomain(origin='*')
-    @anomaly_ns.expect(file_parser)
-    @anomaly_ns.doc(responses={200: 'Success', 400: 'Entity or JSON file does not exist or no training file provided'},
-                    description="Trains a Blackbox Anomaly Detection Model for an entity with the specified entity_id. "
-                                "The entity has to be already created. The Blackbox Model will be trained with the "
-                                "uploaded file. The process of training will be asynchronous and an URL will be "
-                                "returned in order to see the training progress.")
-    # TODO: let specify the models to be used.
+    @anomaly_ns.expect(train_parser)
+    @anomaly_ns.doc(responses={
+        200: 'Success',
+        400: 'Entity or JSON file does not exist, no training file provided or input arguments '
+             'were not specified'},
+        description="Trains a Blackbox Anomaly Detection Model for an entity with the specified entity_id. "
+                    "The entity has to be already created. The Blackbox Model will be trained with the "
+                    "uploaded file. The process of training will be asynchronous and an URL will be "
+                    "returned in order to see the training progress.")
     def post(self, entity_id):
         """Trains a Blackbox model"""
         json_entities = read_json(settings.MODELS_ROUTE_JSON)
@@ -222,12 +224,24 @@ class Train(Resource):
         if not request.files:
             return {'error': 'No file was provided to train the model for the entity {}'.format(entity_id)}, 400
 
-        if request.args and 'name' in request.args:
-            model_name = request.args['name']
+        if request.form and request.form.get('input_arguments'):
+            input_arguments = request.form.get('input_arguments').split(',')
+        else:
+            return {
+                       'error': 'Input arguments were not specified for the model'
+                   }, 400
+
+        if request.form and request.form.get('name'):
+            model_name = request.form.get('name')
         else:
             date = datetime.now()
             model_name = 'model_{}_{}-{}-{}-{}:{}'.format(entity_id, date.year, date.month, date.day, date.hour,
                                                           date.minute)
+
+        if request.form and request.form.get('models'):
+            models = request.form.get('models').split(',')
+        else:
+            models = BlackBoxAnomalyDetection.AVAILABLE_MODELS
 
         # save the file
         file = request.files['file']
