@@ -305,7 +305,8 @@ class Predict(Resource):
 
         # parse date
         date = parser.parse(date).strftime("%Y-%m-%d %H:%M:%S")
-        task = celery_app.send_task(args=[entity_id, date, model_path, predict_data])
+        model_path = model['model_path']
+        task = celery_app.send_task('tasks.predict', args=[entity_id, date, model_path, predict_data])
 
         return {
                    'message': 'The prediction for {} is being made...',
