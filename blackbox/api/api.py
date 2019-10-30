@@ -1,4 +1,5 @@
 import os
+from blackbox import version
 from blackbox import settings
 from dateutil import parser
 from datetime import datetime
@@ -15,7 +16,7 @@ from blackbox.blackbox import BlackBoxAnomalyDetection
 
 # Create Flask App
 app = Flask(settings.APP_NAME)
-api = Api(app, version='0.0.1', title=settings.APP_NAME, description=settings.APP_DESC, doc='/swagger')
+api = Api(app, version=version.__version__, title=settings.APP_NAME, description=settings.APP_DESC, doc='/swagger')
 
 # API Namespaces
 anomaly_ns = api.namespace(settings.API_ANOMALY_ENDPOINT, description='Anomaly Detection Operations')
