@@ -8,7 +8,7 @@ from flask_restplus import Api, Resource, cors, fields
 from werkzeug.datastructures import FileStorage
 from werkzeug.utils import secure_filename
 from blackbox.api.utils import read_json, add_entity_json, build_url, update_entity_json, \
-    delete_entity_json
+    delete_entity_json, match_regex
 from blackbox.api.worker import celery_app
 from blackbox.blackbox import BlackBoxAnomalyDetection
 
@@ -279,16 +279,21 @@ class Predict(Resource):
                     "model for the entity.")
     def post(self):
         """Endpoint to receive data and predict if it's an anomaly."""
+        json_entities = read_json(settings.MODELS_ROUTE_JSON)
+        if not json_entities:
+            return {'error': 'The file {} does not exist'.format(settings.MODELS_ROUTE_JSON)}, 400
+
         if not request.json:
             return {'error': 'No payload in request'}, 400
 
         data = request.json['data'][0]
         entity_id = data['id']
-        json_entities = read_json(settings.MODELS_ROUTE_JSON)
-        if not json_entities or entity_id not in json_entities:
-            return {'error': 'The entity does not exists'}, 400
 
-        entity = json_entities[entity_id]
+        entity_regex = match_regex(list(json_entities.keys()), entity_id)
+        if not entity_regex:
+            return {'error': 'The entity does not match any entity name in model.json'}, 400
+
+        entity = json_entities[entity_regex]
         if (entity['default'] is None and len(entity['models']) == 0) or (len(entity['models']) == 0):
             return {'error': 'The entity has not trained models'}, 400
 

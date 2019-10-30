@@ -1,12 +1,13 @@
 import os
+import re
 import json
 from datetime import datetime
-from typing import Tuple, List
+from typing import Tuple, List, Dict, Union
 
 ENTITY_JSON_STRUCTURE = {"attrs": None, "default": None, "models": {}}
 
 
-def read_json(path):
+def read_json(path) -> Dict:
     """
     Reads a JSON file.
 
@@ -277,3 +278,21 @@ def build_url(url_root, base_endpoint, *args):
         complete_url = complete_url + '/' + point
 
     return complete_url
+
+
+def match_regex(regexes, string) -> Union[str, None]:
+    """
+    Checks if the string matches any regular expression contained in regexes.
+
+    Args:
+        regexes (list of str): contains regular expressions
+        string (str): string to check if matches with any regular expression.
+
+    Returns:
+        str: the regular expression that has matched
+    """
+    for regex in regexes:
+        if re.match(regex, string):
+            return regex
+
+    return None
