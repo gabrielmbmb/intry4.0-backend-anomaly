@@ -261,7 +261,7 @@ class AnomalyAutoencoder(AnomalyModel):
 
         self._autoencoder = self.build_autoencoder(n_inputs=data.shape[1])
         self.history = self._autoencoder.fit(x=data, y=data, batch_size=self._batch_size, epochs=self._epochs,
-                                             validation_split=self._validation_split, shuffle=True)
+                                             validation_split=self._validation_split, shuffle=True, verbose=0)
         predict = self._autoencoder.predict(data)
         self._loss = self.mean_absolute_error(data, predict)
         self._threshold = self.establish_threshold()
