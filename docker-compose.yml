@@ -1,4 +1,4 @@
-version: '3'
+version: '3.7'
 
 services:
   redis:
@@ -6,6 +6,8 @@ services:
     command: redis-server
     volumes:
       - 'redis:/data'
+    networks:
+      - blackbox-net
     expose:
       - '6739'
 
@@ -17,6 +19,8 @@ services:
     command: celery -A blackbox.tasks.tasks worker -l info
     volumes:
       - 'models:/home/worker/blackbox'
+    networks:
+      - blackbox-net
     environment:
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
@@ -29,6 +33,8 @@ services:
       - '5678:5678'
     volumes:
       - 'models:/home/worker/blackbox'
+    networks:
+      - blackbox-net
     environment:
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
@@ -36,4 +42,7 @@ services:
 volumes:
   redis:
   models:
+
+networks:
+  blackbox-net:
 
