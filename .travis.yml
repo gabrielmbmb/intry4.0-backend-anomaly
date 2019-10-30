@@ -1,7 +1,4 @@
 language: python
-env:
-  global:
-    - IMAGE_TAG=platinum/blackbox
 
 cache: pip
 

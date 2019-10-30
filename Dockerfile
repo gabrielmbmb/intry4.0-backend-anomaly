@@ -12,12 +12,12 @@ WORKDIR /home/worker
 
 # install requirements first to leverage Docker cache
 ADD --chown=worker:worker requirements.txt blackbox/requirements.txt
-RUN python -m pip install --user -r blackbox/requirements.txt
+RUN python -m pip install --user --no-warn-script-location -r blackbox/requirements.txt
 
 # install the app
 ADD --chown=worker:worker . blackbox/
 RUN cd blackbox && \
-    python -m pip install --user .
+    python -m pip install --user --no-warn-script-location .
 
 ENV PATH="/home/worker/.local/bin:${PATH}"
 

@@ -4,3 +4,6 @@ tests/
 .travis.yml
 docker-compose.yml
 run-redis.sh
+__pycache__/
+redis-stable/
+venv/
