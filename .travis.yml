@@ -1,16 +1,7 @@
 language: python
-
-services:
-  - docker
-
 env:
   global:
     - IMAGE_TAG=platinum/blackbox
-
-python:
-  - "3.5"
-  - "3.6"
-  - "3.7"
 
 cache: pip
 
@@ -24,20 +15,19 @@ install:
 
 jobs:
   include:
-    - stage: "Python 3.5 Test"
+    - stage: Python Tests
+      name: Python 3.5 test
       language: python
       python: 3.5
-      script:
-        python -m unittest discover tests
-    - stage: "Python 3.6 Test"
-      language: python
+      script: python -m unittest discover tests
+
+    - language: python
+      name: Python 3.6 test
       python: 3.6
-      script:
-        python -m unittest discover tests
-    - stage: "Python 3.7 Test & Coverage"
-      language: python
+      script: python -m unittest discover tests
+
+    - language: python
+      name: Python 3.7 test & coverage
       python: 3.7
-      script:
-        coverage run --source blackbox -m unittest discover tests
-      after_success:
-        bash <(curl -s https://codecov.io/bash)
+      script: coverage run --source blackbox -m unittest discover tests
+      after_success: bash <(curl -s https://codecov.io/bash)
