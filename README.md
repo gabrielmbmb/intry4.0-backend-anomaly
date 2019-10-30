@@ -82,11 +82,9 @@ The app loads the following settings from the environment variables:
 These variables can be defined in a _**.env**_ inside the parent folder, as follows:
 
     APP_DEBUG=False
-    APP_NAME='PLATINUM - Blackbox Anomaly Detection'
-    APP_DESC='A simple API to call the Blackbox Anomaly Detection model.'
-    APP_HOST='localhost'
+    APP_HOST='0.0.0.0'
     APP_PORT=5678
-    API_ANOMALY_ENDPOINT='api/v1/anomaly'
+    API_ANOMALY_ENDPOINT='api/v1'
     MODELS_ROUTE='./models'
     MODELS_ROUTE_JSON='./models/models.json'
     CELERY_BROKER_URL='redis://localhost:6379/0'
@@ -186,32 +184,32 @@ will receive data when the value of an attribute changes:
         -d '{
                 "description": "Notify Anomaly Prediction API of changes in urn:ngsi-ld:Machine:001",
                 "subject": {
-                "entities": [
-                    {
-                        "idPattern": "urn:ngsi-ld:Machine:001"
+                    "entities": [
+                        {
+                            "idPattern": "urn:ngsi-ld:Machine:001"
+                        }
+                    ],
+                    "condition": {
+                      "attrs": [
+                        "Bearing1",
+                        "Bearing2",
+                        "Bearing3",
+                        "Bearing4"
+                      ]
                     }
-                ],
-                "condition": {
-                  "attrs": [
-                    "Bearing1",
-                    "Bearing2",
-                    "Bearing3",
-                    "Bearing4"
-                  ]
+                    },
+                    "notification": {
+                    "http": {
+                      "url": "http://172.17.0.1:5678/api/v1/anomaly/predict"
+                    },
+                    "attrs": [
+                        "Bearing1",
+                        "Bearing2",
+                        "Bearing3",
+                        "Bearing4"
+                    ],
+                    "metadata": ["dateCreated", "dateModified"]
                 }
-                },
-                "notification": {
-                "http": {
-                  "url": "http://172.17.0.1:5678/api/v1/anomaly/predict"
-                },
-                "attrs": [
-                    "Bearing1",
-                    "Bearing2",
-                    "Bearing3",
-                    "Bearing4"
-                ],
-                "metadata": ["dateCreated", "dateModified"]
-                },
         }'
         
 The next time there is a change in an attribute of the entity, Orion Context Broker will send a POST to the
