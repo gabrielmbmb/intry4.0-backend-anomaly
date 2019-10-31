@@ -9,21 +9,21 @@ class TestBlackBoxAnomalyDetection(TestCase):
     """Tests for Blackbox"""
 
     def setUp(self) -> None:
-        self.model = BlackBoxAnomalyDetection()
-        self.model.add_model(AnomalyPCAMahalanobis())
-        self.model.add_model(AnomalyAutoencoder())
-        self.model.add_model(AnomalyKMeans())
-        self.model.add_model(AnomalyOneClassSVM())
-        self.model.add_model(AnomalyIsolationForest())
-        self.model.add_model(AnomalyGaussianDistribution())
+        self.model = BlackBoxAnomalyDetection(verbose=True)
+        self.model.add_model(AnomalyPCAMahalanobis(verbose=True))
+        self.model.add_model(AnomalyAutoencoder(verbose=True))
+        self.model.add_model(AnomalyKMeans(verbose=True))
+        self.model.add_model(AnomalyOneClassSVM(verbose=True))
+        self.model.add_model(AnomalyIsolationForest(verbose=True))
+        self.model.add_model(AnomalyGaussianDistribution(verbose=True))
 
-        self.model_name = BlackBoxAnomalyDetection()
-        self.model_name.add_model(AnomalyPCAMahalanobis(), 'PCAMahalanobis')
-        self.model_name.add_model(AnomalyAutoencoder(), 'Autoencoder')
-        self.model_name.add_model(AnomalyKMeans(), 'KMeans')
-        self.model_name.add_model(AnomalyOneClassSVM(), 'OneClassSVM')
-        self.model_name.add_model(AnomalyIsolationForest(), 'IsolationForest')
-        self.model_name.add_model(AnomalyGaussianDistribution(), 'GaussianDistribution')
+        self.model_name = BlackBoxAnomalyDetection(verbose=True)
+        self.model_name.add_model(AnomalyPCAMahalanobis(verbose=True), 'PCAMahalanobis')
+        self.model_name.add_model(AnomalyAutoencoder(verbose=True), 'Autoencoder')
+        self.model_name.add_model(AnomalyKMeans(verbose=True), 'KMeans')
+        self.model_name.add_model(AnomalyOneClassSVM(verbose=True), 'OneClassSVM')
+        self.model_name.add_model(AnomalyIsolationForest(verbose=True), 'IsolationForest')
+        self.model_name.add_model(AnomalyGaussianDistribution(verbose=True), 'GaussianDistribution')
 
     def test_add_model(self):
         """Tests that models are correctly added to the Blackbox"""
