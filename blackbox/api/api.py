@@ -8,7 +8,7 @@ from flask_restplus import Api, Resource, cors, fields
 from werkzeug.datastructures import FileStorage
 from werkzeug.utils import secure_filename
 from blackbox.api.utils import read_json, add_entity_json, build_url, update_entity_json, \
-    delete_entity_json, match_regex
+    delete_entity_json, match_regex, parse_float
 from blackbox.api.worker import celery_app
 from blackbox.blackbox import BlackBoxAnomalyDetection
 
@@ -313,6 +313,9 @@ class Predict(Resource):
                 return {
                            'error': 'The attr {} was not in the sent attrs'.format(attr)
                        }, 400
+
+        # parse strings to float
+        predict_data = parse_float(predict_data)
 
         # parse date
         date = parser.parse(date).strftime("%Y-%m-%d %H:%M:%S")

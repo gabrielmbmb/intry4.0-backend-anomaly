@@ -296,3 +296,32 @@ def match_regex(regexes, string) -> Union[str, None]:
             return regex
 
     return None
+
+
+def parse_float(to_parse) -> Union[float, list]:
+    """
+    Parses a string and returns a floating point number
+
+    Args:
+        to_parse(list or str): a single string or a list of strings.
+
+    Returns:
+        float or list: floating point number parsed from a string or a list of floatings point numbers parsed from a
+            list of strings
+    """
+    if isinstance(to_parse, list):
+        parsed_floats = []
+        for string in to_parse:
+            try:
+                parsed_floats.append(float(string))
+            except ValueError:
+                print('String {} could not be parsed to float'.format(parsed_floats))
+
+        return parsed_floats
+
+    try:
+        parsed_float = float(to_parse)
+    except ValueError:
+        print('String {} could not be parsed to float'.format(parsed_float))
+
+    return parsed_float
