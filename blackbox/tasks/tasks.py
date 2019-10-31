@@ -92,15 +92,14 @@ def predict_blackbox(entity_id, date, model_path, predict_data):
     """
     model = BlackBoxAnomalyDetection(verbose=True)
     model.load_blackbox(model_path)
+
     predict_data = np.array([predict_data])
     predictions = model.flag_anomaly(predict_data)
+
     predictions = [str(pred) for pred in predictions[0]]  # transform bool to str
-    results = {
-        "entity_id": entity_id,
-        "date": date,
-    }
+    results = {'entity_id': entity_id, 'date': date, 'models_predictions': {}}
 
     for n_model, model in enumerate(model.models.items()):
-        results[model[0]] = predictions[n_model]
+        results['models_predictions'][model[0]] = predictions[n_model]
 
     return {'current': 100, 'total': 100, 'status': 'TASK ENDED', 'results': results}
