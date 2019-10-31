@@ -68,10 +68,16 @@ class BlackBoxAnomalyDetection:
             numpy.ndarray: scaled data.
         """
         if self.scaler is None:
+            if self.verbose:
+                print('Fitting data scaler...')
+
             scaler = MinMaxScaler()
             scaled_data = scaler.fit_transform(data)
             self.scaler = scaler
             return scaled_data
+
+        if self.verbose:
+            print('Scaling data...')
 
         scaled_data = self.scaler.transform(data)
         return scaled_data
@@ -115,6 +121,8 @@ class BlackBoxAnomalyDetection:
         """
         if isinstance(data, list):
             data = np.array(data)
+
+        data = self.scale_data(data)
 
         results = []
         for name, model in self.models.items():
@@ -167,10 +175,11 @@ class BlackBoxAnomalyDetection:
         Returns:
             str: path of the saved blackbox.
         """
+        data_to_pickle = {'models': self.models, 'scaler': self.scaler}
 
         try:
             with open(path, 'wb') as f:
-                pickle.dump(self.models, f)
+                pickle.dump(data_to_pickle, f)
         except pickle.PicklingError as e:
             print('PicklingError: ', str(e))
         except Exception as e:
@@ -195,4 +204,5 @@ class BlackBoxAnomalyDetection:
         except Exception as e:
             print('An error has occurred when trying to write the file: ', str(e))
 
-        self.models = loaded_data
+        self.models = loaded_data['models']
+        self.scaler = loaded_data['scaler']
