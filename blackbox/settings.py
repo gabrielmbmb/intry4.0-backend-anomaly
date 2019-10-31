@@ -16,3 +16,6 @@ MODELS_ROUTE_JSON = os.getenv('MODELS_ROUTE_JSON', os.path.join(MODELS_ROUTE, 'm
 MODELS_ROUTE_TRASH = os.getenv('MODELS_ROUTE_TRASH', os.path.join(MODELS_ROUTE, 'trash'))
 CELERY_BROKER_URL = os.getenv('BROKER_URL', 'redis://localhost:6379/0')
 CELERY_RESULT_BACKEND = os.getenv('CELERY_RESULT_BACKEND', 'redis://localhost:6379/0')
+ORION_CONTEXT_BROKER = os.getenv('ORION_CONTEXT_BROKER', 'http://localhost:1026')
+FIWARE_SERVICEPATH = os.getenv('FIWARE_SERVICEPATH', '/')
+FIWARE_SERVICE = os.getenv('FIWARE_SERVICE', '')

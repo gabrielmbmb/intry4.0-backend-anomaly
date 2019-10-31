@@ -78,6 +78,9 @@ The app loads the following settings from the environment variables:
                      Defaults to './models/models.json'.
 * CELERY_BROKER_URL: the URL of the broker that Celery will use. Defaults to 'redis://localhost:6379/0'.
 * CELERY_RESULT_BACKEND: the URL of the backend that Celery will use. Defaults to 'redis://localhost:6379/0'.
+* ORION_CONTEXT_BROKER: the URL of the Orion Context Broker.
+* FIWARE_SERVICEPATH: Orion Context Broker service path
+* FIWARE_SERVICE: Orion Context Broker name service
 
 These variables can be defined in a _**.env**_ inside the parent folder, as follows:
 
@@ -89,6 +92,9 @@ These variables can be defined in a _**.env**_ inside the parent folder, as foll
     MODELS_ROUTE_JSON='./models/models.json'
     CELERY_BROKER_URL='redis://localhost:6379/0'
     CELERY_RESULT_BACKEND='redis://localhost:6379/0'
+    ORION_CONTEXT_BROKER='http://localhost'
+    FIWARE_SERVICEPATH='/'    
+    FIWARE_SERVICE='' 
     
 ## Example: training a model for a Orion Context Broker (FIWARE) Entity.
 
