@@ -1,5 +1,5 @@
 from unittest import TestCase
-from blackbox.blackbox import BlackBoxAnomalyDetection
+from blackbox.blackbox import BlackBoxAnomalyDetection, NotAnomalyModelClass
 from blackbox.models import AnomalyPCAMahalanobis, AnomalyAutoencoder, AnomalyKMeans, AnomalyIsolationForest, \
     AnomalyGaussianDistribution, AnomalyOneClassSVM
 from blackbox.csv_reader import CSVReader
@@ -40,6 +40,12 @@ class TestBlackBoxAnomalyDetection(TestCase):
         self.assertIsInstance(self.model_name.models['OneClassSVM'], AnomalyOneClassSVM)
         self.assertIsInstance(self.model_name.models['IsolationForest'], AnomalyIsolationForest)
         self.assertIsInstance(self.model_name.models['GaussianDistribution'], AnomalyGaussianDistribution)
+
+    def test_add_model_no_class_anomaly(self):
+        """Tests that an error is raised if an instance of a class that doesn't inherit from AnomalyClassModel
+        is added to the blackbox"""
+        bb = BlackBoxAnomalyDetection()
+        self.assertRaises(NotAnomalyModelClass, bb.add_model, 1)
 
     def test_train_save_load_predict_model(self):
         """Tests training, saving, loading and predicting  a Blackbox"""

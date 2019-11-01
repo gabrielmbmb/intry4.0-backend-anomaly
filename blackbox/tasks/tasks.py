@@ -6,6 +6,7 @@ from blackbox.blackbox import BlackBoxAnomalyDetection
 from blackbox.models import AnomalyPCAMahalanobis, AnomalyAutoencoder, AnomalyKMeans, AnomalyIsolationForest, \
     AnomalyGaussianDistribution, AnomalyOneClassSVM
 from blackbox.csv_reader import CSVReader
+from blackbox.tasks.orion import update_entity_attrs
 
 # Todo: add logging to tasks
 # Todo: send the predictions results to somewhere (not defined yet)
@@ -98,8 +99,12 @@ def predict_blackbox(entity_id, date, model_path, predict_data):
 
     predictions = [str(pred) for pred in predictions[0]]  # transform bool to str
     results = {'entity_id': entity_id, 'date': date, 'models_predictions': {}}
+    attrs = {}
 
     for n_model, model in enumerate(model.models.items()):
         results['models_predictions'][model[0]] = predictions[n_model]
+        attrs[model[0]] = {'type': 'Boolean', 'value': predictions[n_model]}
+
+    print(update_entity_attrs(entity_id, attrs))
 
     return {'current': 100, 'total': 100, 'status': 'TASK ENDED', 'results': results}
