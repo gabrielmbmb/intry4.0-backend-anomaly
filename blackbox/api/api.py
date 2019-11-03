@@ -11,6 +11,7 @@ from blackbox.api.utils import read_json, add_entity_json, build_url, update_ent
     delete_entity_json, match_regex, parse_float
 from blackbox.api.worker import celery_app
 from blackbox.blackbox import BlackBoxAnomalyDetection
+from blackbox import models
 
 # Todo: add logging to the Flask API
 
@@ -77,9 +78,29 @@ class AnomalyModel(Resource):
                        'error': 'Model does not exist.'
                    }, 400
 
+        description = ""
+
+        if model_name == 'PCAMahalanobis':
+            description = models.AnomalyPCAMahalanobis.__doc__
+
+        if model_name == 'Autoencoder':
+            description = models.AnomalyAutoencoder.__doc__
+
+        if model_name == 'KMeans':
+            description = models.AnomalyKMeans.__doc__
+
+        if model_name == 'OneClassSVM':
+            description = models.OneClassSVM.__doc__
+
+        if model_name == 'GaussianDistribution':
+            description = models.AnomalyGaussianDistribution.__doc__
+
+        if model_name == 'IsolationForest':
+            description = models.AnomalyIsolationForest.__doc__
+
         return {
                    'model': model_name,
-                   'description': 'Not implemented yet!'
+                   'description': description
                }, 200
 
 
