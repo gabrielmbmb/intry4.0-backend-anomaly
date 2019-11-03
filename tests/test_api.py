@@ -4,6 +4,7 @@ from unittest import TestCase
 from datetime import datetime
 from blackbox.api.api import app
 from blackbox.api.utils import read_json
+from blackbox.blackbox import BlackBoxAnomalyDetection
 
 
 class TestFlaskApi(TestCase):
@@ -15,11 +16,22 @@ class TestFlaskApi(TestCase):
     def setUp(self):
         self.app = app.test_client()
 
-    def tearDown(self):
+    def rm_test_files(self):
         dirpath = os.getcwd()
         os.chdir(os.path.expanduser('~'))
         shutil.rmtree('./blackbox')
         os.chdir(dirpath)
+
+    def test_get_available_models(self):
+        """Tests getting available models in Blackbox"""
+        response = self.app.get(self.API_ANOMALY_ENDPOINT + '/models')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertListEqual(response.json['available_models'], BlackBoxAnomalyDetection.AVAILABLE_MODELS)
+
+        for available_models in BlackBoxAnomalyDetection.AVAILABLE_MODELS:
+            response = self.app.get(self.API_ANOMALY_ENDPOINT + '/models/' + available_models)
+            print(response.json)
 
     def test_create_entity(self):
         """Test if an entity is correctly created"""
@@ -35,6 +47,8 @@ class TestFlaskApi(TestCase):
             "default": None,
             "models": {}
         })
+
+        self.rm_test_files()
 
     def test_get_entity(self):
         """Test getting an entity from the JSON file"""
@@ -55,12 +69,16 @@ class TestFlaskApi(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertDictEqual(response.json, entity)
 
+        self.rm_test_files()
+
     def test_create_entity_already_existing(self):
         """Test creating an entity which already exists"""
         entity_id = 'urn:ngsi-ld:Machine:001'
         self.app.post(self.API_ANOMALY_ENDPOINT + '/entities/' + entity_id, json={"attrs": ["Bearing1"]})
         response = self.app.post(self.API_ANOMALY_ENDPOINT + '/entities/' + entity_id, json={"attrs": ["Bearing1"]})
         self.assertEqual(response.status_code, 400)
+
+        self.rm_test_files()
 
     def test_update_entity(self):
         """Test if an entity is correctly updated"""
@@ -102,6 +120,8 @@ class TestFlaskApi(TestCase):
             }
         })
 
+        self.rm_test_files()
+
     def test_update_entity_id_already_exist(self):
         """Test updating an entity id with one that already exists"""
         entity_id = 'urn:ngsi-ld:Machine:001'
@@ -114,6 +134,8 @@ class TestFlaskApi(TestCase):
         response = self.app.put(self.API_ANOMALY_ENDPOINT + '/entities/' + entity_id, json=data_update)
         self.assertEqual(response.status_code, 400)
 
+        self.rm_test_files()
+
     def test_delete_entity(self):
         """Test if an entity is correctly deleted"""
         entity_id = 'urn:ngsi-ld:Machine:001'
@@ -123,6 +145,8 @@ class TestFlaskApi(TestCase):
         date = datetime.now()
         date_string = '{}-{}-{}-{}:{}'.format(date.year, date.month, date.day, date.hour, date.minute)
         self.assertTrue(os.path.exists(os.path.expanduser('~/blackbox/models/trash/') + entity_id + '_' + date_string))
+
+        self.rm_test_files()
 
     # def test_train_entity(self):
     #     """Test training a Blackbox model for an entity"""
