@@ -1,11 +1,11 @@
 import setuptools
-
+from blackbox import version
 with open('README.md', 'r') as fh:
     long_description = fh.read()
 
 setuptools.setup(
     name="platinum-anomaly-detection",
-    version="0.0.1",
+    version=version.__version__,
     author="Gabriel Martín Blázquez",
     author_email="gmartin_b@usal.es",
     description="A package that implements several algorithms to detect anomalies",
