@@ -56,7 +56,7 @@ class CSVReader:
         """
         if os.path.exists(self.path):
             df = pd.read_csv(self.path)
-            df = df.append(to_append, sort=False)
+            df = df.append(to_append, sort=False, ignore_index=True)
             df.to_csv(self.path, index=False)
         else:
             to_append.to_csv(self.path, index=False)
