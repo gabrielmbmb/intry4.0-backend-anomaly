@@ -1,5 +1,5 @@
 from unittest import TestCase
-from blackbox.csv_reader import CSVReader
+from blackbox.utils.csv import CSVReader
 
 
 class TestCsvReader(TestCase):

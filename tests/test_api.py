@@ -3,7 +3,7 @@ import shutil
 from unittest import TestCase
 from datetime import datetime
 from blackbox.api.api import app
-from blackbox.api.utils import read_json
+from blackbox.utils.api import read_json
 from blackbox.blackbox import BlackBoxAnomalyDetection
 
 

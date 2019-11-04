@@ -1,15 +1,15 @@
 import numpy as np
+import pandas as pd
 from blackbox import settings
 from celery import Celery
-from blackbox.api.utils import add_model_entity_json
+from blackbox.utils.api import add_model_entity_json
 from blackbox.blackbox import BlackBoxAnomalyDetection
 from blackbox.models import AnomalyPCAMahalanobis, AnomalyAutoencoder, AnomalyKMeans, AnomalyIsolationForest, \
     AnomalyGaussianDistribution, AnomalyOneClassSVM
-from blackbox.csv_reader import CSVReader
-from blackbox.tasks.orion import update_entity_attrs
+from blackbox.utils.csv import CSVReader
+from blackbox.utils.orion import update_entity_attrs
 
 # Todo: add logging to tasks
-# Todo: send the predictions results to somewhere (not defined yet)
 
 celery_app = Celery('tasks',
                     broker=settings.CELERY_BROKER_URL,

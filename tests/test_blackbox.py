@@ -2,7 +2,7 @@ from unittest import TestCase
 from blackbox.blackbox import BlackBoxAnomalyDetection, NotAnomalyModelClass
 from blackbox.models import AnomalyPCAMahalanobis, AnomalyAutoencoder, AnomalyKMeans, AnomalyIsolationForest, \
     AnomalyGaussianDistribution, AnomalyOneClassSVM
-from blackbox.csv_reader import CSVReader
+from blackbox.utils.csv import CSVReader
 
 
 class TestBlackBoxAnomalyDetection(TestCase):
