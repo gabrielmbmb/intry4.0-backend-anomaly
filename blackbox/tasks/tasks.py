@@ -105,6 +105,20 @@ def predict_blackbox(entity_id, date, model_path, predict_data):
         results['models_predictions'][model[0]] = predictions[n_model]
         attrs[model[0]] = {'type': 'Boolean', 'value': predictions[n_model]}
 
-    print(update_entity_attrs(entity_id, attrs))
+    response = update_entity_attrs(entity_id, attrs)
+
+    if response is None:
+        predictions_path = settings.MODELS_ROUTE + '/predictions.csv'
+        print('Could not connect to Orion Context Broker. Saving predictions in {}'.format(predictions_path))
+
+        data = [date, entity_id]
+        columns = ['Date', 'Entity ID']
+        for key in results['models_predictions'].keys():
+            data.append(results['models_predictions'][key])
+            columns.append(key)
+
+        to_append = pd.DataFrame([data], columns=columns)
+        reader = CSVReader(path=predictions_path)
+        reader.append_to_csv(to_append)
 
     return {'current': 100, 'total': 100, 'status': 'TASK ENDED', 'results': results}

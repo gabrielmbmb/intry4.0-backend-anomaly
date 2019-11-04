@@ -1,7 +1,4 @@
-import os
 import requests
-from blackbox.
-from blackbox.settings import MODELS_ROUTE
 from typing import Union
 from blackbox.settings import FIWARE_SERVICE, FIWARE_SERVICEPATH, ORION_CONTEXT_BROKER
 
@@ -29,8 +26,6 @@ def update_entity_attrs(entity_id, attrs) -> Union[None, requests.Response]:
             'Content-Type': 'application/json'
         })
     except requests.exceptions.RequestException:
-        predictions_path = MODELS_ROUTE + '/predictions.json'
-        if os.path.exists(predictions_path):
-            print("Could not connect with Orion Context Broker. Saving prediction in {}".format('file'))
+        response = None
 
     return response

@@ -1,3 +1,4 @@
+import os
 import csv
 import pandas as pd
 
@@ -17,7 +18,8 @@ class CSVReader:
         self.path = path
         self.sep = None
         self.has_header = None
-        self.get_csv_structure()
+        if os.path.exists(self.path):
+            self.get_csv_structure()
 
     def get_csv_structure(self) -> None:
         """Detects the separator and the header of a CSV file."""
@@ -41,3 +43,20 @@ class CSVReader:
             df = pd.read_csv(self.path, sep=self.sep, header=None, index_col=0)
 
         return df
+
+    def append_to_csv(self, to_append) -> None:
+        """
+        Appends a DataFrame at the end of the CSV file. If the CSV file doesn't exist, then it will be created.
+
+        Args:
+            to_append (pandas.DataFrame): dataframe to be appended or to be written in the new CSV file.
+
+        Returns:
+
+        """
+        if os.path.exists(self.path):
+            df = pd.read_csv(self.path)
+            df = df.append(to_append, sort=False)
+            df.to_csv(self.path, index=False)
+        else:
+            to_append.to_csv(self.path, index=False)
