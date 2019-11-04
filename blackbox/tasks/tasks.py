@@ -1,15 +1,15 @@
 import numpy as np
+import pandas as pd
 from blackbox import settings
 from celery import Celery
-from blackbox.api.utils import add_model_entity_json
+from blackbox.utils.api import add_model_entity_json
 from blackbox.blackbox import BlackBoxAnomalyDetection
 from blackbox.models import AnomalyPCAMahalanobis, AnomalyAutoencoder, AnomalyKMeans, AnomalyIsolationForest, \
     AnomalyGaussianDistribution, AnomalyOneClassSVM
-from blackbox.csv_reader import CSVReader
-from blackbox.tasks.orion import update_entity_attrs
+from blackbox.utils.csv import CSVReader
+from blackbox.utils.orion import update_entity_attrs
 
 # Todo: add logging to tasks
-# Todo: send the predictions results to somewhere (not defined yet)
 
 celery_app = Celery('tasks',
                     broker=settings.CELERY_BROKER_URL,
@@ -105,6 +105,20 @@ def predict_blackbox(entity_id, date, model_path, predict_data):
         results['models_predictions'][model[0]] = predictions[n_model]
         attrs[model[0]] = {'type': 'Boolean', 'value': predictions[n_model]}
 
-    print(update_entity_attrs(entity_id, attrs))
+    response = update_entity_attrs(entity_id, attrs)
+
+    if response is None:
+        predictions_path = settings.MODELS_ROUTE + '/predictions.csv'
+        print('Could not connect to Orion Context Broker. Saving predictions in {}'.format(predictions_path))
+
+        data = [date, entity_id]
+        columns = ['Date', 'Entity ID']
+        for key in results['models_predictions'].keys():
+            data.append(results['models_predictions'][key])
+            columns.append(key)
+
+        to_append = pd.DataFrame([data], columns=columns)
+        reader = CSVReader(path=predictions_path)
+        reader.append_to_csv(to_append)
 
     return {'current': 100, 'total': 100, 'status': 'TASK ENDED', 'results': results}

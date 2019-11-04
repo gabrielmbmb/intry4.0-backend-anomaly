@@ -18,11 +18,14 @@ def update_entity_attrs(entity_id, attrs) -> Union[None, requests.Response]:
         return None
 
     url = '{}/v2/entities/{}/attrs'.format(ORION_CONTEXT_BROKER, entity_id)
-    print(url)
-    response = requests.post(url, json=attrs, headers={
-        'fiware-servicepath': FIWARE_SERVICEPATH,
-        'fiware-service': FIWARE_SERVICE,
-        'Content-Type': 'application/json'
-    })
+
+    try:
+        response = requests.post(url, json=attrs, headers={
+            'fiware-servicepath': FIWARE_SERVICEPATH,
+            'fiware-service': FIWARE_SERVICE,
+            'Content-Type': 'application/json'
+        })
+    except requests.exceptions.RequestException:
+        response = None
 
     return response

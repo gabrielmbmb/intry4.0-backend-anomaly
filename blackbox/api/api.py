@@ -7,9 +7,9 @@ from flask import Flask, request
 from flask_restplus import Api, Resource, cors, fields
 from werkzeug.datastructures import FileStorage
 from werkzeug.utils import secure_filename
-from blackbox.api.utils import read_json, add_entity_json, build_url, update_entity_json, \
+from blackbox.utils.api import read_json, add_entity_json, build_url, update_entity_json, \
     delete_entity_json, match_regex, parse_float
-from blackbox.api.worker import celery_app
+from blackbox.utils.worker import celery_app
 from blackbox.blackbox import BlackBoxAnomalyDetection
 from blackbox import models
 
