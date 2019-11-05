@@ -1,3 +1,4 @@
+import os
 import pandas as pd
 from unittest import TestCase
 from blackbox.utils.csv import CSVReader
@@ -37,8 +38,14 @@ class TestCsvReader(TestCase):
         df2 = pd.DataFrame([[True, True, False]], columns=['a', 'c', 'd'])
         df_appended = df1.append(df2, sort=False, ignore_index=True)
 
-        df1.to_csv(path, index=False)
-        reader.append_to_csv(df2)
+        # if file does not exist
+        reader.append_to_csv(df1)
+        df = pd.read_csv(path)
+        pd.testing.assert_frame_equal(df, df1)
 
+        # if file does exist
+        reader.append_to_csv(df2)
         df = pd.read_csv(path)
         pd.testing.assert_frame_equal(df, df_appended)
+
+        os.remove(path)
