@@ -284,7 +284,7 @@ class Train(Resource):
                                     args=[entity_id, path_train_file, model_name, models, input_arguments])
 
         return {
-                   'message': 'The file was {} uploaded. Training model for entity {}'.format(file.filename, entity_id),
+                   'message': 'The file {} was uploaded. Training model for entity {}'.format(file.filename, entity_id),
                    'task_status_url': build_url(request.url_root, settings.API_ANOMALY_ENDPOINT, 'task', task.id)
                }, 202
 
