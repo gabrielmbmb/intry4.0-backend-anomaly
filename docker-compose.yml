@@ -21,9 +21,11 @@ services:
       - 'models:/home/worker/blackbox'
     networks:
       - blackbox-net
+      - orion-net
     environment:
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - ORION_CONTEXT_BROKER=http://orion:1026
 
   blackbox:
     image: 'platinum/blackbox:0.0.1'
@@ -35,14 +37,40 @@ services:
       - 'models:/home/worker/blackbox'
     networks:
       - blackbox-net
+      - orion-net
     environment:
       - CELERY_BROKER_URL=redis://redis:6379/0
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - ORION_CONTEXT_BROKER=http://orion:1026
+
+  mongo:
+    image: mongo:3.6
+    command: --nojournal
+    expose:
+      - '27017'
+    volumes:
+      - mongo:/data
+    networks:
+      - orion-net
+
+  orion:
+    image: fiware/orion
+    depends_on:
+      - mongo
+    expose:
+      - '1026'
+    ports:
+      - '1026:1026'
+    networks:
+      - orion-net
+    command: -dbhost mongo -logLevel DEBUG
 
 volumes:
   redis:
   models:
+  mongo:
 
 networks:
   blackbox-net:
+  orion-net:
 
