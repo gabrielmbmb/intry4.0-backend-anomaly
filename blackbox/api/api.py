@@ -185,7 +185,7 @@ class Entity(Resource):
         new_entity_id = None
         default = None
         attrs = None
-        models = None
+        new_models = None
 
         if 'new_entity_id' in json_:
             new_entity_id = json_['new_entity_id']
@@ -197,10 +197,10 @@ class Entity(Resource):
             attrs = json_['attrs']
 
         if 'models' in json_:
-            models = json_['models']
+            new_models = json_['models']
 
         updated, messages = update_entity_json(entity_id, settings.MODELS_ROUTE_JSON, settings.MODELS_ROUTE,
-                                               new_entity_id, default, attrs, models)
+                                               new_entity_id, default, attrs, new_models)
 
         if not updated:
             return {
