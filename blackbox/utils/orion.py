@@ -3,6 +3,22 @@ from typing import Union
 from blackbox.settings import FIWARE_SERVICE, FIWARE_SERVICEPATH, ORION_CONTEXT_BROKER
 
 
+def check_orion_connection() -> bool:
+    """
+    Checks if the Orion Context Broker is up.
+
+    Returns:
+        bool: indicates if the OCB is up or not.
+    """
+    url = ORION_CONTEXT_BROKER + '/version'
+    try:
+        requests.get(url)
+    except requests.exceptions.RequestException:
+        return False
+
+    return True
+
+
 def update_entity_attrs(entity_id, attrs) -> Union[None, requests.Response]:
     """
     Updates entity attributes stored in Orion Context Broker.

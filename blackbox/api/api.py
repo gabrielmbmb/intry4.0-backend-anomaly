@@ -10,6 +10,7 @@ from werkzeug.utils import secure_filename
 from blackbox.utils.api import read_json, add_entity_json, build_url, update_entity_json, \
     delete_entity_json, match_regex, parse_float
 from blackbox.utils.worker import celery_app
+from blackbox.utils.orion import check_orion_connection
 from blackbox.blackbox import BlackBoxAnomalyDetection
 from blackbox import models
 
@@ -394,9 +395,13 @@ def handle_root_exception(error):
 
 
 def run_api():
-    """
-    Runs the API with the configuration inside the config file.
-    """
+    """Runs the API with the configuration inside the config file"""
+    if not check_orion_connection():
+        print('Unable to connect to Orion Context Broker...')
+        print('Blackbox will continue its execution anyway...')
+    else:
+        print('Orion Context Broker is up')
+
     app.run(host=settings.APP_HOST, port=settings.APP_PORT, debug=settings.APP_DEBUG)
 
 
