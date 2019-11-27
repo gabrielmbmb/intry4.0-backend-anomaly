@@ -58,6 +58,7 @@ update_entity = anomaly_ns.model('update_entity', {
 # API Routes
 @anomaly_ns.route('/models')
 class AvailableModels(Resource):
+    @cors.crossdomain(origin='*')
     @anomaly_ns.doc(responses={200: 'Success'},
                     description='Returns the list of available models for Anomaly Detection')
     def get(self):
@@ -70,6 +71,7 @@ class AvailableModels(Resource):
 @anomaly_ns.route('/models/<string:model_name>')
 @anomaly_ns.param('model_name', 'Name of anomaly detection model')
 class AnomalyModel(Resource):
+    @cors.crossdomain(origin='*')
     @anomaly_ns.doc(responses={200: 'Success', 400: 'Model does not exist'},
                     description='Return the description of the model.')
     def get(self, model_name):
