@@ -402,7 +402,7 @@ def run_api():
     else:
         print('Orion Context Broker is up')
 
-    app.run(host=settings.APP_HOST, port=settings.APP_PORT, debug=settings.APP_DEBUG)
+    app.run(host=settings.APP_HOST, port=settings.APP_PORT, debug=settings.APP_DEBUG, ssl_context='adhoc')
 
 
 if __name__ == '__main__':
