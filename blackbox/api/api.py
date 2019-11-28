@@ -275,7 +275,7 @@ class Train(Resource):
 
         # save the file
         file = request.files['file']
-        filename, ext = os.path.splitext(file.filename)
+        _, ext = os.path.splitext(file.filename)
         if ext != '.csv':
             return {'error': 'The file is not a .csv file'}, 400
 
