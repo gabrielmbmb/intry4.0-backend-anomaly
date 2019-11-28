@@ -1,4 +1,5 @@
 import os
+import threading
 from blackbox import version
 from blackbox import settings
 from dateutil import parser
@@ -16,16 +17,22 @@ from blackbox import models
 
 # Todo: add logging to the Flask API
 
+# Lock
+lock = threading.Lock()
+
 # Create Flask App
 app = Flask(settings.APP_NAME)
-api = Api(app, version=version.__version__, title=settings.APP_NAME, description=settings.APP_DESC, doc='/swagger')
+api = Api(app, version=version.__version__, title=settings.APP_NAME,
+          description=settings.APP_DESC, doc='/swagger')
 
 # API Namespaces
-anomaly_ns = api.namespace(settings.API_ANOMALY_ENDPOINT, description='Anomaly Detection Operations')
+anomaly_ns = api.namespace(
+    settings.API_ANOMALY_ENDPOINT, description='Anomaly Detection Operations')
 
 # API parsers
 train_parser = anomaly_ns.parser()
-train_parser.add_argument('file', type=FileStorage, required=True, location='files', help='CSV training file')
+train_parser.add_argument('file', type=FileStorage,
+                          required=True, location='files', help='CSV training file')
 train_parser.add_argument('input_arguments', required=True,
                           help='List of input arguments for Anomaly Detection models separated by a comma')
 train_parser.add_argument('name', help='Optional name for the Blackbox model')
@@ -64,8 +71,8 @@ class AvailableModels(Resource):
     def get(self):
         """Returns available models"""
         return {
-                   'available_models': BlackBoxAnomalyDetection.AVAILABLE_MODELS
-               }, 200
+            'available_models': BlackBoxAnomalyDetection.AVAILABLE_MODELS
+        }, 200
 
 
 @anomaly_ns.route('/models/<string:model_name>')
@@ -78,8 +85,8 @@ class AnomalyModel(Resource):
         """Returns model description"""
         if model_name not in BlackBoxAnomalyDetection.AVAILABLE_MODELS:
             return {
-                       'error': 'Model does not exist.'
-                   }, 400
+                'error': 'Model does not exist.'
+            }, 400
 
         description = ""
 
@@ -102,9 +109,9 @@ class AnomalyModel(Resource):
             description = models.AnomalyIsolationForest.__doc__
 
         return {
-                   'model': model_name,
-                   'description': description
-               }, 200
+            'model': model_name,
+            'description': description
+        }, 200
 
 
 @anomaly_ns.route('/entities')
@@ -142,7 +149,8 @@ class Entity(Resource):
 
     @cors.crossdomain(origin='*')
     @anomaly_ns.doc(body=new_entity_model,
-                    responses={200: 'Success', 400: 'No payload, unable to create the entity or validation error'},
+                    responses={
+                        200: 'Success', 400: 'No payload, unable to create the entity or validation error'},
                     description="Creates an entity with the specified entity_id which has to be the same as in Orion "
                                 "Context Broker (OCB, FIWARE). It is necessary to specify the name of the attributes "
                                 "which the API will receive from OCB in order to make the predictions. The number of "
@@ -163,8 +171,10 @@ class Entity(Resource):
         except TypeError:
             return {'error': 'No payload with attrs was send'}, 400
 
-        created, msg = add_entity_json(settings.MODELS_ROUTE_JSON, entity_id,
-                                       os.path.join(settings.MODELS_ROUTE, entity_id), attrs)
+        with lock:
+            created, msg = add_entity_json(settings.MODELS_ROUTE_JSON, entity_id,
+                                           os.path.join(settings.MODELS_ROUTE, entity_id), attrs)
+
         if not created:
             return {'error': msg}, 400
 
@@ -172,7 +182,8 @@ class Entity(Resource):
 
     @cors.crossdomain(origin='*')
     @anomaly_ns.doc(body=update_entity,
-                    responses={200: 'Success', 400: 'No payload, unable to write or validation error'},
+                    responses={
+                        200: 'Success', 400: 'No payload, unable to write or validation error'},
                     description="Updates an entity with the specified entity_id. The new values of the entity has to "
                                 "be specified in the payload. It's mandatory to specify every value. If the "
                                 "new_entity_id is specified, it must not exist already. If the default model is "
@@ -181,8 +192,8 @@ class Entity(Resource):
         """Updates an entity"""
         if not request.json:
             return {
-                       'error': 'No payload was sent'
-                   }, 400
+                'error': 'No payload was sent'
+            }, 400
 
         json_ = request.json
         new_entity_id = None
@@ -202,18 +213,19 @@ class Entity(Resource):
         if 'models' in json_:
             new_models = json_['models']
 
-        updated, messages = update_entity_json(entity_id, settings.MODELS_ROUTE_JSON, settings.MODELS_ROUTE,
-                                               new_entity_id, default, attrs, new_models)
+        with lock:
+            updated, messages = update_entity_json(entity_id, settings.MODELS_ROUTE_JSON, settings.MODELS_ROUTE,
+                                                   new_entity_id, default, attrs, new_models)
 
         if not updated:
             return {
-                       'error': 'The entity was not updated',
-                       'messages': messages
-                   }, 400
+                'error': 'The entity was not updated',
+                'messages': messages
+            }, 400
 
         return {
-                   'messages': messages
-               }, 200
+            'messages': messages
+        }, 200
 
     @cors.crossdomain(origin='*')
     @anomaly_ns.doc(responses={200: 'Success', 400: 'Entity or JSON file does not exist'},
@@ -221,13 +233,14 @@ class Entity(Resource):
                                 "to the trash directory from the API.")
     def delete(self, entity_id):
         """Deletes an entity"""
-        deleted, msg = delete_entity_json(entity_id, settings.MODELS_ROUTE_JSON, settings.MODELS_ROUTE,
-                                          settings.MODELS_ROUTE_TRASH)
+        with lock:
+            deleted, msg = delete_entity_json(entity_id, settings.MODELS_ROUTE_JSON, settings.MODELS_ROUTE,
+                                            settings.MODELS_ROUTE_TRASH)
 
         if not deleted:
             return {
-                       'error': msg
-                   }, 400
+                'error': msg
+            }, 400
 
         return {'message': msg}, 200
 
@@ -258,8 +271,8 @@ class Train(Resource):
             input_arguments = request.form.get('input_arguments').split(',')
         else:
             return {
-                       'error': 'Input arguments were not specified for the model'
-                   }, 400
+                'error': 'Input arguments were not specified for the model'
+            }, 400
 
         if request.form and request.form.get('name'):
             model_name = request.form.get('name')
@@ -279,24 +292,27 @@ class Train(Resource):
         if ext != '.csv':
             return {'error': 'The file is not a .csv file'}, 400
 
-        file.save(os.path.join(settings.MODELS_ROUTE, entity_id, 'train_data', secure_filename(file.filename)))
+        file.save(os.path.join(settings.MODELS_ROUTE, entity_id,
+                               'train_data', secure_filename(file.filename)))
 
         # train the model
-        path_train_file = settings.MODELS_ROUTE + '/' + entity_id + '/train_data/' + file.filename
+        path_train_file = settings.MODELS_ROUTE + '/' + \
+            entity_id + '/train_data/' + file.filename
         task = celery_app.send_task('tasks.train',
                                     args=[entity_id, path_train_file, model_name, models, input_arguments])
 
         return {
-                   'message': 'The file {} was uploaded. Training model for entity {}'.format(file.filename, entity_id),
-                   'task_status_url': build_url(request.url_root, settings.API_ANOMALY_ENDPOINT, 'task', task.id)
-               }, 202
+            'message': 'The file {} was uploaded. Training model for entity {}'.format(file.filename, entity_id),
+            'task_status_url': build_url(request.url_root, settings.API_ANOMALY_ENDPOINT, 'task', task.id)
+        }, 202
 
 
 @anomaly_ns.route('/predict')
 class Predict(Resource):
     @cors.crossdomain(origin='*')
     @anomaly_ns.doc(
-        responses={202: 'Success', 400: 'No payload, the entity or the JSON file does not exist or an attr is missing'},
+        responses={
+            202: 'Success', 400: 'No payload, the entity or the JSON file does not exist or an attr is missing'},
         description="This endpoint will receive the data from Orion Context Broker (FIWARE), i.e this endpoint has to "
                     "be specified in the HTTP URL field of a OCB subscription (OCB will make a POST to this endpoint)."
                     " With the data received from an entity, a prediction will be made using the default pre-trained "
@@ -335,8 +351,8 @@ class Predict(Resource):
                 predict_data.append(data[attr]['value'])
             except KeyError:
                 return {
-                           'error': 'The attr {} was not in the sent attrs'.format(attr)
-                       }, 400
+                    'error': 'The attr {} was not in the sent attrs'.format(attr)
+                }, 400
 
         # parse strings to float
         predict_data = parse_float(predict_data)
@@ -344,12 +360,13 @@ class Predict(Resource):
         # parse date
         date = parser.parse(date).strftime("%Y-%m-%d %H:%M:%S")
         model_path = model['model_path']
-        task = celery_app.send_task('tasks.predict', args=[entity_id, date, model_path, predict_data])
+        task = celery_app.send_task('tasks.predict', args=[
+                                    entity_id, date, model_path, predict_data])
 
         return {
-                   'message': 'The prediction for {} is being made...',
-                   'task_status_url': build_url(request.url_root, settings.API_ANOMALY_ENDPOINT, 'task', task.id)
-               }, 202
+            'message': 'The prediction for {} is being made...',
+            'task_status_url': build_url(request.url_root, settings.API_ANOMALY_ENDPOINT, 'task', task.id)
+        }, 202
 
 
 @anomaly_ns.route('/task/<string:task_id>')
@@ -405,10 +422,11 @@ def run_api():
         print('Orion Context Broker is up')
 
     if settings.API_SSL:
-        app.run(host=settings.APP_HOST, port=settings.APP_PORT, debug=settings.APP_DEBUG, ssl_context='adhoc')
+        app.run(host=settings.APP_HOST, port=settings.APP_PORT,
+                debug=settings.APP_DEBUG, ssl_context='adhoc')
     else:
-        app.run(host=settings.APP_HOST, port=settings.APP_PORT, debug=settings.APP_DEBUG)
-
+        app.run(host=settings.APP_HOST, port=settings.APP_PORT,
+                debug=settings.APP_DEBUG)
 
 
 if __name__ == '__main__':
