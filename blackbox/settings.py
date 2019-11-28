@@ -11,6 +11,7 @@ APP_DESC = 'A simple API to call the Blackbox Anomaly Detection model.'
 APP_HOST = os.getenv('APP_HOST', '0.0.0.0')
 APP_PORT = os.getenv('APP_PORT', '5678')
 API_ANOMALY_ENDPOINT = os.getenv('API_ANOMALY_ENDPOINT', 'api/v1')
+API_SSL = 'True' == os.getenv('API_SSL', 'False')
 MODELS_ROUTE = os.getenv('MODELS_ROUTE', os.path.expanduser('~/blackbox/models'))
 MODELS_ROUTE_JSON = os.getenv('MODELS_ROUTE_JSON', os.path.join(MODELS_ROUTE, 'models.json'))
 MODELS_ROUTE_TRASH = os.getenv('MODELS_ROUTE_TRASH', os.path.join(MODELS_ROUTE, 'trash'))
