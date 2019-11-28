@@ -137,3 +137,6 @@ redis-stable/
 
 # models
 models/
+
+# vscode
+.vscode/
