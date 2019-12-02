@@ -20,7 +20,7 @@ def read_json(path) -> Dict:
     try:
         with open(path, 'r') as f:
             json_ = json.load(f)
-    except FileNotFoundError as e:
+    except FileNotFoundError:
         json_ = None
 
     return json_
@@ -64,11 +64,12 @@ def add_entity_json(path_json, entity_id, path_entity_dir, attrs) -> Tuple[bool,
     """
     try:
         os.makedirs(os.path.join(path_entity_dir, 'train_data'))
-    except FileExistsError as e:
+    except FileExistsError:
         print('The directory {} already exists. Aborting...'.format(path_entity_dir))
         return False, 'The directory {} already exists.'.format(path_entity_dir)
-    except OSError as e:
-        print('Error creating directory {} for entity {}. Aborting...'.format(path_entity_dir, entity_id))
+    except OSError:
+        print('Error creating directory {} for entity {}. Aborting...'.format(
+            path_entity_dir, entity_id))
         return False, 'The directory {} could not be created'.format(path_entity_dir)
 
     json_entities = read_json(path_json)
@@ -198,12 +199,14 @@ def update_entity_json(entity_id, path_json, path_models, new_entity_id=None,
 
     if new_entity_id:
         if new_entity_id in json_entities:
-            messages.append('An entity already exist with id {}'.format(new_entity_id))
+            messages.append(
+                'An entity already exist with id {}'.format(new_entity_id))
         else:
             if isinstance(new_entity_id, str):
                 json_entities[new_entity_id] = entity
                 json_entities.pop(entity_id, None)
-                os.rename(os.path.join(path_models, entity_id), os.path.join(path_models, new_entity_id))
+                os.rename(os.path.join(path_models, entity_id),
+                          os.path.join(path_models, new_entity_id))
                 messages.append('The parameter entity_id has been updated.')
                 updated = True
             else:
@@ -244,8 +247,10 @@ def delete_entity_json(entity_id, path_json, path_models, path_trash) -> Tuple[b
 
     # move the dir of the entity to the trash folder
     date = datetime.now()
-    date_string = '{}-{}-{}-{}:{}'.format(date.year, date.month, date.day, date.hour, date.minute)
-    os.rename(path_models + '/' + entity_id, path_trash + '/' + entity_id + '_' + date_string)
+    date_string = '{}-{}-{}-{}:{}'.format(date.year,
+                                          date.month, date.day, date.hour, date.minute)
+    os.rename(path_models + '/' + entity_id, path_trash +
+              '/' + entity_id + '_' + date_string)
 
     return True, 'The entity {} was deleted and its directory was moved to {}'.format(entity_id, path_trash)
 

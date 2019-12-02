@@ -36,7 +36,8 @@ def train_blackbox(self, entity_id, filename, model_name, models, input_argument
     """
 
     def cb_function(progress, message):
-        self.update_state(state='PROGRESS', meta={'current': progress, 'total': 100, 'status': message})
+        self.update_state(state='PROGRESS', meta={
+                          'current': progress, 'total': 100, 'status': message})
 
     # read CSV file
     reader = CSVReader(filename)
@@ -97,7 +98,8 @@ def predict_blackbox(entity_id, date, model_path, predict_data):
     predict_data = np.array([predict_data])
     predictions = model.flag_anomaly(predict_data)
 
-    predictions = [str(pred) for pred in predictions[0]]  # transform bool to str
+    predictions = [str(pred)
+                   for pred in predictions[0]]  # transform bool to str
     results = {'entity_id': entity_id, 'date': date, 'models_predictions': {}}
     attrs = {}
 
@@ -109,7 +111,8 @@ def predict_blackbox(entity_id, date, model_path, predict_data):
 
     if response is None:
         predictions_path = settings.MODELS_ROUTE + '/predictions.csv'
-        print('Could not connect to Orion Context Broker. Saving predictions in {}'.format(predictions_path))
+        print('Could not connect to Orion Context Broker. Saving predictions in {}'.format(
+            predictions_path))
 
         data = [date, entity_id]
         columns = ['Date', 'Entity ID']

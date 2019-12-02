@@ -45,13 +45,15 @@ class BlackBoxAnomalyDetection:
             name (str): name of the model. Defaults to '<ClassName>'.
         """
         if not isinstance(model, AnomalyModel):
-            raise NotAnomalyModelClass('The model to be added is not an instance of blackbox.models.AnomalyModel!')
+            raise NotAnomalyModelClass(
+                'The model to be added is not an instance of blackbox.models.AnomalyModel!')
 
         if name is None:
             name = model.__class__.__name__
 
         if self.verbose:
-            print('Adding model {} to the blackbox...'.format(model.__class__.__name__))
+            print('Adding model {} to the blackbox...'.format(
+                model.__class__.__name__))
 
         self.models[name] = model
 
@@ -159,7 +161,8 @@ class BlackBoxAnomalyDetection:
             path_dir (str): path to the directory storing the saved models. Defaults to './saved_models'.
         """
         for model in self.models:
-            path = path_dir + '/' + self.models[model].__class__.__name__ + '.pkl'
+            path = path_dir + '/' + \
+                self.models[model].__class__.__name__ + '.pkl'
             if self.verbose:
                 print('Loading model from {}'.format(path))
             self.models[model].load_model(path=path)

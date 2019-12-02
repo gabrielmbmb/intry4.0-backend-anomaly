@@ -25,9 +25,11 @@ class CSVReader:
         """Detects the separator and the header of a CSV file."""
         with open(self.path, newline='') as f:
             sniffer = csv.Sniffer()
-            self.sep = sniffer.sniff(f.read(2048)).delimiter  # get file separator
+            self.sep = sniffer.sniff(
+                f.read(2048)).delimiter  # get file separator
             f.seek(0)
-            self.has_header = sniffer.has_header(f.read(2048))  # check if CSV has header
+            self.has_header = sniffer.has_header(
+                f.read(2048))  # check if CSV has header
             f.seek(0)
 
     def get_df(self) -> pd.DataFrame:
