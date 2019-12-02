@@ -210,7 +210,7 @@ class AnomalyAutoencoder(AnomalyModel):
     """
     from keras import models
     from keras.layers import Dense
-    from keras.regularizers import l2
+    from keras import regularizers
 
     def __init__(self,
                  activation='elu',
@@ -229,8 +229,7 @@ class AnomalyAutoencoder(AnomalyModel):
         self._activation = activation
         self._kernel_initializer = kernel_initializer
         if kernel_regularizer is None:
-            self._kernel_regularizer = self.l2(
-                0.0)  # pylint: disable=too-many-function-args
+            self._kernel_regularizer = self.regularizers.l2(0.0)
         else:
             self._kernel_regularizer = kernel_regularizer
         self._loss_function = loss_function
