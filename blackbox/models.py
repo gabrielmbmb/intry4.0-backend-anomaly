@@ -229,7 +229,7 @@ class AnomalyAutoencoder(AnomalyModel):
         self._activation = activation
         self._kernel_initializer = kernel_initializer
         if kernel_regularizer is None:
-            self._kernel_regularizer = self.l2(0.0)
+            self._kernel_regularizer = self.l2(0.0) # pylint: disable=too-many-function-args
         else:
             self._kernel_regularizer = kernel_regularizer
         self._loss_function = loss_function
