@@ -229,7 +229,8 @@ class AnomalyAutoencoder(AnomalyModel):
         self._activation = activation
         self._kernel_initializer = kernel_initializer
         if kernel_regularizer is None:
-            self._kernel_regularizer = self.l2(0.0) # pylint: disable=too-many-function-args
+            self._kernel_regularizer = self.l2(
+                0.0)  # pylint: disable=too-many-function-args
         else:
             self._kernel_regularizer = kernel_regularizer
         self._loss_function = loss_function
@@ -306,18 +307,18 @@ class AnomalyAutoencoder(AnomalyModel):
         model = self.models.Sequential()
 
         # encoder
-        model.add(self.Dense(units=10, 
-                             activation=self._activation, 
+        model.add(self.Dense(units=10,
+                             activation=self._activation,
                              kernel_initializer=self._kernel_initializer,
-                             kernel_regularizer=self._kernel_regularizer, 
+                             kernel_regularizer=self._kernel_regularizer,
                              input_shape=(n_inputs,)))
 
-        model.add(self.Dense(units=2, 
+        model.add(self.Dense(units=2,
                              activation=self._activation,
                              kernel_initializer=self._kernel_initializer))
 
         # decoder
-        model.add(self.Dense(units=10, 
+        model.add(self.Dense(units=10,
                              activation=self._activation,
                              kernel_initializer=self._kernel_initializer))
 
@@ -374,11 +375,12 @@ class AnomalyKMeans(AnomalyModel):
     anomaly.
 
     Args:
+        _n_clusters (Int): indicates the number of clusters. Defaults to None.
         verbose (bool): verbose mode. Defaults to False.
     """
     from sklearn.cluster import KMeans
 
-    def __init__(self, verbose=False):
+    def __init__(self, _n_clusters=None, verbose=False):
         super().__init__()
         self.verbose = verbose
         self._kmeans = None
@@ -394,14 +396,16 @@ class AnomalyKMeans(AnomalyModel):
         Args:
             data (numpy.ndarray or pandas.DataFrame): training data
         """
-        if self.verbose:
-            print('Calculating optimal number of clusters with Elbow Method...')
 
-        (self._n_clusters, _) = self.elbow(data)
+        if self._n_clusters is None:
+            if self.verbose:
+                print('Calculating optimal number of clusters with Elbow Method...')
 
-        if self.verbose:
-            print('Optimal number of n_clusters: {}. Fitting model...'.format(
-                self._n_clusters))
+            (self._n_clusters, _) = self.elbow(data)
+
+            if self.verbose:
+                print('Optimal number of n_clusters: {}. Fitting model...'.format(
+                    self._n_clusters))
 
         self._kmeans = self.KMeans(n_clusters=self._n_clusters)
         self._kmeans.fit(data)
