@@ -3,20 +3,8 @@ import pandas as pd
 import pickle
 
 from abc import ABCMeta, abstractmethod
-
-from sklearn.decomposition import PCA
-from sklearn.cluster import KMeans
-from sklearn.svm import OneClassSVM
-from sklearn.ensemble import IsolationForest
-
-from keras import models
-from keras.layers import Dense
-from keras.regularizers import l2
-
 from typing import List, Tuple
 
-
-# TODO: imports inside classes
 
 class AnomalyModel(metaclass=ABCMeta):
     """Abstract base class for anomaly detection model."""
@@ -114,10 +102,11 @@ class AnomalyPCAMahalanobis(AnomalyModel):
         std_deviation_num (int): number of the standard deviation used to establish the threshold. Defaults to 3.
         verbose (bool): verbose mode. Defaults to False.
     """
+    from sklearn.decomposition import PCA
 
     def __init__(self, n_components=2, std_deviation_num=3, verbose=False) -> None:
         super().__init__()
-        self._pca = PCA(n_components=n_components, svd_solver='full')
+        self._pca = self.PCA(n_components=n_components, svd_solver='full')
         self._data = None
         self._distances = None
         self._cov = None
@@ -208,7 +197,7 @@ class AnomalyAutoencoder(AnomalyModel):
     Args:
         activation (str): activation function that layers will have. Defaults to 'elu'.
         kernel_initializer (str): kernel initializer that layers will have. Defaults to 'glorot_uniform'.
-        kernel_regularizer: kernel regularizer that layers will have. Defaults to None.
+        kernel_regularizer (keras.regularizers): kernel regularizer that layers will have. Defaults to None.
         loss_function (str): loss function that the Autoencoder will have. Defaults to 'mse'.
         optimizer (str): optimizer that the Autoencoder will have. Defaults to 'adam'.
         epochs (int): number of times that all the batches will be processed during the Autoencoder training. Defaults
@@ -219,17 +208,28 @@ class AnomalyAutoencoder(AnomalyModel):
         std_dev_num (float): number of the standard deviation used to establish the threshold. Defaults to 3.
         verbose (bool): verbose mode. Defaults to False.
     """
+    from keras import models
+    from keras.layers import Dense
+    from keras.regularizers import l2
 
-    def __init__(self, activation='elu', kernel_initializer='glorot_uniform', kernel_regularizer=None,
-                 loss_function='mse', optimizer='adam', epochs=100, batch_size=10, validation_split=0.05,
-                 std_dev_num=3, verbose=False):
+    def __init__(self,
+                 activation='elu',
+                 kernel_initializer='glorot_uniform',
+                 kernel_regularizer=None,
+                 loss_function='mse',
+                 optimizer='adam',
+                 epochs=100,
+                 batch_size=10,
+                 validation_split=0.05,
+                 std_dev_num=3,
+                 verbose=False):
         super().__init__()
 
         # model parameters
         self._activation = activation
         self._kernel_initializer = kernel_initializer
         if kernel_regularizer is None:
-            self._kernel_regularizer = l2(0.0)
+            self._kernel_regularizer = self.l2(0.0)
         else:
             self._kernel_regularizer = kernel_regularizer
         self._loss_function = loss_function
@@ -293,7 +293,7 @@ class AnomalyAutoencoder(AnomalyModel):
         loss = self.mean_absolute_error(data, predict)
         return loss > self._threshold
 
-    def build_autoencoder(self, n_inputs) -> models.Sequential:
+    def build_autoencoder(self, n_inputs):
         """
         Builds the model of an Autoencoder with 1 input layer, 3 hidden layers and 1 output layer.
 
@@ -303,19 +303,27 @@ class AnomalyAutoencoder(AnomalyModel):
         Returns:
             keras.engine.sequential.Sequential: Autoencoder model.
         """
-        model = models.Sequential()
+        model = self.models.Sequential()
 
         # encoder
-        model.add(Dense(units=10, activation=self._activation, kernel_initializer=self._kernel_initializer,
-                        kernel_regularizer=self._kernel_regularizer, input_shape=(n_inputs,)))
+        model.add(self.Dense(units=10, 
+                             activation=self._activation, 
+                             kernel_initializer=self._kernel_initializer,
+                             kernel_regularizer=self._kernel_regularizer, 
+                             input_shape=(n_inputs,)))
 
-        model.add(Dense(units=2, activation=self._activation, kernel_initializer=self._kernel_initializer))
+        model.add(self.Dense(units=2, 
+                             activation=self._activation,
+                             kernel_initializer=self._kernel_initializer))
 
         # decoder
-        model.add(Dense(units=10, activation=self._activation, kernel_initializer=self._kernel_initializer))
+        model.add(self.Dense(units=10, 
+                             activation=self._activation,
+                             kernel_initializer=self._kernel_initializer))
 
         # output layer
-        model.add(Dense(units=n_inputs, kernel_initializer=self._kernel_initializer))
+        model.add(
+            self.Dense(units=n_inputs, kernel_initializer=self._kernel_initializer))
 
         # compile
         model.compile(optimizer=self._optimizer, loss=self._loss_function)
@@ -368,6 +376,7 @@ class AnomalyKMeans(AnomalyModel):
     Args:
         verbose (bool): verbose mode. Defaults to False.
     """
+    from sklearn.cluster import KMeans
 
     def __init__(self, verbose=False):
         super().__init__()
@@ -391,11 +400,13 @@ class AnomalyKMeans(AnomalyModel):
         (self._n_clusters, _) = self.elbow(data)
 
         if self.verbose:
-            print('Optimal number of n_clusters: {}. Fitting model...'.format(self._n_clusters))
+            print('Optimal number of n_clusters: {}. Fitting model...'.format(
+                self._n_clusters))
 
-        self._kmeans = KMeans(n_clusters=self._n_clusters)
+        self._kmeans = self.KMeans(n_clusters=self._n_clusters)
         self._kmeans.fit(data)
-        self._distances = self.get_distance_by_point(data, self._kmeans.cluster_centers_, self._kmeans.labels_)
+        self._distances = self.get_distance_by_point(
+            data, self._kmeans.cluster_centers_, self._kmeans.labels_)
 
         if self.verbose:
             print('Calculating threshold value to flag an anomaly...')
@@ -414,7 +425,8 @@ class AnomalyKMeans(AnomalyModel):
             list of float: distances between the data given and its assigned cluster centroid.
         """
         data_labels = self._kmeans.predict(data)
-        distances = self.get_distance_by_point(data, self._kmeans.cluster_centers_, data_labels)
+        distances = self.get_distance_by_point(
+            data, self._kmeans.cluster_centers_, data_labels)
         return distances
 
     def flag_anomaly(self, data) -> np.ndarray:
@@ -460,7 +472,7 @@ class AnomalyKMeans(AnomalyModel):
             print('Computing K-Means models...')
 
         n_clusters = range(1, max_clusters)
-        kmeans = [KMeans(n_clusters=i).fit(data) for i in n_clusters]
+        kmeans = [self.KMeans(n_clusters=i).fit(data) for i in n_clusters]
         scores = [kmeans[i].score(data) for i in range(len(kmeans))]
         line_p1, line_p2 = (0, scores[0]), (max_clusters, scores[-1])
 
@@ -531,12 +543,14 @@ class AnomalyOneClassSVM(AnomalyModel):
         gamma (float): kernel coefficient. Defaults to 0.01.
         verbose (bool): verbose mode. Defaults to False.
     """
+    from sklearn.svm import OneClassSVM
 
     def __init__(self, outliers_fraction=0.01, gamma=0.01, verbose=False):
         super().__init__()
         self._outliers_fraction = outliers_fraction
         self._gamma = gamma
-        self._svm = OneClassSVM(nu=self._outliers_fraction, kernel='rbf', gamma=self._gamma)
+        self._svm = self.OneClassSVM(
+            nu=self._outliers_fraction, kernel='rbf', gamma=self._gamma)
         self.verbose = verbose
 
     def train(self, data) -> None:
@@ -616,7 +630,8 @@ class AnomalyGaussianDistribution(AnomalyModel):
 
         (self._mean, self._variance) = self.estimate_parameters(data)
         self._probabilities = self.calculate_probability(data)
-        (self._epsilon, _) = self.establish_threshold(labels, self._probabilities)
+        (self._epsilon, _) = self.establish_threshold(
+            labels, self._probabilities)
 
     def predict(self, data) -> np.ndarray:
         """
@@ -665,12 +680,14 @@ class AnomalyGaussianDistribution(AnomalyModel):
         for sample_index in range(num_samples):
             for feature_index in range(num_features):
                 # power of e
-                power_dividend = np.power(data[sample_index, feature_index] - self._mean[feature_index], 2)
+                power_dividend = np.power(
+                    data[sample_index, feature_index] - self._mean[feature_index], 2)
                 power_divider = 2 * self._variance[feature_index]
                 e_power = -1 * power_dividend / power_divider
 
                 # prefix multiplier
-                prefix_multiplier = 1 / np.sqrt(2 * np.pi * self._variance[feature_index])
+                prefix_multiplier = 1 / \
+                    np.sqrt(2 * np.pi * self._variance[feature_index])
 
                 # probability
                 probability = prefix_multiplier * np.exp(e_power)
@@ -750,10 +767,12 @@ class AnomalyIsolationForest(AnomalyModel):
         outliers_fraction (float): outliers fraction. Defaults to 0.01 (3 standard deviations).
         verbose (bool): verbose mode. Defaults to False.
     """
+    from sklearn.ensemble import IsolationForest
 
     def __init__(self, outliers_fraction=0.01, verbose=False):
         super().__init__()
-        self._forest = IsolationForest(contamination=outliers_fraction, behaviour='new')
+        self._forest = self.IsolationForest(
+            contamination=outliers_fraction, behaviour='new')
         self._outliers_fraction = outliers_fraction
         self.verbose = verbose
 
