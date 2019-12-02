@@ -100,7 +100,7 @@ class AnomalyModel(Resource):
             description = models.AnomalyKMeans.__doc__
 
         if model_name == 'OneClassSVM':
-            description = models.OneClassSVM.__doc__
+            description = models.AnomalyOneClassSVM.__doc__
 
         if model_name == 'GaussianDistribution':
             description = models.AnomalyGaussianDistribution.__doc__
