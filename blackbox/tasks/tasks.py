@@ -18,7 +18,7 @@ celery_app = Celery('tasks',
 
 # Tasks
 @celery_app.task(name='tasks.train', bind=True)
-def train_blackbox(self, entity_id, filename, model_name, models, input_arguments):
+def train_blackbox(self, entity_id, filename, model_name, models, input_arguments, additional_params):
     """
     Celery's task which will read the training data and train the Blackbox model for the specified entity.
 
@@ -30,11 +30,12 @@ def train_blackbox(self, entity_id, filename, model_name, models, input_argument
         models (list of str): list of strings containing the name of anomaly prediction models
             that are going to be used.
         input_arguments (list of str): name of the inputs variables of the Blackbox model.
+        additional_params (dict): dictionary containing additional params to specify
+            to each anomaly detection model.
 
     Returns:
         dict: status of the task.
     """
-
     def cb_function(progress, message):
         self.update_state(state='PROGRESS', meta={
                           'current': progress, 'total': 100, 'status': message})
@@ -46,23 +47,53 @@ def train_blackbox(self, entity_id, filename, model_name, models, input_argument
     # create and train Blackbox model
     model = BlackBoxAnomalyDetection(verbose=True)
 
+    # PCAMahalanobis
     if BlackBoxAnomalyDetection.AVAILABLE_MODELS[0] in models:
-        model.add_model(AnomalyPCAMahalanobis())
+        params = additional_params['PCAMahalanobis']
+        if bool(params):
+            model.add_model(AnomalyPCAMahalanobis(**params))
+        else:
+            model.add_model(AnomalyPCAMahalanobis())
 
+    # Autoencoder
     if BlackBoxAnomalyDetection.AVAILABLE_MODELS[1] in models:
-        model.add_model(AnomalyAutoencoder())
+        params = additional_params['Autoencoder']
+        if bool(params):
+            model.add_model(AnomalyAutoencoder(**params))
+        else:
+            model.add_model(AnomalyAutoencoder())
 
+    # KMeans
     if BlackBoxAnomalyDetection.AVAILABLE_MODELS[2] in models:
-        model.add_model(AnomalyKMeans())
+        params = additional_params['KMeans']
+        if bool(params):
+            model.add_model(AnomalyKMeans(**params))
+        else:
+            model.add_model(AnomalyKMeans())
 
+    # OneClassSVM
     if BlackBoxAnomalyDetection.AVAILABLE_MODELS[3] in models:
-        model.add_model(AnomalyOneClassSVM())
+        params = additional_params['OneClassSVM']
+        if bool(params):
+            model.add_model(AnomalyOneClassSVM(**params))
+        else:
+            model.add_model(AnomalyOneClassSVM())
 
+    # GaussianDistribution
     if BlackBoxAnomalyDetection.AVAILABLE_MODELS[4] in models:
-        model.add_model(AnomalyIsolationForest())
+        params = additional_params['GaussianDistribution']
+        if bool(params):
+            model.add_model(AnomalyIsolationForest(**params))
+        else:
+            model.add_model(AnomalyIsolationForest())
 
+    # IsolationForest
     if BlackBoxAnomalyDetection.AVAILABLE_MODELS[5] in models:
-        model.add_model(AnomalyGaussianDistribution())
+        params = additional_params['IsolationForest']
+        if bool(params):
+            model.add_model(AnomalyIsolationForest(**params))
+        else:
+            model.add_model(AnomalyIsolationForest())
 
     model.train_models(data, cb_func=cb_function)
 

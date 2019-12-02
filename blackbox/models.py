@@ -543,17 +543,24 @@ class AnomalyOneClassSVM(AnomalyModel):
 
     Args:
         outliers_fraction (float): outliers fraction. Defaults to 0.01 (3 standard deviations).
+        kernel (str): kernel type. It must be one of ‘linear’, ‘poly’, ‘rbf’, ‘sigmoid’, ‘precomputed’ or a callable.
+            Defaults to 'rbf'.
         gamma (float): kernel coefficient. Defaults to 0.01.
         verbose (bool): verbose mode. Defaults to False.
     """
     from sklearn.svm import OneClassSVM
 
-    def __init__(self, outliers_fraction=0.01, gamma=0.01, verbose=False):
+    def __init__(self, 
+                 outliers_fraction=0.01,
+                 kernel='rbf',
+                 gamma=0.01, 
+                 verbose=False):
         super().__init__()
         self._outliers_fraction = outliers_fraction
         self._gamma = gamma
+        self._kernel = kernel
         self._svm = self.OneClassSVM(
-            nu=self._outliers_fraction, kernel='rbf', gamma=self._gamma)
+            nu=self._outliers_fraction, kernel=self._kernel, gamma=self._gamma)
         self.verbose = verbose
 
     def train(self, data) -> None:

@@ -33,11 +33,26 @@ anomaly_ns = api.namespace(
 train_parser = anomaly_ns.parser()
 train_parser.add_argument('file', type=FileStorage,
                           required=True, location='files', help='CSV training file')
-train_parser.add_argument('input_arguments', required=True,
-                          help='List of input arguments for Anomaly Detection models separated by a comma')
-train_parser.add_argument('name', help='Optional name for the Blackbox model')
-train_parser.add_argument('models',
-                          help='List of the models that are going to be inside the Blackbox separated by a comma')
+train_parser.add_argument('input_arguments', type=str, required=True,
+                          help='List of input arguments for Anomaly Detection models separated by a comma.')
+train_parser.add_argument(
+    'name', type=str, help='Optional name to identify the Blackbox model that will be trained.')
+train_parser.add_argument('models', type=str,
+                          help="List of the models that are going to be inside the Blackbox separated by a comma. "
+                               "If not specified, then every anomaly detection model available will be used")
+train_parser.add_argument('n_components', type=int,
+                          help="Numbers of components for the PCA technique.")
+train_parser.add_argument('std_deviation_num', type=int,
+                          help="Number of standard deviations for the PCA + Mahalanobis technique.")
+train_parser.add_argument('n_clusters', type=int,
+                          help="Number of cluster for the K-Means technique.")
+train_parser.add_argument('outliers_fraction', type=float,
+                          help="Percentage of outliers in train data for the One Class SVM and Isolation Forest tecniques.")
+train_parser.add_argument('kernel', type=str, choices=('linear', 'poly', 'rbf', 'sigmoid', 'precomputed'),
+                          help="Kernel type for One Class SVM technique.")
+train_parser.add_argument(
+    'gamma', type=float, help="Kernel coefficient for 'rbf', 'poly' and 'sigmoid' in One Class SVM technique.")
+
 
 # API Models
 new_entity_model = anomaly_ns.model('new_entity', {
@@ -264,29 +279,67 @@ class Train(Resource):
         if not json_entities or entity_id not in json_entities:
             return {'error': 'The entity does not exist!'}, 400
 
-        if not request.files:
+        parsed_args = train_parser.parse_args()
+
+        if not parsed_args.get('file'):
             return {'error': 'No file was provided to train the model for the entity {}'.format(entity_id)}, 400
 
-        if request.form and request.form.get('input_arguments'):
-            input_arguments = request.form.get('input_arguments').split(',')
+        if parsed_args.get('input_arguments'):
+            input_arguments = parsed_args.get('input_arguments').split(',')
         else:
             return {
                 'error': 'Input arguments were not specified for the model'
             }, 400
 
-        if request.form and request.form.get('name'):
-            model_name = request.form.get('name')
+        if parsed_args.get('name'):
+            model_name = parsed_args.get('name')
         else:
             date = datetime.now()
             model_name = 'model_{}_{}-{}-{}-{}:{}'.format(entity_id, date.year, date.month, date.day, date.hour,
                                                           date.minute)
 
-        if request.form and request.form.get('models'):
-            models = request.form.get('models').split(',')
+        if parsed_args.get('models'):
+            models = parsed_args.get('models').split(',')
         else:
             models = BlackBoxAnomalyDetection.AVAILABLE_MODELS
 
-        # save the file
+        # Get additonal models params
+        additional_params = {
+            'PCAMahalanobis': {},
+            'Autoencoder': {},
+            'KMeans': {},
+            'OneClassSVM': {},
+            'GaussianDistribution': {},
+            'IsolationForest': {}
+        }
+
+        if parsed_args.get('n_components'):
+            additional_params['PCAMahalanobis']['n_components'] = parsed_args.get(
+                'n_components')
+
+        if parsed_args.get('std_deviation_num'):
+            additional_params['PCAMahalanobis']['std_deviation_num'] = parsed_args.get(
+                'std_deviation_num')
+
+        if parsed_args.get('n_clusters'):
+            additional_params['KMeans']['_n_clusters'] = parsed_args.get(
+                'n_clusters')
+
+        if parsed_args.get('outliers_fraction'):
+            additional_params['OneClassSVM']['outliers_fraction'] = parsed_args.get(
+                'outliers_fraction')
+            additional_params['IsolationForest']['outliers_fraction'] = parsed_args.get(
+                'outliers_fraction')
+
+        if parsed_args.get('kernel'):
+            additional_params['OneClassSVM']['kernel'] = parsed_args.get(
+                'kernel')
+
+        if parsed_args.get('gamma'):
+            additional_params['OneClassSVM']['gamma'] = parsed_args.get(
+                'gamma')
+
+        # Save the file
         file = request.files['file']
         _, ext = os.path.splitext(file.filename)
         if ext != '.csv':
@@ -295,11 +348,15 @@ class Train(Resource):
         file.save(os.path.join(settings.MODELS_ROUTE, entity_id,
                                'train_data', secure_filename(file.filename)))
 
-        # train the model
+        # Train the model
         path_train_file = settings.MODELS_ROUTE + '/' + \
             entity_id + '/train_data/' + file.filename
-        task = celery_app.send_task('tasks.train',
-                                    args=[entity_id, path_train_file, model_name, models, input_arguments])
+        task = celery_app.send_task('tasks.train', args=[entity_id,
+                                                         path_train_file,
+                                                         model_name,
+                                                         models,
+                                                         input_arguments,
+                                                         additional_params])
 
         return {
             'message': 'The file {} was uploaded. Training model for entity {}'.format(file.filename, entity_id),
