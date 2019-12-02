@@ -307,7 +307,7 @@ class Train(Resource):
         }, 202
 
 
-@anomaly_ns.route('/predict')
+@anomaly_ns.route('/ocb_predict')
 class Predict(Resource):
     @cors.crossdomain(origin='*')
     @anomaly_ns.doc(
@@ -318,7 +318,7 @@ class Predict(Resource):
                     " With the data received from an entity, a prediction will be made using the default pre-trained "
                     "model for the entity.")
     def post(self):
-        """Endpoint to receive data and predict if it's an anomaly."""
+        """Endpoint to receive data from OCB and predict if it's an anomaly."""
         json_entities = read_json(settings.MODELS_ROUTE_JSON)
         if not json_entities:
             return {'error': 'The file {} does not exist'.format(settings.MODELS_ROUTE_JSON)}, 400
