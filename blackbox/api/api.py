@@ -235,7 +235,7 @@ class Entity(Resource):
         """Deletes an entity"""
         with lock:
             deleted, msg = delete_entity_json(entity_id, settings.MODELS_ROUTE_JSON, settings.MODELS_ROUTE,
-                                            settings.MODELS_ROUTE_TRASH)
+                                              settings.MODELS_ROUTE_TRASH)
 
         if not deleted:
             return {
@@ -308,7 +308,7 @@ class Train(Resource):
 
 
 @anomaly_ns.route('/ocb_predict')
-class Predict(Resource):
+class OCBPredict(Resource):
     @cors.crossdomain(origin='*')
     @anomaly_ns.doc(
         responses={
@@ -367,6 +367,14 @@ class Predict(Resource):
             'message': 'The prediction for {} is being made...',
             'task_status_url': build_url(request.url_root, settings.API_ANOMALY_ENDPOINT, 'task', task.id)
         }, 202
+
+
+@anomaly_ns.route('/predict')
+class Predict(Resource):
+
+    def post(self):
+        """Endpoint to receive data from an entity and predict if it's an anomaly"""
+        pass
 
 
 @anomaly_ns.route('/task/<string:task_id>')
