@@ -383,7 +383,7 @@ class AnomalyKMeans(AnomalyModel):
         super().__init__()
         self.verbose = verbose
         self._kmeans = None
-        self._n_clusters = None
+        self._n_clusters = _n_clusters
         self._threshold = None
         self._distances = None
 
