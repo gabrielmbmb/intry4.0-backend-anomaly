@@ -3,7 +3,7 @@ from blackbox.blackbox import BlackBoxAnomalyDetection, NotAnomalyModelClass
 from blackbox.models import AnomalyPCAMahalanobis, AnomalyAutoencoder, AnomalyKMeans, AnomalyIsolationForest, \
     AnomalyGaussianDistribution, AnomalyOneClassSVM
 from blackbox.utils.csv import CSVReader
-
+from keras.regularizers import l1
 
 class TestBlackBoxAnomalyDetection(TestCase):
     """Tests for Blackbox"""
@@ -19,8 +19,8 @@ class TestBlackBoxAnomalyDetection(TestCase):
 
         self.model_name = BlackBoxAnomalyDetection(verbose=True)
         self.model_name.add_model(AnomalyPCAMahalanobis(verbose=True), 'PCAMahalanobis')
-        self.model_name.add_model(AnomalyAutoencoder(verbose=True), 'Autoencoder')
-        self.model_name.add_model(AnomalyKMeans(verbose=True), 'KMeans')
+        self.model_name.add_model(AnomalyAutoencoder(kernel_regularizer=l1(0.0), verbose=True), 'Autoencoder')
+        self.model_name.add_model(AnomalyKMeans(_n_clusters=20, verbose=True), 'KMeans')
         self.model_name.add_model(AnomalyOneClassSVM(verbose=True), 'OneClassSVM')
         self.model_name.add_model(AnomalyIsolationForest(verbose=True), 'IsolationForest')
         self.model_name.add_model(AnomalyGaussianDistribution(verbose=True), 'GaussianDistribution')
