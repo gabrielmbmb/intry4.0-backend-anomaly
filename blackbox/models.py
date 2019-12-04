@@ -195,6 +195,8 @@ class AnomalyAutoencoder(AnomalyModel):
     won't be able to reconstruct data with anomalies (value of loss function high).
 
     Args:
+        hidden_neurons (list): hidden layers and the number of neurons for each hidden layer. Defaults to [32, 16, 16, 32].
+        dropout_rate (float): dropout rate across all layers. Float between 0 and 1. Defaults to 0.2.
         activation (str): activation function that layers will have. Defaults to 'elu'.
         kernel_initializer (str): kernel initializer that layers will have. Defaults to 'glorot_uniform'.
         kernel_regularizer (keras.regularizers): kernel regularizer that layers will have. Defaults to None.
@@ -209,10 +211,12 @@ class AnomalyAutoencoder(AnomalyModel):
         verbose (bool): verbose mode. Defaults to False.
     """
     from keras import models
-    from keras.layers import Dense
+    from keras.layers import Dense, Dropout
     from keras import regularizers
 
     def __init__(self,
+                 hidden_neurons=[32, 16, 16, 32],
+                 dropout_rate=0.2,
                  activation='elu',
                  kernel_initializer='glorot_uniform',
                  kernel_regularizer=None,
@@ -226,6 +230,8 @@ class AnomalyAutoencoder(AnomalyModel):
         super().__init__()
 
         # model parameters
+        self._hidden_neurons = hidden_neurons
+        self._dropout_rate = dropout_rate
         self._activation = activation
         self._kernel_initializer = kernel_initializer
         if kernel_regularizer is None:
@@ -305,21 +311,21 @@ class AnomalyAutoencoder(AnomalyModel):
         """
         model = self.models.Sequential()
 
-        # encoder
-        model.add(self.Dense(units=10,
+        # input layer
+        model.add(self.Dense(units=self._hidden_neurons[0],
                              activation=self._activation,
                              kernel_initializer=self._kernel_initializer,
                              kernel_regularizer=self._kernel_regularizer,
                              input_shape=(n_inputs,)))
+        model.add(self.Dropout(self._dropout_rate))
 
-        model.add(self.Dense(units=2,
-                             activation=self._activation,
-                             kernel_initializer=self._kernel_initializer))
+        # hidden layers
+        for _, hidden_neurons in enumerate(self._hidden_neurons, 1):
+            model.add(self.Dense(units=hidden_neurons,
+                                 activation=self._activation,
+                                 kernel_initializer=self._kernel_initializer))
+            model.add(self.Dropout(self._dropout_rate))
 
-        # decoder
-        model.add(self.Dense(units=10,
-                             activation=self._activation,
-                             kernel_initializer=self._kernel_initializer))
 
         # output layer
         model.add(
@@ -327,6 +333,9 @@ class AnomalyAutoencoder(AnomalyModel):
 
         # compile
         model.compile(optimizer=self._optimizer, loss=self._loss_function)
+
+        if self.verbose:
+            print(model.summary())
 
         return model
 
