@@ -31,28 +31,63 @@ anomaly_ns = api.namespace(
 
 # API parsers
 train_parser = anomaly_ns.parser()
+
+# Train file
 train_parser.add_argument('file', type=FileStorage,
                           required=True, location='files', help='CSV training file')
+
+# Train file features
 train_parser.add_argument('input_arguments', type=str, required=True,
                           help='List of input arguments for Anomaly Detection models separated by a comma.')
+
+# Model name
 train_parser.add_argument(
     'name', type=str, help='Optional name to identify the Blackbox model that will be trained.')
+
+# List of models
 train_parser.add_argument('models', type=str,
                           help="List of the models that are going to be inside the Blackbox separated by a comma. "
                                "If not specified, then every anomaly detection model available will be used")
+
+# PCA + Mahalanobis params
 train_parser.add_argument('n_components', type=int,
                           help="Numbers of components for the PCA technique.")
 train_parser.add_argument('std_deviation_num', type=int,
                           help="Number of standard deviations for the PCA + Mahalanobis technique.")
+
+# K-Means params
 train_parser.add_argument('n_clusters', type=int,
                           help="Number of cluster for the K-Means technique.")
 train_parser.add_argument('outliers_fraction', type=float,
                           help="Percentage of outliers in train data for the One Class SVM and Isolation Forest tecniques.")
+
+# OCSVM params
 train_parser.add_argument('kernel', type=str, choices=('linear', 'poly', 'rbf', 'sigmoid', 'precomputed'),
                           help="Kernel type for One Class SVM technique.")
 train_parser.add_argument(
     'gamma', type=float, help="Kernel coefficient for 'rbf', 'poly' and 'sigmoid' in One Class SVM technique.")
 
+# Autoencoder params
+train_parser.add_argument('hidden_neurons', type=str,
+                          help="Hidden layers and the number of neurons in each layer. Example: 32,16,16,32")
+train_parser.add_argument('dropout_rate', type=float,
+                          help="Dropout rate across all the layers.")
+train_parser.add_argument('activation', type=str,
+                          help="Layers activation function.")
+train_parser.add_argument('kernel_initializer', type=str,
+                          help="Layers kernel initializer.")
+train_parser.add_argument('kernel_regularizer', type=str,
+                          help="Layers kernel regularizer.")
+train_parser.add_argument('loss_function', type=str,
+                          help="Autoencoder's lost function.")
+train_parser.add_argument('optimizer', type=str, help="Autoencoder optimizer.")
+train_parser.add_argument(
+    'epochs', type=int, help="Number of times that all the batches will be processed.")
+train_parser.add_argument('batch_size', type=int, help="Batch size")
+train_parser.add_argument('validation_split', type=float,
+                          help="Percentage of the training data that will be used for validation.")
+train_parser.add_argument('std_dev_num', type=float,
+                          help="Number of the standard deviaton used to stablish a threshold.")
 
 # API Models
 new_entity_model = anomaly_ns.model('new_entity', {
@@ -339,6 +374,40 @@ class Train(Resource):
             additional_params['OneClassSVM']['gamma'] = parsed_args.get(
                 'gamma')
 
+        if parsed_args.get('hidden_neurons'):
+            additional_params['Autoencoder']['hidden_neurons'] = list(
+                map(int, parsed_args.get('hidden_neurons').split(',')))
+
+        if parsed_args.get('dropout_rate'):
+            additional_params['Autoencoder']['dropout_rate'] = parsed_args.get('dropout_rate')
+
+        if parser_args.get('activation'):
+            additional_params['Autoencoder']['activation'] = parsed_args.get('activation')
+
+        if parser_args.get('kernel_initializer'):
+            additional_params['Autoencoder']['kernel_initializer'] = parsed_args.get('kernel_initializer')
+
+        if parser_args.get('kernel_regularizer'):
+            additional_params['Autoencoder']['kernel_regularizer'] = parsed_args.get('kernel_regularizer')
+
+        if parser_args.get('loss_function'):
+            additional_params['Autoencoder']['loss_function'] = parsed_args.get('loss_function')
+
+        if parser_args.get('optimizer'):
+            additional_params['Autoencoder']['optimizer'] = parsed_args.get('optimizer')
+
+        if parser_args.get('epochs'):
+            additional_params['Autoencoder']['epochs'] = parsed_args.get('epochs')
+
+        if parser_args.get('batch_size'):
+            additional_params['Autoencoder']['batch_size'] = parsed_args.get('batch_size')
+
+        if parser_args.get('validation_split'):
+            additional_params['Autoencoder']['validation_split'] = parsed_args.get('validation_split')
+
+        if parser_args.get('std_dev_num'):
+            additional_params['Autoencoder']['std_dev_num'] = parsed_args.get('std_dev_num')
+
         # Save the file
         file = request.files['file']
         _, ext = os.path.splitext(file.filename)
@@ -429,6 +498,7 @@ class OCBPredict(Resource):
 @anomaly_ns.route('/predict')
 class Predict(Resource):
 
+    @cors.crossdomain(origin='*')
     def post(self):
         """Endpoint to receive data from an entity and predict if it's an anomaly"""
         pass
