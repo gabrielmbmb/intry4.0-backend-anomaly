@@ -381,31 +381,31 @@ class Train(Resource):
         if parsed_args.get('dropout_rate'):
             additional_params['Autoencoder']['dropout_rate'] = parsed_args.get('dropout_rate')
 
-        if parser_args.get('activation'):
+        if parsed_args.get('activation'):
             additional_params['Autoencoder']['activation'] = parsed_args.get('activation')
 
-        if parser_args.get('kernel_initializer'):
+        if parsed_args.get('kernel_initializer'):
             additional_params['Autoencoder']['kernel_initializer'] = parsed_args.get('kernel_initializer')
 
-        if parser_args.get('kernel_regularizer'):
+        if parsed_args.get('kernel_regularizer'):
             additional_params['Autoencoder']['kernel_regularizer'] = parsed_args.get('kernel_regularizer')
 
-        if parser_args.get('loss_function'):
+        if parsed_args.get('loss_function'):
             additional_params['Autoencoder']['loss_function'] = parsed_args.get('loss_function')
 
-        if parser_args.get('optimizer'):
+        if parsed_args.get('optimizer'):
             additional_params['Autoencoder']['optimizer'] = parsed_args.get('optimizer')
 
-        if parser_args.get('epochs'):
+        if parsed_args.get('epochs'):
             additional_params['Autoencoder']['epochs'] = parsed_args.get('epochs')
 
-        if parser_args.get('batch_size'):
+        if parsed_args.get('batch_size'):
             additional_params['Autoencoder']['batch_size'] = parsed_args.get('batch_size')
 
-        if parser_args.get('validation_split'):
+        if parsed_args.get('validation_split'):
             additional_params['Autoencoder']['validation_split'] = parsed_args.get('validation_split')
 
-        if parser_args.get('std_dev_num'):
+        if parsed_args.get('std_dev_num'):
             additional_params['Autoencoder']['std_dev_num'] = parsed_args.get('std_dev_num')
 
         # Save the file
