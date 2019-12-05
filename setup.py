@@ -27,7 +27,7 @@ setuptools.setup(
         "Intended Audience :: Developers",
         "Framework :: Flask",
     ],
-    python_requires='>=3.6',
+    python_requires='>=3.5',
     keywords='PLATINUM, anomaly-detection',
     project_urls={
         'Bug Reports': 'https://github.com/bisite/PLATINUM-anomaly-detection/issues',
