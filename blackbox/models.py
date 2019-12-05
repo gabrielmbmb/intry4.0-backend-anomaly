@@ -99,19 +99,22 @@ class AnomalyPCAMahalanobis(AnomalyModel):
 
     Args:
         n_components (int or float): number of components to which the data have to be reduced. Defaults to 2.
-        std_deviation_num (int): number of the standard deviation used to establish the threshold. Defaults to 3.
+        contamination (float): contamination fraction of training dataset. Defaults to 0.01.
         verbose (bool): verbose mode. Defaults to False.
     """
     from sklearn.decomposition import PCA
 
-    def __init__(self, n_components=2, std_deviation_num=3, verbose=False) -> None:
+    def __init__(self,
+                 n_components=2,
+                 contamination=0.01,
+                 verbose=False) -> None:
         super().__init__()
         self._pca = self.PCA(n_components=n_components, svd_solver='full')
         self._data = None
         self._distances = None
         self._cov = None
         self._threshold = None
-        self._std_dev_num = std_deviation_num
+        self._contamination = contamination
         self.verbose = verbose
 
     def train(self, data) -> None:
@@ -154,15 +157,13 @@ class AnomalyPCAMahalanobis(AnomalyModel):
 
     def calculate_threshold(self) -> float:
         """
-        Computes the threshold (value of the N standard deviation of the train distance distribution) that has to
-        surpass a distance of a point to be flagged as an anomaly.
+        Computes the threshold that has to surpass a distance of a point to be flagged as an anomaly.
 
         Returns:
             float: threshold.
         """
-        mean = np.mean(self._distances, axis=0)
-        std = np.std(self._distances, axis=0)
-        threshold = self._std_dev_num * std + mean
+        threshold = np.percentile(
+            self._distances, 100 * (1 - self._contamination))
         return threshold
 
     def mahalanobis_distance(self, x) -> np.ndarray:
@@ -207,7 +208,7 @@ class AnomalyAutoencoder(AnomalyModel):
         batch_size (int): batch size. Defaults to 10.
         validation_split (float): percentage of the training data that will be used for model validation. Defaults to
             0.05.
-        std_dev_num (float): number of the standard deviation used to establish the threshold. Defaults to 3.
+        contamination (float): contamination fraction of the training dataset. Defaults to 0.01.
         verbose (bool): verbose mode. Defaults to False.
     """
     from keras import models
@@ -215,7 +216,7 @@ class AnomalyAutoencoder(AnomalyModel):
     from keras import regularizers
 
     def __init__(self,
-                 hidden_neurons=[32, 16, 16, 32],
+                 hidden_neurons=None,
                  dropout_rate=0.2,
                  activation='elu',
                  kernel_initializer='glorot_uniform',
@@ -225,7 +226,7 @@ class AnomalyAutoencoder(AnomalyModel):
                  epochs=100,
                  batch_size=10,
                  validation_split=0.05,
-                 std_dev_num=3,
+                 contamination=0.01,
                  verbose=False):
         super().__init__()
 
@@ -234,10 +235,7 @@ class AnomalyAutoencoder(AnomalyModel):
         self._dropout_rate = dropout_rate
         self._activation = activation
         self._kernel_initializer = kernel_initializer
-        if kernel_regularizer is None:
-            self._kernel_regularizer = self.regularizers.l2(0.0)
-        else:
-            self._kernel_regularizer = kernel_regularizer
+        self._kernel_regularizer = kernel_regularizer
         self._loss_function = loss_function
         self._optimizer = optimizer
 
@@ -245,8 +243,19 @@ class AnomalyAutoencoder(AnomalyModel):
         self._epochs = epochs
         self._batch_size = batch_size
         self._validation_split = validation_split
+        self._contamination = contamination
 
-        self._std_dev_num = std_dev_num
+        # default values
+        if self._kernel_regularizer is None:
+            self._kernel_regularizer = self.regularizers.l2(0.0)
+
+        if self._hidden_neurons is None:
+            self._hidden_neurons = [32, 16, 16, 32]
+
+        # Verify that the network design is symmetric
+        if not self._hidden_neurons == self._hidden_neurons[::-1]:
+            raise ValueError(
+                "Hidden neurons should be symmetric: {}".format(self._hidden_neurons))
 
         self._autoencoder = None
         self.history = None
@@ -265,9 +274,19 @@ class AnomalyAutoencoder(AnomalyModel):
         if isinstance(data, pd.DataFrame):
             data = data.values
 
-        self._autoencoder = self.build_autoencoder(n_inputs=data.shape[1])
-        self.history = self._autoencoder.fit(x=data, y=data, batch_size=self._batch_size, epochs=self._epochs,
-                                             validation_split=self._validation_split, shuffle=True, verbose=0)
+        # Verify that number of neurons doesn't exceeds the number of features
+        self._n_features = data.shape[1]
+        if self._n_features < min(self._hidden_neurons):
+            raise ValueError("Number of neurons should not exceed the number of features.")
+        
+        self._autoencoder = self.build_autoencoder()
+        self.history = self._autoencoder.fit(x=data, 
+                                             y=data, 
+                                             batch_size=self._batch_size, 
+                                             epochs=self._epochs,
+                                             validation_split=self._validation_split, 
+                                             shuffle=True, 
+                                             verbose=0)
         predict = self._autoencoder.predict(data)
         self._loss = self.mean_absolute_error(data, predict)
         self._threshold = self.establish_threshold()
@@ -299,12 +318,9 @@ class AnomalyAutoencoder(AnomalyModel):
         loss = self.mean_absolute_error(data, predict)
         return loss > self._threshold
 
-    def build_autoencoder(self, n_inputs):
+    def build_autoencoder(self):
         """
-        Builds the model of an Autoencoder with 1 input layer, 3 hidden layers and 1 output layer.
-
-        Args:
-            n_inputs (int): number of inputs that the network will have (number of features)
+        Builds the model the Autoencoder model.
 
         Returns:
             keras.engine.sequential.Sequential: Autoencoder model.
@@ -315,21 +331,21 @@ class AnomalyAutoencoder(AnomalyModel):
         model.add(self.Dense(units=self._hidden_neurons[0],
                              activation=self._activation,
                              kernel_initializer=self._kernel_initializer,
-                             kernel_regularizer=self._kernel_regularizer,
-                             input_shape=(n_inputs,)))
+                             activity_regularizer=self._kernel_regularizer,
+                             input_shape=(self._n_features,)))
         model.add(self.Dropout(self._dropout_rate))
 
         # hidden layers
-        for _, hidden_neurons in enumerate(self._hidden_neurons, 1):
+        for _, hidden_neurons in enumerate(self._hidden_neurons, 2):
             model.add(self.Dense(units=hidden_neurons,
                                  activation=self._activation,
-                                 kernel_initializer=self._kernel_initializer))
+                                 kernel_initializer=self._kernel_initializer,
+                                 activity_regularizer=self._kernel_regularizer))
             model.add(self.Dropout(self._dropout_rate))
-
 
         # output layer
         model.add(
-            self.Dense(units=n_inputs, kernel_initializer=self._kernel_initializer))
+            self.Dense(units=self._n_features, kernel_initializer=self._kernel_initializer))
 
         # compile
         model.compile(optimizer=self._optimizer, loss=self._loss_function)
@@ -341,15 +357,12 @@ class AnomalyAutoencoder(AnomalyModel):
 
     def establish_threshold(self) -> float:
         """
-        Computes the threshold (value of the N standard deviation of the train loss distribution) that has to
-        surpass the calculated loss (MAE) of a point to be flagged as an anomaly.
+        Computes the threshold that has to surpass the calculated loss (MAE) of a point to be flagged as an anomaly.
 
         Returns:
             float: threshold.
         """
-        mean = np.mean(self._loss, axis=0)
-        std = np.std(self._loss, axis=0)
-        threshold = self._std_dev_num * std + mean
+        threshold = np.percentile(self._loss, 100 * (1 - self._contamination))
         return threshold
 
     @staticmethod
@@ -559,10 +572,10 @@ class AnomalyOneClassSVM(AnomalyModel):
     """
     from sklearn.svm import OneClassSVM
 
-    def __init__(self, 
+    def __init__(self,
                  outliers_fraction=0.01,
                  kernel='rbf',
-                 gamma=0.01, 
+                 gamma=0.01,
                  verbose=False):
         super().__init__()
         self._outliers_fraction = outliers_fraction
@@ -783,16 +796,16 @@ class AnomalyIsolationForest(AnomalyModel):
     anomalies is easier because only a few conditions are needed to separate them from normal values.
 
     Args:
-        outliers_fraction (float): outliers fraction. Defaults to 0.01 (3 standard deviations).
+        contamination (float): contamination fraction in dataset. Defaults to 0.01.
         verbose (bool): verbose mode. Defaults to False.
     """
     from sklearn.ensemble import IsolationForest
 
-    def __init__(self, outliers_fraction=0.01, verbose=False):
+    def __init__(self, contamination=0.01, verbose=False):
         super().__init__()
         self._forest = self.IsolationForest(
-            contamination=outliers_fraction, behaviour='new')
-        self._outliers_fraction = outliers_fraction
+            contamination=contamination, behaviour='new')
+        self._contamination = contamination
         self.verbose = verbose
 
     def train(self, data) -> None:
