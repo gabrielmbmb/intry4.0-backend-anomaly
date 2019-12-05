@@ -5,41 +5,63 @@ from blackbox.models import AnomalyPCAMahalanobis, AnomalyAutoencoder, AnomalyKM
 from blackbox.utils.csv import CSVReader
 from keras.regularizers import l1
 
+
 class TestBlackBoxAnomalyDetection(TestCase):
     """Tests for Blackbox"""
 
     def setUp(self) -> None:
         self.model = BlackBoxAnomalyDetection(verbose=True)
         self.model.add_model(AnomalyPCAMahalanobis(verbose=True))
-        self.model.add_model(AnomalyAutoencoder(verbose=True))
+        self.model.add_model(AnomalyAutoencoder(verbose=True,
+                                                hidden_neurons=[4, 2, 2, 4]))
         self.model.add_model(AnomalyKMeans(verbose=True))
         self.model.add_model(AnomalyOneClassSVM(verbose=True))
         self.model.add_model(AnomalyIsolationForest(verbose=True))
         self.model.add_model(AnomalyGaussianDistribution(verbose=True))
 
         self.model_name = BlackBoxAnomalyDetection(verbose=True)
-        self.model_name.add_model(AnomalyPCAMahalanobis(verbose=True), 'PCAMahalanobis')
-        self.model_name.add_model(AnomalyAutoencoder(kernel_regularizer=l1(0.0), verbose=True), 'Autoencoder')
-        self.model_name.add_model(AnomalyKMeans(_n_clusters=20, verbose=True), 'KMeans')
-        self.model_name.add_model(AnomalyOneClassSVM(verbose=True), 'OneClassSVM')
-        self.model_name.add_model(AnomalyIsolationForest(verbose=True), 'IsolationForest')
-        self.model_name.add_model(AnomalyGaussianDistribution(verbose=True), 'GaussianDistribution')
+        self.model_name.add_model(
+            AnomalyPCAMahalanobis(verbose=True), 'PCAMahalanobis')
+        self.model_name.add_model(AnomalyAutoencoder(kernel_regularizer=l1(0.0),
+                                                     verbose=True,
+                                                     hidden_neurons=[4, 2, 2, 4]),
+                                  'Autoencoder')
+        self.model_name.add_model(AnomalyKMeans(_n_clusters=20,
+                                                verbose=True),
+                                  'KMeans')
+        self.model_name.add_model(AnomalyOneClassSVM(verbose=True),
+                                  'OneClassSVM')
+        self.model_name.add_model(AnomalyIsolationForest(verbose=True),
+                                  'IsolationForest')
+        self.model_name.add_model(AnomalyGaussianDistribution(verbose=True),
+                                  'GaussianDistribution')
 
     def test_add_model(self):
         """Tests that models are correctly added to the Blackbox"""
-        self.assertIsInstance(self.model.models['AnomalyPCAMahalanobis'], AnomalyPCAMahalanobis)
-        self.assertIsInstance(self.model.models['AnomalyAutoencoder'], AnomalyAutoencoder)
-        self.assertIsInstance(self.model.models['AnomalyKMeans'], AnomalyKMeans)
-        self.assertIsInstance(self.model.models['AnomalyOneClassSVM'], AnomalyOneClassSVM)
-        self.assertIsInstance(self.model.models['AnomalyIsolationForest'], AnomalyIsolationForest)
-        self.assertIsInstance(self.model.models['AnomalyGaussianDistribution'], AnomalyGaussianDistribution)
+        self.assertIsInstance(
+            self.model.models['AnomalyPCAMahalanobis'], AnomalyPCAMahalanobis)
+        self.assertIsInstance(
+            self.model.models['AnomalyAutoencoder'], AnomalyAutoencoder)
+        self.assertIsInstance(
+            self.model.models['AnomalyKMeans'], AnomalyKMeans)
+        self.assertIsInstance(
+            self.model.models['AnomalyOneClassSVM'], AnomalyOneClassSVM)
+        self.assertIsInstance(
+            self.model.models['AnomalyIsolationForest'], AnomalyIsolationForest)
+        self.assertIsInstance(
+            self.model.models['AnomalyGaussianDistribution'], AnomalyGaussianDistribution)
 
-        self.assertIsInstance(self.model_name.models['PCAMahalanobis'], AnomalyPCAMahalanobis)
-        self.assertIsInstance(self.model_name.models['Autoencoder'], AnomalyAutoencoder)
+        self.assertIsInstance(
+            self.model_name.models['PCAMahalanobis'], AnomalyPCAMahalanobis)
+        self.assertIsInstance(
+            self.model_name.models['Autoencoder'], AnomalyAutoencoder)
         self.assertIsInstance(self.model_name.models['KMeans'], AnomalyKMeans)
-        self.assertIsInstance(self.model_name.models['OneClassSVM'], AnomalyOneClassSVM)
-        self.assertIsInstance(self.model_name.models['IsolationForest'], AnomalyIsolationForest)
-        self.assertIsInstance(self.model_name.models['GaussianDistribution'], AnomalyGaussianDistribution)
+        self.assertIsInstance(
+            self.model_name.models['OneClassSVM'], AnomalyOneClassSVM)
+        self.assertIsInstance(
+            self.model_name.models['IsolationForest'], AnomalyIsolationForest)
+        self.assertIsInstance(
+            self.model_name.models['GaussianDistribution'], AnomalyGaussianDistribution)
 
     def test_add_model_no_class_anomaly(self):
         """Tests that an error is raised if an instance of a class that doesn't inherit from AnomalyClassModel
