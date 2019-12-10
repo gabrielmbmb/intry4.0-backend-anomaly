@@ -80,8 +80,8 @@ train_parser.add_argument(
         "GaussianDistribution",
         "IsolationForest",
     ),
-    help="List of the models that are going to be inside the Blackbox separated by a comma. "
-    "If not specified, then every anomaly detection model available will be used.",
+    help="List of the models that are going to be inside the Blackbox separated by a"
+    " comma. If not specified, then every anomaly detection model available will be used.",
 )
 
 # PCA + Mahalanobis params
@@ -112,8 +112,8 @@ train_parser.add_argument(
 train_parser.add_argument(
     "hidden_neurons",
     type=str,
-    help="Hidden layers and the number of neurons in each layer for the Autoencoder model."
-    " Example: 32,16,16,32.",
+    help="Hidden layers and the number of neurons in each layer for the Autoencoder"
+    " model. Example: 32,16,16,32.",
 )
 train_parser.add_argument(
     "dropout_rate",
@@ -134,13 +134,15 @@ train_parser.add_argument("optimizer", type=str, help="Autoencoder optimizer.")
 train_parser.add_argument(
     "epochs",
     type=int,
-    help="Number of times that all the batches will be processed in the Autoencoder model.",
+    help="Number of times that all the batches will be processed in the Autoencoder"
+    " model.",
 )
 train_parser.add_argument("batch_size", type=int, help="Batch size")
 train_parser.add_argument(
     "validation_split",
     type=float,
-    help="Percentage of the training data that will be used for validation in the Autoencoder model.",
+    help="Percentage of the training data that will be used for validation in the"
+    " Autoencoder model.",
 )
 
 # API Models
@@ -236,8 +238,8 @@ class EntitiesList(Resource):
     @cors.crossdomain(origin="*")
     @anomaly_ns.doc(
         responses={200: "Success"},
-        description="Return the list of created entities and for each entity its attributes, "
-        "default model and trained models.",
+        description="Return the list of created entities and for each entity its"
+        " attributes, default model and trained models.",
     )
     def get(self):
         """Returns a list of entities"""
@@ -254,7 +256,8 @@ class Entity(Resource):
     @cors.crossdomain(origin="*")
     @anomaly_ns.doc(
         responses={200: "Success", 400: "Entity or JSON file does not exist"},
-        description="Returns an entity and its attributes, default model and trained models.",
+        description="Returns an entity and its attributes, default model and trained "
+        "models.",
     )
     def get(self, entity_id):
         """Return an entity"""
@@ -275,11 +278,11 @@ class Entity(Resource):
             200: "Success",
             400: "No payload, unable to create the entity or validation error",
         },
-        description="Creates an entity with the specified entity_id which has to be the same as in Orion "
-        "Context Broker (OCB, FIWARE). It is necessary to specify the name of the attributes "
-        "which the API will receive from OCB in order to make the predictions. The number of "
-        "the attributes has to be exactly the same as the number of attributes in the training "
-        "dataset.",
+        description="Creates an entity with the specified entity_id which has to be"
+        " the same as in Orion Context Broker (OCB, FIWARE). It is necessary to specify"
+        " the name of the attributes which the API will receive from OCB in order to"
+        " make the predictions. The number of the attributes has to be exactly the same"
+        " as the number of attributes in the training dataset.",
     )
     def post(self, entity_id):
         """Creates an entity"""
@@ -316,10 +319,11 @@ class Entity(Resource):
             200: "Success",
             400: "No payload, unable to write or validation error",
         },
-        description="Updates an entity with the specified entity_id. The new values of the entity has to "
-        "be specified in the payload. It's mandatory to specify every value. If the "
-        "new_entity_id is specified, it must not exist already. If the default model is "
-        "updated it must exist in the list of trained model for the specified entity.",
+        description="Updates an entity with the specified entity_id. The new values of"
+        " the entity has to be specified in the payload. It's mandatory to specify"
+        " every value. If the new_entity_id is specified, it must not exist already."
+        " If the default model is updated it must exist in the list of trained model"
+        " for the specified entity.",
     )
     def put(self, entity_id):
         """Updates an entity"""
@@ -363,8 +367,8 @@ class Entity(Resource):
     @cors.crossdomain(origin="*")
     @anomaly_ns.doc(
         responses={200: "Success", 400: "Entity or JSON file does not exist"},
-        description="Deletes an entity from the API list and moves its trained models and training data "
-        "to the trash directory from the API.",
+        description="Deletes an entity from the API list and moves its trained models"
+        " and training data to the trash directory from the API.",
     )
     def delete(self, entity_id):
         """Deletes an entity"""
@@ -390,13 +394,14 @@ class Train(Resource):
     @anomaly_ns.doc(
         responses={
             200: "Success",
-            400: "Entity or JSON file does not exist, no training file provided or input arguments "
-            "were not specified",
+            400: "Entity or JSON file does not exist, no training file provided or"
+            " input arguments were not specified",
         },
-        description="Trains a Blackbox Anomaly Detection Model for an entity with the specified entity_id. "
-        "The entity has to be already created. The Blackbox Model will be trained with the "
-        "uploaded file. The process of training will be asynchronous and an URL will be "
-        "returned in order to see the training progress.",
+        description="Trains a Blackbox Anomaly Detection Model for an entity with the"
+        " specified entity_id. The entity has to be already created. The Blackbox Model"
+        " will be trained with the uploaded file. The process of training will be"
+        " asynchronous and an URL will be returned in order to see the training"
+        " progress.",
     )
     def post(self, entity_id):
         """Trains a Blackbox model"""
@@ -409,9 +414,7 @@ class Train(Resource):
         if not parsed_args.get("file"):
             return (
                 {
-                    "error": "No file was provided to train the model for the entity {}".format(
-                        entity_id
-                    )
+                    "error": f"No file was provided to train the model for the entity {entity_id}"
                 },
                 400,
             )
@@ -572,12 +575,14 @@ class OCBPredict(Resource):
     @anomaly_ns.doc(
         responses={
             202: "Success",
-            400: "No payload, the entity or the JSON file does not exist or an attr is missing",
+            400: "No payload, the entity or the JSON file does not exist or an attr is"
+            " missing",
         },
-        description="This endpoint will receive the data from Orion Context Broker (FIWARE), i.e this endpoint has to "
-        "be specified in the HTTP URL field of a OCB subscription (OCB will make a POST to this endpoint)."
-        " With the data received from an entity, a prediction will be made using the default pre-trained "
-        "model for the entity.",
+        description="This endpoint will receive the data from Orion Context Broker"
+        " (FIWARE), i.e this endpoint has to be specified in the HTTP URL field of a"
+        " OCB subscription (OCB will make a POST to this endpoint). With the data"
+        " received from an entity, a prediction will be made using the default"
+        " pre-trained model for the entity.",
     )
     def post(self):
         """Endpoint to receive data from OCB and predict if it's an anomaly."""
@@ -612,9 +617,8 @@ class OCBPredict(Resource):
             return {"error": "The entity has not trained models"}, 400
 
         default = entity["default"]
-        if (
-            default is None
-        ):  # if the default model is not set, take the first model from the dict of models
+        if default is None:
+            # if the default model is not set, take the first model from the dict of models
             entity_models = entity["models"]
             model = list(entity_models.keys())[0]
         else:
@@ -666,9 +670,9 @@ class TaskStatus(Resource):
     @cors.crossdomain(origin="*")
     @anomaly_ns.doc(
         responses={200: "Success"},
-        description="Returns the progress of the task specifying the state, the current progress, the "
-        "total progress that has to be reached and the status. Also, if the task has ended "
-        "a result will be returned too.",
+        description="Returns the progress of the task specifying the state, the current"
+        " progress, the total progress that has to be reached and the status. Also, if"
+        " the task has ended a result will be returned too.",
     )
     def get(self, task_id):
         """Gets the status of a task"""
