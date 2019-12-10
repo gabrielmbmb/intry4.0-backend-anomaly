@@ -20,7 +20,7 @@ from blackbox.utils.api import (
 from blackbox.utils.worker import celery_app
 from blackbox.utils.orion import check_orion_connection
 from blackbox.blackbox import BlackBoxAnomalyDetection
-from blackbox import models
+from blackbox.models import unsupervised
 
 # Todo: add logging to the Flask API
 
@@ -213,22 +213,22 @@ class AnomalyModel(Resource):
         description = ""
 
         if model_name == "PCAMahalanobis":
-            description = models.AnomalyPCAMahalanobis.__doc__
+            description = unsupervised.AnomalyPCAMahalanobis.__doc__
 
         if model_name == "Autoencoder":
-            description = models.AnomalyAutoencoder.__doc__
+            description = unsupervised.AnomalyAutoencoder.__doc__
 
         if model_name == "KMeans":
-            description = models.AnomalyKMeans.__doc__
+            description = unsupervised.AnomalyKMeans.__doc__
 
         if model_name == "OneClassSVM":
-            description = models.AnomalyOneClassSVM.__doc__
+            description = unsupervised.AnomalyOneClassSVM.__doc__
 
         if model_name == "GaussianDistribution":
-            description = models.AnomalyGaussianDistribution.__doc__
+            description = unsupervised.AnomalyGaussianDistribution.__doc__
 
         if model_name == "IsolationForest":
-            description = models.AnomalyIsolationForest.__doc__
+            description = unsupervised.AnomalyIsolationForest.__doc__
 
         return {"model": model_name, "description": description}, 200
 

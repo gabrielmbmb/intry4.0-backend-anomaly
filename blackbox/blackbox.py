@@ -2,7 +2,7 @@ import os
 import pickle
 import numpy as np
 
-from blackbox.models import AnomalyModel
+from blackbox.models.base_model import AnomalyModel
 from sklearn.preprocessing import MinMaxScaler
 
 
