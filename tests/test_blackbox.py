@@ -1,6 +1,6 @@
 from unittest import TestCase
 from blackbox.blackbox import BlackBoxAnomalyDetection, NotAnomalyModelClass
-from blackbox.models import (
+from blackbox.models.unsupervised import (
     AnomalyPCAMahalanobis,
     AnomalyAutoencoder,
     AnomalyKMeans,
