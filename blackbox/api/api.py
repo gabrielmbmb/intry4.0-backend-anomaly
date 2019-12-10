@@ -120,7 +120,8 @@ train_parser.add_argument(
     type=float,
     help="Dropout rate across all the layers of the Autoencoder.",
 )
-train_parser.add_argument("activation", type=str, help="Layers activation function.")
+train_parser.add_argument("activation", type=str,
+                          help="Layers activation function.")
 train_parser.add_argument(
     "kernel_initializer", type=str, help="Layers kernel initializer."
 )
@@ -414,7 +415,9 @@ class Train(Resource):
         if not parsed_args.get("file"):
             return (
                 {
-                    "error": f"No file was provided to train the model for the entity {entity_id}"
+                    "error": "No file was provided to train the model for the entity {}".format(
+                        entity_id
+                    )
                 },
                 400,
             )
@@ -458,7 +461,8 @@ class Train(Resource):
             )
 
         if parsed_args.get("n_clusters"):
-            additional_params["KMeans"]["_n_clusters"] = parsed_args.get("n_clusters")
+            additional_params["KMeans"]["_n_clusters"] = parsed_args.get(
+                "n_clusters")
 
         if parsed_args.get("outliers_fraction"):
             additional_params["OneClassSVM"]["outliers_fraction"] = parsed_args.get(
@@ -469,10 +473,12 @@ class Train(Resource):
             )
 
         if parsed_args.get("kernel"):
-            additional_params["OneClassSVM"]["kernel"] = parsed_args.get("kernel")
+            additional_params["OneClassSVM"]["kernel"] = parsed_args.get(
+                "kernel")
 
         if parsed_args.get("gamma"):
-            additional_params["OneClassSVM"]["gamma"] = parsed_args.get("gamma")
+            additional_params["OneClassSVM"]["gamma"] = parsed_args.get(
+                "gamma")
 
         if parsed_args.get("hidden_neurons"):
             additional_params["Autoencoder"]["hidden_neurons"] = list(
@@ -505,10 +511,12 @@ class Train(Resource):
             )
 
         if parsed_args.get("optimizer"):
-            additional_params["Autoencoder"]["optimizer"] = parsed_args.get("optimizer")
+            additional_params["Autoencoder"]["optimizer"] = parsed_args.get(
+                "optimizer")
 
         if parsed_args.get("epochs"):
-            additional_params["Autoencoder"]["epochs"] = parsed_args.get("epochs")
+            additional_params["Autoencoder"]["epochs"] = parsed_args.get(
+                "epochs")
 
         if parsed_args.get("batch_size"):
             additional_params["Autoencoder"]["batch_size"] = parsed_args.get(
@@ -631,7 +639,8 @@ class OCBPredict(Resource):
                 predict_data.append(data[attr]["value"])
             except KeyError:
                 return (
-                    {"error": "The attr {} was not in the sent attrs".format(attr)},
+                    {"error": "The attr {} was not in the sent attrs".format(
+                        attr)},
                     400,
                 )
 
