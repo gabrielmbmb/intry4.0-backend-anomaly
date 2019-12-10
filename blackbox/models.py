@@ -38,25 +38,25 @@ class AnomalyModel(metaclass=ABCMeta):
             str: path of the saved file.
         """
         if path is None:
-            path = './' + self.__class__.__name__ + '.pkl'
+            path = "./" + self.__class__.__name__ + ".pkl"
 
         data_to_pickle = {}
 
         for key, value in self.__dict__.items():
             # save only protected attributes
-            if key[0] == '_':
+            if key[0] == "_":
                 data_to_pickle[key] = value
 
         if self.verbose:
-            print('Saving model to {}'.format(path))
+            print("Saving model to {}".format(path))
 
         try:
-            with open(path, 'wb') as f:
+            with open(path, "wb") as f:
                 pickle.dump(data_to_pickle, f)
         except pickle.PicklingError as e:
-            print('PicklingError: ', str(e))
+            print("PicklingError: ", str(e))
         except Exception as e:
-            print('An error has occurred when trying to write the file: ', str(e))
+            print("An error has occurred when trying to write the file: ", str(e))
 
         return path
 
@@ -70,18 +70,18 @@ class AnomalyModel(metaclass=ABCMeta):
         loaded_data = None
 
         if path is None:
-            path = './' + self.__class__.__name__ + '.pkl'
+            path = "./" + self.__class__.__name__ + ".pkl"
 
         if self.verbose:
-            print('Loading model from {}'.format(path))
+            print("Loading model from {}".format(path))
 
         try:
-            with open(path, 'rb') as f:
+            with open(path, "rb") as f:
                 loaded_data = pickle.load(f)
         except pickle.UnpicklingError as e:
-            print('UnpicklingError: ', str(e))
+            print("UnpicklingError: ", str(e))
         except Exception as e:
-            print('An error has occurred when trying to read the file: ', str(e))
+            print("An error has occurred when trying to read the file: ", str(e))
 
         if loaded_data:
             for key, value in loaded_data.items():
@@ -102,14 +102,12 @@ class AnomalyPCAMahalanobis(AnomalyModel):
         contamination (float): contamination fraction of training dataset. Defaults to 0.01.
         verbose (bool): verbose mode. Defaults to False.
     """
+
     from sklearn.decomposition import PCA
 
-    def __init__(self,
-                 n_components=2,
-                 contamination=0.01,
-                 verbose=False) -> None:
+    def __init__(self, n_components=2, contamination=0.01, verbose=False) -> None:
         super().__init__()
-        self._pca = self.PCA(n_components=n_components, svd_solver='full')
+        self._pca = self.PCA(n_components=n_components, svd_solver="full")
         self._data = None
         self._distances = None
         self._cov = None
@@ -162,8 +160,7 @@ class AnomalyPCAMahalanobis(AnomalyModel):
         Returns:
             float: threshold.
         """
-        threshold = np.percentile(
-            self._distances, 100 * (1 - self._contamination))
+        threshold = np.percentile(self._distances, 100 * (1 - self._contamination))
         return threshold
 
     def mahalanobis_distance(self, x) -> np.ndarray:
@@ -211,23 +208,26 @@ class AnomalyAutoencoder(AnomalyModel):
         contamination (float): contamination fraction of the training dataset. Defaults to 0.01.
         verbose (bool): verbose mode. Defaults to False.
     """
+
     from keras import models
     from keras.layers import Dense, Dropout
     from keras import regularizers
 
-    def __init__(self,
-                 hidden_neurons=None,
-                 dropout_rate=0.2,
-                 activation='elu',
-                 kernel_initializer='glorot_uniform',
-                 kernel_regularizer=None,
-                 loss_function='mse',
-                 optimizer='adam',
-                 epochs=100,
-                 batch_size=10,
-                 validation_split=0.05,
-                 contamination=0.01,
-                 verbose=False):
+    def __init__(
+        self,
+        hidden_neurons=None,
+        dropout_rate=0.2,
+        activation="elu",
+        kernel_initializer="glorot_uniform",
+        kernel_regularizer=None,
+        loss_function="mse",
+        optimizer="adam",
+        epochs=100,
+        batch_size=10,
+        validation_split=0.05,
+        contamination=0.01,
+        verbose=False,
+    ):
         super().__init__()
 
         # model parameters
@@ -255,7 +255,8 @@ class AnomalyAutoencoder(AnomalyModel):
         # Verify that the network design is symmetric
         if not self._hidden_neurons == self._hidden_neurons[::-1]:
             raise ValueError(
-                "Hidden neurons should be symmetric: {}".format(self._hidden_neurons))
+                "Hidden neurons should be symmetric: {}".format(self._hidden_neurons)
+            )
 
         self._autoencoder = None
         self.history = None
@@ -277,16 +278,20 @@ class AnomalyAutoencoder(AnomalyModel):
         # Verify that number of neurons doesn't exceeds the number of features
         self._n_features = data.shape[1]
         if self._n_features < min(self._hidden_neurons):
-            raise ValueError("Number of neurons should not exceed the number of features.")
-        
+            raise ValueError(
+                "Number of neurons should not exceed the number of features."
+            )
+
         self._autoencoder = self.build_autoencoder()
-        self.history = self._autoencoder.fit(x=data, 
-                                             y=data, 
-                                             batch_size=self._batch_size, 
-                                             epochs=self._epochs,
-                                             validation_split=self._validation_split, 
-                                             shuffle=True, 
-                                             verbose=0)
+        self.history = self._autoencoder.fit(
+            x=data,
+            y=data,
+            batch_size=self._batch_size,
+            epochs=self._epochs,
+            validation_split=self._validation_split,
+            shuffle=True,
+            verbose=0,
+        )
         predict = self._autoencoder.predict(data)
         self._loss = self.mean_absolute_error(data, predict)
         self._threshold = self.establish_threshold()
@@ -328,24 +333,35 @@ class AnomalyAutoencoder(AnomalyModel):
         model = self.models.Sequential()
 
         # input layer
-        model.add(self.Dense(units=self._hidden_neurons[0],
-                             activation=self._activation,
-                             kernel_initializer=self._kernel_initializer,
-                             activity_regularizer=self._kernel_regularizer,
-                             input_shape=(self._n_features,)))
+        model.add(
+            self.Dense(
+                units=self._hidden_neurons[0],
+                activation=self._activation,
+                kernel_initializer=self._kernel_initializer,
+                activity_regularizer=self._kernel_regularizer,
+                input_shape=(self._n_features,),
+            )
+        )
         model.add(self.Dropout(self._dropout_rate))
 
         # hidden layers
         for _, hidden_neurons in enumerate(self._hidden_neurons, 2):
-            model.add(self.Dense(units=hidden_neurons,
-                                 activation=self._activation,
-                                 kernel_initializer=self._kernel_initializer,
-                                 activity_regularizer=self._kernel_regularizer))
+            model.add(
+                self.Dense(
+                    units=hidden_neurons,
+                    activation=self._activation,
+                    kernel_initializer=self._kernel_initializer,
+                    activity_regularizer=self._kernel_regularizer,
+                )
+            )
             model.add(self.Dropout(self._dropout_rate))
 
         # output layer
         model.add(
-            self.Dense(units=self._n_features, kernel_initializer=self._kernel_initializer))
+            self.Dense(
+                units=self._n_features, kernel_initializer=self._kernel_initializer
+            )
+        )
 
         # compile
         model.compile(optimizer=self._optimizer, loss=self._loss_function)
@@ -399,6 +415,7 @@ class AnomalyKMeans(AnomalyModel):
         _n_clusters (Int): indicates the number of clusters. Defaults to None.
         verbose (bool): verbose mode. Defaults to False.
     """
+
     from sklearn.cluster import KMeans
 
     def __init__(self, _n_clusters=None, verbose=False):
@@ -420,21 +437,25 @@ class AnomalyKMeans(AnomalyModel):
 
         if self._n_clusters is None:
             if self.verbose:
-                print('Calculating optimal number of clusters with Elbow Method...')
+                print("Calculating optimal number of clusters with Elbow Method...")
 
             (self._n_clusters, _) = self.elbow(data)
 
             if self.verbose:
-                print('Optimal number of n_clusters: {}. Fitting model...'.format(
-                    self._n_clusters))
+                print(
+                    "Optimal number of n_clusters: {}. Fitting model...".format(
+                        self._n_clusters
+                    )
+                )
 
         self._kmeans = self.KMeans(n_clusters=self._n_clusters)
         self._kmeans.fit(data)
         self._distances = self.get_distance_by_point(
-            data, self._kmeans.cluster_centers_, self._kmeans.labels_)
+            data, self._kmeans.cluster_centers_, self._kmeans.labels_
+        )
 
         if self.verbose:
-            print('Calculating threshold value to flag an anomaly...')
+            print("Calculating threshold value to flag an anomaly...")
 
         self._threshold = self.calculate_threshold()
 
@@ -451,7 +472,8 @@ class AnomalyKMeans(AnomalyModel):
         """
         data_labels = self._kmeans.predict(data)
         distances = self.get_distance_by_point(
-            data, self._kmeans.cluster_centers_, data_labels)
+            data, self._kmeans.cluster_centers_, data_labels
+        )
         return distances
 
     def flag_anomaly(self, data) -> np.ndarray:
@@ -494,7 +516,7 @@ class AnomalyKMeans(AnomalyModel):
                 scores (list): list of float with scores for every K-Means model.
         """
         if self.verbose:
-            print('Computing K-Means models...')
+            print("Computing K-Means models...")
 
         n_clusters = range(1, max_clusters)
         kmeans = [self.KMeans(n_clusters=i).fit(data) for i in n_clusters]
@@ -502,7 +524,7 @@ class AnomalyKMeans(AnomalyModel):
         line_p1, line_p2 = (0, scores[0]), (max_clusters, scores[-1])
 
         if self.verbose:
-            print('Calculating Elbow point...')
+            print("Calculating Elbow point...")
 
         distances = []
         for n_score, score in enumerate(scores):
@@ -527,8 +549,7 @@ class AnomalyKMeans(AnomalyModel):
         p1 = np.asarray(line_p1)
         p2 = np.asarray(line_p2)
         p = np.asarray(point)
-        d = np.linalg.norm(np.cross(p2 - p1, p1 - p)) / \
-            np.linalg.norm(p2 - p1)
+        d = np.linalg.norm(np.cross(p2 - p1, p1 - p)) / np.linalg.norm(p2 - p1)
 
         return d
 
@@ -564,25 +585,23 @@ class AnomalyOneClassSVM(AnomalyModel):
     density of points (not anomaly), and negative for small densities (anomaly).
 
     Args:
-        outliers_fraction (float): outliers fraction. Defaults to 0.01 (3 standard deviations).
+        contamination (float): contamination fraction of training dataset. Defaults to 0.01.
         kernel (str): kernel type. It must be one of ‘linear’, ‘poly’, ‘rbf’, ‘sigmoid’, ‘precomputed’ or a callable.
             Defaults to 'rbf'.
         gamma (float): kernel coefficient. Defaults to 0.01.
         verbose (bool): verbose mode. Defaults to False.
     """
+
     from sklearn.svm import OneClassSVM
 
-    def __init__(self,
-                 outliers_fraction=0.01,
-                 kernel='rbf',
-                 gamma=0.01,
-                 verbose=False):
+    def __init__(self, contamination=0.01, kernel="rbf", gamma=0.01, verbose=False):
         super().__init__()
-        self._outliers_fraction = outliers_fraction
+        self._contamination = contamination
         self._gamma = gamma
         self._kernel = kernel
         self._svm = self.OneClassSVM(
-            nu=self._outliers_fraction, kernel=self._kernel, gamma=self._gamma)
+            nu=self._contamination, kernel=self._kernel, gamma=self._gamma
+        )
         self.verbose = verbose
 
     def train(self, data) -> None:
@@ -593,7 +612,7 @@ class AnomalyOneClassSVM(AnomalyModel):
             data (numpy.ndarray or pandas.DataFrame): training data
         """
         if self.verbose:
-            print('Training the OneClassSVM model...')
+            print("Training the OneClassSVM model...")
 
         self._svm.fit(data)
 
@@ -662,8 +681,7 @@ class AnomalyGaussianDistribution(AnomalyModel):
 
         (self._mean, self._variance) = self.estimate_parameters(data)
         self._probabilities = self.calculate_probability(data)
-        (self._epsilon, _) = self.establish_threshold(
-            labels, self._probabilities)
+        (self._epsilon, _) = self.establish_threshold(labels, self._probabilities)
 
     def predict(self, data) -> np.ndarray:
         """
@@ -713,19 +731,21 @@ class AnomalyGaussianDistribution(AnomalyModel):
             for feature_index in range(num_features):
                 # power of e
                 power_dividend = np.power(
-                    data[sample_index, feature_index] - self._mean[feature_index], 2)
+                    data[sample_index, feature_index] - self._mean[feature_index], 2
+                )
                 power_divider = 2 * self._variance[feature_index]
                 e_power = -1 * power_dividend / power_divider
 
                 # prefix multiplier
-                prefix_multiplier = 1 / \
-                    np.sqrt(2 * np.pi * self._variance[feature_index])
+                prefix_multiplier = 1 / np.sqrt(
+                    2 * np.pi * self._variance[feature_index]
+                )
 
                 # probability
                 probability = prefix_multiplier * np.exp(e_power)
                 probabilities[sample_index] *= probability
 
-        return probabilities.reshape(-1, )
+        return probabilities.reshape(-1,)
 
     @staticmethod
     def estimate_parameters(data) -> Tuple[np.ndarray, np.ndarray]:
@@ -774,7 +794,9 @@ class AnomalyGaussianDistribution(AnomalyModel):
             true_positives = np.sum((predictions == 1) & (labels == 1))
 
             # prevent division by 0
-            if (true_positives + false_positives) == 0 or (true_positives + false_negatives) == 0:
+            if (true_positives + false_positives) == 0 or (
+                true_positives + false_negatives
+            ) == 0:
                 continue
 
             precision = true_positives / (true_positives + false_positives)
@@ -799,12 +821,14 @@ class AnomalyIsolationForest(AnomalyModel):
         contamination (float): contamination fraction in dataset. Defaults to 0.01.
         verbose (bool): verbose mode. Defaults to False.
     """
+
     from sklearn.ensemble import IsolationForest
 
     def __init__(self, contamination=0.01, verbose=False):
         super().__init__()
         self._forest = self.IsolationForest(
-            contamination=contamination, behaviour='new')
+            contamination=contamination, behaviour="new"
+        )
         self._contamination = contamination
         self.verbose = verbose
 
@@ -816,7 +840,7 @@ class AnomalyIsolationForest(AnomalyModel):
             data (numpy.ndarray or pandas.DataFrame): training data
         """
         if self.verbose:
-            print('Training the Isolation Forest model...')
+            print("Training the Isolation Forest model...")
 
         self._forest.fit(data)
 

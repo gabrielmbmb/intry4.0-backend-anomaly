@@ -10,62 +10,62 @@ from blackbox.blackbox import BlackBoxAnomalyDetection
 class TestFlaskApi(TestCase):
     """Test Flask API"""
 
-    API_ANOMALY_ENDPOINT = '/api/v1'
-    TEST_MODELS_JSON_PATH = os.path.expanduser('~/blackbox/models/models.json')
+    API_ANOMALY_ENDPOINT = "/api/v1"
+    TEST_MODELS_JSON_PATH = os.path.expanduser("~/blackbox/models/models.json")
 
     def setUp(self):
         self.app = app.test_client()
 
     def rm_test_files(self):
         dirpath = os.getcwd()
-        os.chdir(os.path.expanduser('~'))
-        shutil.rmtree('./blackbox')
+        os.chdir(os.path.expanduser("~"))
+        shutil.rmtree("./blackbox")
         os.chdir(dirpath)
 
     def test_get_available_models(self):
         """Tests getting available models in Blackbox"""
-        response = self.app.get(self.API_ANOMALY_ENDPOINT + '/models')
+        response = self.app.get(self.API_ANOMALY_ENDPOINT + "/models")
 
         self.assertEqual(response.status_code, 200)
-        self.assertListEqual(response.json['available_models'], BlackBoxAnomalyDetection.AVAILABLE_MODELS)
+        self.assertListEqual(
+            response.json["available_models"], BlackBoxAnomalyDetection.AVAILABLE_MODELS
+        )
 
         for available_models in BlackBoxAnomalyDetection.AVAILABLE_MODELS:
-            response = self.app.get(self.API_ANOMALY_ENDPOINT + '/models/' + available_models)
+            response = self.app.get(
+                self.API_ANOMALY_ENDPOINT + "/models/" + available_models
+            )
             print(response.json)
 
     def test_create_entity(self):
         """Test if an entity is correctly created"""
-        entity_id = 'urn:ngsi-ld:Machine:001'
-        response = self.app.post(self.API_ANOMALY_ENDPOINT + '/entities/' + entity_id, json={"attrs": ["Bearing1"]})
+        entity_id = "urn:ngsi-ld:Machine:001"
+        response = self.app.post(
+            self.API_ANOMALY_ENDPOINT + "/entities/" + entity_id,
+            json={"attrs": ["Bearing1"]},
+        )
 
         self.assertEqual(response.status_code, 200)
 
         json_entities = read_json(self.TEST_MODELS_JSON_PATH)
         entity = json_entities[entity_id]
-        self.assertDictEqual(entity, {
-            "attrs": ["Bearing1"],
-            "default": None,
-            "models": {}
-        })
+        self.assertDictEqual(
+            entity, {"attrs": ["Bearing1"], "default": None, "models": {}}
+        )
 
         self.rm_test_files()
 
     def test_get_entity(self):
         """Test getting an entity from the JSON file"""
-        entity_id = 'urn:ngsi-ld:Machine:001'
-        self.app.post(self.API_ANOMALY_ENDPOINT + '/entities/' + entity_id, json={"attrs": ["Bearing1"]})
+        entity_id = "urn:ngsi-ld:Machine:001"
+        self.app.post(
+            self.API_ANOMALY_ENDPOINT + "/entities/" + entity_id,
+            json={"attrs": ["Bearing1"]},
+        )
 
-        entity = {
-            entity_id: {
-                "attrs": [
-                    "Bearing1",
-                ],
-                "default": None,
-                "models": {}
-            }
-        }
+        entity = {entity_id: {"attrs": ["Bearing1",], "default": None, "models": {}}}
 
-        response = self.app.get(self.API_ANOMALY_ENDPOINT + '/entities/' + entity_id)
+        response = self.app.get(self.API_ANOMALY_ENDPOINT + "/entities/" + entity_id)
         self.assertEqual(response.status_code, 200)
         self.assertDictEqual(response.json, entity)
 
@@ -73,78 +73,106 @@ class TestFlaskApi(TestCase):
 
     def test_create_entity_already_existing(self):
         """Test creating an entity which already exists"""
-        entity_id = 'urn:ngsi-ld:Machine:001'
-        self.app.post(self.API_ANOMALY_ENDPOINT + '/entities/' + entity_id, json={"attrs": ["Bearing1"]})
-        response = self.app.post(self.API_ANOMALY_ENDPOINT + '/entities/' + entity_id, json={"attrs": ["Bearing1"]})
+        entity_id = "urn:ngsi-ld:Machine:001"
+        self.app.post(
+            self.API_ANOMALY_ENDPOINT + "/entities/" + entity_id,
+            json={"attrs": ["Bearing1"]},
+        )
+        response = self.app.post(
+            self.API_ANOMALY_ENDPOINT + "/entities/" + entity_id,
+            json={"attrs": ["Bearing1"]},
+        )
         self.assertEqual(response.status_code, 400)
 
         self.rm_test_files()
 
     def test_update_entity(self):
         """Test if an entity is correctly updated"""
-        entity_id = 'urn:ngsi-ld:Machine:001'
-        self.app.post(self.API_ANOMALY_ENDPOINT + '/entities/' + entity_id, json={"attrs": ["Bearing1"]})
+        entity_id = "urn:ngsi-ld:Machine:001"
+        self.app.post(
+            self.API_ANOMALY_ENDPOINT + "/entities/" + entity_id,
+            json={"attrs": ["Bearing1"]},
+        )
 
-        new_entity_id = 'urn:ngsi-ld:Machine:999'
+        new_entity_id = "urn:ngsi-ld:Machine:999"
         data_update = {
             "new_entity_id": new_entity_id,
             "default": "./models/urn:ngsi-ld:Machine:001/test_model.pkl",
-            "attrs": [
-                "Pressure1",
-                "Pressure2"
-            ],
+            "attrs": ["Pressure1", "Pressure2"],
             "models": {
                 "model": {
                     "model_path": "./models/urn:ngsi-ld:Machine:001/test_model.pkl",
-                    "train_data_path": "./models/urn:ngsi-ld:Machine:001/train_data/train_data.csv"
+                    "train_data_path": "./models/urn:ngsi-ld:Machine:001/train_data/train_data.csv",
                 }
-            }
+            },
         }
 
-        response = self.app.put(self.API_ANOMALY_ENDPOINT + '/entities/' + entity_id, json=data_update)
+        response = self.app.put(
+            self.API_ANOMALY_ENDPOINT + "/entities/" + entity_id, json=data_update
+        )
         self.assertEqual(response.status_code, 200)
 
         json_entities = read_json(self.TEST_MODELS_JSON_PATH)
         entity = json_entities[new_entity_id]
-        self.assertDictEqual(entity, {
-            "attrs": [
-                "Pressure1",
-                "Pressure2"
-            ],
-            "default": None,
-            "models": {
-                "model": {
-                    "model_path": "./models/urn:ngsi-ld:Machine:001/test_model.pkl",
-                    "train_data_path": "./models/urn:ngsi-ld:Machine:001/train_data/train_data.csv"
-                }
-            }
-        })
+        self.assertDictEqual(
+            entity,
+            {
+                "attrs": ["Pressure1", "Pressure2"],
+                "default": None,
+                "models": {
+                    "model": {
+                        "model_path": "./models/urn:ngsi-ld:Machine:001/test_model.pkl",
+                        "train_data_path": "./models/urn:ngsi-ld:Machine:001/train_data/train_data.csv",
+                    }
+                },
+            },
+        )
 
         self.rm_test_files()
 
     def test_update_entity_id_already_exist(self):
         """Test updating an entity id with one that already exists"""
-        entity_id = 'urn:ngsi-ld:Machine:001'
-        self.app.post(self.API_ANOMALY_ENDPOINT + '/entities/' + entity_id, json={"attrs": ["Bearing1"]})
+        entity_id = "urn:ngsi-ld:Machine:001"
+        self.app.post(
+            self.API_ANOMALY_ENDPOINT + "/entities/" + entity_id,
+            json={"attrs": ["Bearing1"]},
+        )
 
-        entity_id_2 = 'urn:ngsi-ld:Machine:002'
-        self.app.post(self.API_ANOMALY_ENDPOINT + '/entities/' + entity_id_2, json={"attrs": ["Bearing1"]})
+        entity_id_2 = "urn:ngsi-ld:Machine:002"
+        self.app.post(
+            self.API_ANOMALY_ENDPOINT + "/entities/" + entity_id_2,
+            json={"attrs": ["Bearing1"]},
+        )
 
         data_update = {"new_entity_id": entity_id}
-        response = self.app.put(self.API_ANOMALY_ENDPOINT + '/entities/' + entity_id, json=data_update)
+        response = self.app.put(
+            self.API_ANOMALY_ENDPOINT + "/entities/" + entity_id, json=data_update
+        )
         self.assertEqual(response.status_code, 400)
 
         self.rm_test_files()
 
     def test_delete_entity(self):
         """Test if an entity is correctly deleted"""
-        entity_id = 'urn:ngsi-ld:Machine:001'
-        self.app.post(self.API_ANOMALY_ENDPOINT + '/entities/' + entity_id, json={"attrs": ["Bearing1"]})
-        response = self.app.delete(self.API_ANOMALY_ENDPOINT + '/entities/' + entity_id)
+        entity_id = "urn:ngsi-ld:Machine:001"
+        self.app.post(
+            self.API_ANOMALY_ENDPOINT + "/entities/" + entity_id,
+            json={"attrs": ["Bearing1"]},
+        )
+        response = self.app.delete(self.API_ANOMALY_ENDPOINT + "/entities/" + entity_id)
         self.assertEqual(response.status_code, 200)
         date = datetime.now()
-        date_string = '{}-{}-{}-{}:{}'.format(date.year, date.month, date.day, date.hour, date.minute)
-        self.assertTrue(os.path.exists(os.path.expanduser('~/blackbox/models/trash/') + entity_id + '_' + date_string))
+        date_string = "{}-{}-{}-{}:{}".format(
+            date.year, date.month, date.day, date.hour, date.minute
+        )
+        self.assertTrue(
+            os.path.exists(
+                os.path.expanduser("~/blackbox/models/trash/")
+                + entity_id
+                + "_"
+                + date_string
+            )
+        )
 
         self.rm_test_files()
 

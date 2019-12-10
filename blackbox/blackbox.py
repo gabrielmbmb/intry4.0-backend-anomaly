@@ -8,6 +8,7 @@ from sklearn.preprocessing import MinMaxScaler
 
 class NotAnomalyModelClass(Exception):
     """Raised when a model added to the blackbox is not an instance of AnomalyModel"""
+
     pass
 
 
@@ -23,12 +24,12 @@ class BlackBoxAnomalyDetection:
     """
 
     AVAILABLE_MODELS = [
-        'PCAMahalanobis',
-        'Autoencoder',
-        'KMeans',
-        'OneClassSVM',
-        'GaussianDistribution',
-        'IsolationForest'
+        "PCAMahalanobis",
+        "Autoencoder",
+        "KMeans",
+        "OneClassSVM",
+        "GaussianDistribution",
+        "IsolationForest",
     ]
 
     def __init__(self, verbose=False):
@@ -46,14 +47,14 @@ class BlackBoxAnomalyDetection:
         """
         if not isinstance(model, AnomalyModel):
             raise NotAnomalyModelClass(
-                'The model to be added is not an instance of blackbox.models.AnomalyModel!')
+                "The model to be added is not an instance of blackbox.models.AnomalyModel!"
+            )
 
         if name is None:
             name = model.__class__.__name__
 
         if self.verbose:
-            print('Adding model {} to the blackbox...'.format(
-                model.__class__.__name__))
+            print("Adding model {} to the blackbox...".format(model.__class__.__name__))
 
         self.models[name] = model
 
@@ -71,7 +72,7 @@ class BlackBoxAnomalyDetection:
         """
         if self.scaler is None:
             if self.verbose:
-                print('Fitting data scaler...')
+                print("Fitting data scaler...")
 
             scaler = MinMaxScaler()
             scaled_data = scaler.fit_transform(data)
@@ -79,7 +80,7 @@ class BlackBoxAnomalyDetection:
             return scaled_data
 
         if self.verbose:
-            print('Scaling data...')
+            print("Scaling data...")
 
         scaled_data = self.scaler.transform(data)
         return scaled_data
@@ -99,17 +100,17 @@ class BlackBoxAnomalyDetection:
         for name, model in self.models.items():
             if cb_func:
                 progress = (model_n / len(self.models)) * 100
-                message = 'Training model ' + name
+                message = "Training model " + name
                 cb_func(progress, message)
 
             if self.verbose:
-                print('Training model {}...'.format(name))
+                print("Training model {}...".format(name))
 
             model.train(data)
             model_n += 1
 
         if self.verbose:
-            print('Models trained!')
+            print("Models trained!")
 
     def flag_anomaly(self, data) -> np.ndarray:
         """
@@ -127,15 +128,16 @@ class BlackBoxAnomalyDetection:
         data = self.scale_data(data)
 
         results = []
-        for name, model in self.models.items():
+        for _, model in self.models.items():
             results.append(model.flag_anomaly(data))
 
         np_array = np.array(results)
+        # pylint: disable=E1136 # pylint/issues/3139
         np_array = np_array.reshape((np_array.shape[1], np_array.shape[0]))
 
         return np_array
 
-    def save_models(self, path_dir='./saved_models') -> None:
+    def save_models(self, path_dir="./saved_models") -> None:
         """
         Saves the trained models in the directory specified.
 
@@ -144,16 +146,16 @@ class BlackBoxAnomalyDetection:
         """
         if not os.path.exists(path_dir):
             if self.verbose:
-                print('Directory {} does not exists. Creating...'.format(path_dir))
+                print("Directory {} does not exists. Creating...".format(path_dir))
             os.mkdir(path_dir)
 
         for name, model in self.models.items():
-            path = path_dir + '/' + name + '.pkl'
+            path = path_dir + "/" + name + ".pkl"
             if self.verbose:
-                print('Saving model in {}'.format(path))
+                print("Saving model in {}".format(path))
             model.save_model(path=path)
 
-    def load_models(self, path_dir='./saved_models') -> None:
+    def load_models(self, path_dir="./saved_models") -> None:
         """
         Loads the trained models from the directory specified.
 
@@ -161,13 +163,12 @@ class BlackBoxAnomalyDetection:
             path_dir (str): path to the directory storing the saved models. Defaults to './saved_models'.
         """
         for model in self.models:
-            path = path_dir + '/' + \
-                self.models[model].__class__.__name__ + '.pkl'
+            path = path_dir + "/" + self.models[model].__class__.__name__ + ".pkl"
             if self.verbose:
-                print('Loading model from {}'.format(path))
+                print("Loading model from {}".format(path))
             self.models[model].load_model(path=path)
 
-    def save_blackbox(self, path='./blackbox.pkl') -> str:
+    def save_blackbox(self, path="./blackbox.pkl") -> str:
         """
         Saves the entire Blackbox, that's means that all models will be saved in the same file and it will be easier to
         load the Blackbox instead of loading every model one by one and then adding it to the Blackbox.
@@ -178,19 +179,19 @@ class BlackBoxAnomalyDetection:
         Returns:
             str: path of the saved blackbox.
         """
-        data_to_pickle = {'models': self.models, 'scaler': self.scaler}
+        data_to_pickle = {"models": self.models, "scaler": self.scaler}
 
         try:
-            with open(path, 'wb') as f:
+            with open(path, "wb") as f:
                 pickle.dump(data_to_pickle, f)
         except pickle.PicklingError as e:
-            print('PicklingError: ', str(e))
+            print("PicklingError: ", str(e))
         except Exception as e:
-            print('An error has occurred when trying to write the file: ', str(e))
+            print("An error has occurred when trying to write the file: ", str(e))
 
         return path
 
-    def load_blackbox(self, path='./blackbox.pkl') -> None:
+    def load_blackbox(self, path="./blackbox.pkl") -> None:
         """
         Loads a Blackbox from a pickle file.
 
@@ -200,12 +201,13 @@ class BlackBoxAnomalyDetection:
         loaded_data = None
 
         try:
-            with open(path, 'rb') as f:
+            with open(path, "rb") as f:
                 loaded_data = pickle.load(f)
         except pickle.UnpicklingError as e:
-            print('UnpicklingError: ', str(e))
+            print("UnpicklingError: ", str(e))
         except Exception as e:
-            print('An error has occurred when trying to write the file: ', str(e))
+            print("An error has occurred when trying to write the file: ", str(e))
 
-        self.models = loaded_data['models']
-        self.scaler = loaded_data['scaler']
+        self.models = loaded_data["models"]
+        self.scaler = loaded_data["scaler"]
+

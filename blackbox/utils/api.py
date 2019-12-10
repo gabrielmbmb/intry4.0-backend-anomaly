@@ -18,7 +18,7 @@ def read_json(path) -> Dict:
         dict: dict with the content of the JSON file or None if the JSON couldn't be read.
     """
     try:
-        with open(path, 'r') as f:
+        with open(path, "r") as f:
             json_ = json.load(f)
     except FileNotFoundError:
         json_ = None
@@ -44,7 +44,7 @@ def write_json(path, data, sort=False) -> None:
 
         data = new_json
 
-    with open(path, 'w') as f:
+    with open(path, "w") as f:
         json.dump(data, f)
 
 
@@ -63,32 +63,42 @@ def add_entity_json(path_json, entity_id, path_entity_dir, attrs) -> Tuple[bool,
         tuple: bool which indicates if the entity was created and str which is a descriptive message.
     """
     try:
-        os.makedirs(os.path.join(path_entity_dir, 'train_data'))
+        os.makedirs(os.path.join(path_entity_dir, "train_data"))
     except FileExistsError:
-        print('The directory {} already exists. Aborting...'.format(path_entity_dir))
-        return False, 'The directory {} already exists.'.format(path_entity_dir)
+        print("The directory {} already exists. Aborting...".format(path_entity_dir))
+        return False, "The directory {} already exists.".format(path_entity_dir)
     except OSError:
-        print('Error creating directory {} for entity {}. Aborting...'.format(
-            path_entity_dir, entity_id))
-        return False, 'The directory {} could not be created'.format(path_entity_dir)
+        print(
+            "Error creating directory {} for entity {}. Aborting...".format(
+                path_entity_dir, entity_id
+            )
+        )
+        return False, "The directory {} could not be created".format(path_entity_dir)
 
     json_entities = read_json(path_json)
     if not json_entities:
         json_entities = {entity_id: ENTITY_JSON_STRUCTURE}
     else:
         if entity_id in json_entities:
-            return False, 'The entity {} already exists'.format(entity_id)
+            return False, "The entity {} already exists".format(entity_id)
 
         json_entities[entity_id] = ENTITY_JSON_STRUCTURE
 
-    json_entities[entity_id]['attrs'] = attrs
+    json_entities[entity_id]["attrs"] = attrs
     write_json(path_json, json_entities, sort=True)
 
-    return True, 'The entity {} was created'.format(entity_id)
+    return True, "The entity {} was created".format(entity_id)
 
 
-def add_model_entity_json(path_json, entity_id, model_name, model_path, train_data_path, models,
-                          input_arguments) -> bool:
+def add_model_entity_json(
+    path_json,
+    entity_id,
+    model_name,
+    model_path,
+    train_data_path,
+    models,
+    input_arguments,
+) -> bool:
     """
     Adds a model of an entity to the JSON file.
 
@@ -110,22 +120,22 @@ def add_model_entity_json(path_json, entity_id, model_name, model_path, train_da
     """
     json_entities = read_json(path_json)
     if not json_entities:
-        raise FileNotFoundError('File {} does not exists!'.format(path_json))
+        raise FileNotFoundError("File {} does not exists!".format(path_json))
 
     try:
         entity_dict = json_entities[entity_id]
     except KeyError as e:
-        print('Entity does not exist: ', e)
+        print("Entity does not exist: ", e)
         return False
 
-    if entity_dict['default'] is None:
-        entity_dict['default'] = model_name
+    if entity_dict["default"] is None:
+        entity_dict["default"] = model_name
 
-    entity_dict['models'][model_name] = {
-        'input_arguments': input_arguments,
-        'models': models,
-        'model_path': model_path,
-        'train_data_path': train_data_path
+    entity_dict["models"][model_name] = {
+        "input_arguments": input_arguments,
+        "models": models,
+        "model_path": model_path,
+        "train_data_path": train_data_path,
     }
 
     json_entities[entity_id] = entity_dict
@@ -133,8 +143,15 @@ def add_model_entity_json(path_json, entity_id, model_name, model_path, train_da
     return True
 
 
-def update_entity_json(entity_id, path_json, path_models, new_entity_id=None,
-                       default=None, attrs=None, models=None) -> Tuple[bool, List[str]]:
+def update_entity_json(
+    entity_id,
+    path_json,
+    path_models,
+    new_entity_id=None,
+    default=None,
+    attrs=None,
+    models=None,
+) -> Tuple[bool, List[str]]:
     """
     Updates an entity stored in the JSON file.
 
@@ -155,62 +172,65 @@ def update_entity_json(entity_id, path_json, path_models, new_entity_id=None,
     """
     json_entities = read_json(path_json)
     if not json_entities:
-        raise FileNotFoundError('File {} does not exists!'.format(path_json))
+        raise FileNotFoundError("File {} does not exists!".format(path_json))
 
     messages = []
     updated = False
 
     if entity_id not in json_entities:
-        messages.append('The entity does not exist.')
+        messages.append("The entity does not exist.")
         return updated, messages
 
     entity = json_entities[entity_id]
 
     if models:
         if isinstance(models, dict):
-            entity['models'] = models
-            messages.append('The parameter models has been updated.')
+            entity["models"] = models
+            messages.append("The parameter models has been updated.")
             updated = True
         else:
-            messages.append('The parameter models has to be a dict.')
+            messages.append("The parameter models has to be a dict.")
 
     if default:
         if isinstance(default, str):
-            if default in entity['models']:
-                entity['default'] = default
-                messages.append('The parameter default has been updated.')
+            if default in entity["models"]:
+                entity["default"] = default
+                messages.append("The parameter default has been updated.")
                 updated = True
             else:
                 messages.append(
-                    'The model {} does not exists for entity {} and cannot be set as default model'.format(default,
-                                                                                                           entity_id))
+                    "The model {} does not exists for entity {} and cannot be set as default model".format(
+                        default, entity_id
+                    )
+                )
         else:
-            messages.append('The parameter default has to be an str.')
+            messages.append("The parameter default has to be an str.")
 
     if attrs:
         if isinstance(attrs, list):
-            entity['attrs'] = attrs
-            messages.append('The parameter attrs has been updated.')
+            entity["attrs"] = attrs
+            messages.append("The parameter attrs has been updated.")
             updated = True
         else:
-            messages.append('The parameter attrs has to be a list of str.')
+            messages.append("The parameter attrs has to be a list of str.")
 
     json_entities[entity_id] = entity
 
     if new_entity_id:
         if new_entity_id in json_entities:
-            messages.append(
-                'An entity already exist with id {}'.format(new_entity_id))
+            messages.append("An entity already exist with id {}".format(new_entity_id))
         else:
             if isinstance(new_entity_id, str):
                 json_entities[new_entity_id] = entity
                 json_entities.pop(entity_id, None)
-                os.rename(os.path.join(path_models, entity_id),
-                          os.path.join(path_models, new_entity_id))
-                messages.append('The parameter entity_id has been updated.')
+                os.rename(
+                    os.path.join(path_models, entity_id),
+                    os.path.join(path_models, new_entity_id),
+                )
+                messages.append("The parameter entity_id has been updated.")
                 updated = True
             else:
-                messages.append('The parameter new_entity_id has to be an str')
+                messages.append("The parameter new_entity_id has to be an str")
 
     if updated:
         write_json(path_json, json_entities, sort=True)
@@ -218,7 +238,9 @@ def update_entity_json(entity_id, path_json, path_models, new_entity_id=None,
     return updated, messages
 
 
-def delete_entity_json(entity_id, path_json, path_models, path_trash) -> Tuple[bool, str]:
+def delete_entity_json(
+    entity_id, path_json, path_models, path_trash
+) -> Tuple[bool, str]:
     """
     Deletes an entity from the JSON storing the entities and its models. The directory of the entity will be moved
     to the deleted entities folder.
@@ -237,22 +259,29 @@ def delete_entity_json(entity_id, path_json, path_models, path_trash) -> Tuple[b
 
     json_entities = read_json(path_json)
     if not json_entities:
-        raise FileNotFoundError('File {} does not exists!'.format(path_json))
+        raise FileNotFoundError("File {} does not exists!".format(path_json))
 
     if entity_id not in json_entities:
-        return False, 'The entity {} does not exists.'.format(entity_id)
+        return False, "The entity {} does not exists.".format(entity_id)
 
     json_entities.pop(entity_id, False)
     write_json(path_json, json_entities)
 
     # move the dir of the entity to the trash folder
     date = datetime.now()
-    date_string = '{}-{}-{}-{}:{}'.format(date.year,
-                                          date.month, date.day, date.hour, date.minute)
-    os.rename(path_models + '/' + entity_id, path_trash +
-              '/' + entity_id + '_' + date_string)
+    date_string = "{}-{}-{}-{}:{}".format(
+        date.year, date.month, date.day, date.hour, date.minute
+    )
+    os.rename(
+        path_models + "/" + entity_id, path_trash + "/" + entity_id + "_" + date_string
+    )
 
-    return True, 'The entity {} was deleted and its directory was moved to {}'.format(entity_id, path_trash)
+    return (
+        True,
+        "The entity {} was deleted and its directory was moved to {}".format(
+            entity_id, path_trash
+        ),
+    )
 
 
 def build_url(url_root, base_endpoint, *args):
@@ -268,19 +297,21 @@ def build_url(url_root, base_endpoint, *args):
     Returns:
         str: the build URL.
     """
-    complete_url = ''
-    if (url_root[-1] == '/' and base_endpoint[0] != '/') or (url_root[-1] != '/' and base_endpoint[0] == '/'):
+    complete_url = ""
+    if (url_root[-1] == "/" and base_endpoint[0] != "/") or (
+        url_root[-1] != "/" and base_endpoint[0] == "/"
+    ):
         complete_url = url_root + base_endpoint
-    elif url_root[-1] == '/' and base_endpoint[0] == '/':
+    elif url_root[-1] == "/" and base_endpoint[0] == "/":
         complete_url = url_root[:-1] + base_endpoint
-    elif url_root[-1] != '/' and base_endpoint[0] != '/':
-        complete_url = url_root + '/' + base_endpoint
+    elif url_root[-1] != "/" and base_endpoint[0] != "/":
+        complete_url = url_root + "/" + base_endpoint
 
-    if complete_url[-1] == '/':
+    if complete_url[-1] == "/":
         complete_url = complete_url[:-1]
 
     for point in args:
-        complete_url = complete_url + '/' + point
+        complete_url = complete_url + "/" + point
 
     return complete_url
 
@@ -320,7 +351,7 @@ def parse_float(to_parse) -> Union[float, list, None]:
             try:
                 parsed_floats.append(float(string))
             except ValueError:
-                print('String {} could not be parsed to float'.format(parsed_floats))
+                print("String {} could not be parsed to float".format(parsed_floats))
 
         return parsed_floats
 
@@ -328,6 +359,6 @@ def parse_float(to_parse) -> Union[float, list, None]:
         parsed_float = float(to_parse)
     except ValueError:
         parsed_float = None
-        print('String {} could not be parsed to float'.format(parsed_float))
+        print("String {} could not be parsed to float".format(parsed_float))
 
     return parsed_float

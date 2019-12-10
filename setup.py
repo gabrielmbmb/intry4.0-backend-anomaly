@@ -1,6 +1,7 @@
 import setuptools
 from blackbox import version
-with open('README.md', 'r') as fh:
+
+with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
@@ -14,9 +15,9 @@ setuptools.setup(
     packages=setuptools.find_packages(),
     data_files=[],
     entry_points={
-        'console_scripts': [
-            'blackbox = blackbox.api.api:run_api',
-            'blackbox-tools = tools.blackbox_tools:tools'
+        "console_scripts": [
+            "blackbox = blackbox.api.api:run_api",
+            "blackbox-tools = tools.blackbox_tools:tools",
         ]
     },
     classifiers=[
@@ -27,10 +28,10 @@ setuptools.setup(
         "Intended Audience :: Developers",
         "Framework :: Flask",
     ],
-    python_requires='>=3.5',
-    keywords='PLATINUM, anomaly-detection',
+    python_requires=">=3.5",
+    keywords="PLATINUM, anomaly-detection",
     project_urls={
-        'Bug Reports': 'https://github.com/bisite/PLATINUM-anomaly-detection/issues',
-        'Source': 'https://github.com/bisite/PLATINUM-anomaly-detection',
-    }
+        "Bug Reports": "https://github.com/bisite/PLATINUM-anomaly-detection/issues",
+        "Source": "https://github.com/bisite/PLATINUM-anomaly-detection",
+    },
 )

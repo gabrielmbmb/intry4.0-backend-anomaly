@@ -8,36 +8,57 @@ from pygments import highlight
 from pygments.lexers.data import JsonLexer
 from pygments.formatters.terminal import TerminalFormatter
 
-DEFAULT_FIWARE_HOST = 'http://localhost:1026'
-DEFAULT_BLACKBOX_HOST = 'http://localhost:5678'
-DEFAULT_FIWARE_SERVICE = 'sensores'
-DEFAULT_FIWARE_SERVICE_PATH = '/'
-DEFAULT_TYPE = 'Machine'
+DEFAULT_FIWARE_HOST = "http://localhost:1026"
+DEFAULT_BLACKBOX_HOST = "http://localhost:5678"
+DEFAULT_FIWARE_SERVICE = "sensores"
+DEFAULT_FIWARE_SERVICE_PATH = "/"
+DEFAULT_TYPE = "Machine"
 
 
 @click.group()
-@click.option('--on', type=click.Choice(['fiware', 'blackbox', 'both']), default='both',
-              help='Indicates where the operation has to be done.')
-@click.option('--blackbox_url', '-ah', default=DEFAULT_BLACKBOX_HOST, help='URL of Blackbox API')
-@click.option('--fiware_url', '-fh', default=DEFAULT_FIWARE_HOST, help='URL of Orion Context Broker (FIWARE)')
-@click.option('--fw_service', '-fs', default=DEFAULT_FIWARE_SERVICE, help='Orion Context Broker service')
-@click.option('--fw_service_path', '-fsp', default=DEFAULT_FIWARE_SERVICE_PATH,
-              help='Orion Context Broker service path')
-@click.option('--entity_type', '-et', default=DEFAULT_TYPE, help='Type of the entity')
+@click.option(
+    "--on",
+    type=click.Choice(["fiware", "blackbox", "both"]),
+    default="both",
+    help="Indicates where the operation has to be done.",
+)
+@click.option(
+    "--blackbox_url", "-ah", default=DEFAULT_BLACKBOX_HOST, help="URL of Blackbox API"
+)
+@click.option(
+    "--fiware_url",
+    "-fh",
+    default=DEFAULT_FIWARE_HOST,
+    help="URL of Orion Context Broker (FIWARE)",
+)
+@click.option(
+    "--fw_service",
+    "-fs",
+    default=DEFAULT_FIWARE_SERVICE,
+    help="Orion Context Broker service",
+)
+@click.option(
+    "--fw_service_path",
+    "-fsp",
+    default=DEFAULT_FIWARE_SERVICE_PATH,
+    help="Orion Context Broker service path",
+)
+@click.option("--entity_type", "-et", default=DEFAULT_TYPE, help="Type of the entity")
 @click.pass_context
 def tools(ctx, on, blackbox_url, fiware_url, fw_service, fw_service_path, entity_type):
     ctx.ensure_object(dict)
-    ctx.obj['ON'] = on
-    ctx.obj['BLACKBOX_HOST'] = blackbox_url
-    ctx.obj['FIWARE_HOST'] = fiware_url
-    ctx.obj['FIWARE_SERVICE'] = fw_service
-    ctx.obj['FIWARE_SERVICE_PATH'] = fw_service_path
-    ctx.obj['TYPE'] = entity_type
+    ctx.obj["ON"] = on
+    ctx.obj["BLACKBOX_HOST"] = blackbox_url
+    ctx.obj["FIWARE_HOST"] = fiware_url
+    ctx.obj["FIWARE_SERVICE"] = fw_service
+    ctx.obj["FIWARE_SERVICE_PATH"] = fw_service_path
+    ctx.obj["TYPE"] = entity_type
 
 
 ############
 # ENTITIES #
 ############
+
 
 def parse_attrs(attrs) -> dict:
     """
@@ -51,22 +72,24 @@ def parse_attrs(attrs) -> dict:
     """
     attr_dict = {}
     for attr in attrs:
-        attr_split = attr.split(',')
+        attr_split = attr.split(",")
         if len(attr_split) != 3:
-            click.echo('Badly constructed attribute: {}'.format(attr))
+            click.echo("Badly constructed attribute: {}".format(attr))
             continue
 
         attr_split[1] = attr_split[1].title()
-        if attr_split[1] == 'Float':
+        if attr_split[1] == "Float":
             attr_split[2] = float(attr_split[2])
-        elif attr_split[1] == 'Text':
+        elif attr_split[1] == "Text":
             pass
-        elif attr_split[1] == 'Integer':
+        elif attr_split[1] == "Integer":
             attr_split[2] = int(attr_split[2])
         else:
-            click.echo('Invalid type for attribute {}: {}'.format(attr_split[0], attr_split[1]))
+            click.echo(
+                "Invalid type for attribute {}: {}".format(attr_split[0], attr_split[1])
+            )
 
-        attr_dict[attr_split[0]] = {'type': attr_split[1], 'value': attr_split[2]}
+        attr_dict[attr_split[0]] = {"type": attr_split[1], "value": attr_split[2]}
 
     return attr_dict
 
@@ -86,9 +109,9 @@ def beautify_json(json_data) -> dict:
     return highlighted_json
 
 
-@tools.command('create_entity')
-@click.argument('entity_id')
-@click.argument('attrs', nargs=-1)
+@tools.command("create_entity")
+@click.argument("entity_id")
+@click.argument("attrs", nargs=-1)
 @click.pass_context
 def create_entity(ctx, entity_id, attrs):
     """
@@ -99,42 +122,51 @@ def create_entity(ctx, entity_id, attrs):
         entity_id (str): Orion Context Broker (FIWARE) entity id
         attrs (list of str): list of strings containing the name, type and value of the attributes.
     """
-    click.echo('Creating {} in {} & {} (service: {})'.format(entity_id, ctx.obj['BLACKBOX_HOST'],
-                                                             ctx.obj['FIWARE_HOST'], ctx.obj['FIWARE_SERVICE']))
+    click.echo(
+        "Creating {} in {} & {} (service: {})".format(
+            entity_id,
+            ctx.obj["BLACKBOX_HOST"],
+            ctx.obj["FIWARE_HOST"],
+            ctx.obj["FIWARE_SERVICE"],
+        )
+    )
 
     attrs_dict = {}
     if attrs:
         attrs_dict = parse_attrs(attrs)
 
     # create entity in Orion Context Broker
-    if ctx.obj['ON'] == 'fiware' or ctx.obj['ON'] == 'both':
-        url = ctx.obj['FIWARE_HOST'] + '/v2/entities'
-        data = {**{'id': entity_id, 'type': ctx.obj['TYPE']}, **attrs_dict}
+    if ctx.obj["ON"] == "fiware" or ctx.obj["ON"] == "both":
+        url = ctx.obj["FIWARE_HOST"] + "/v2/entities"
+        data = {**{"id": entity_id, "type": ctx.obj["TYPE"]}, **attrs_dict}
         headers = {
-            'Content-Type': 'application/json',
-            'fiware-service': ctx.obj['FIWARE_SERVICE'],
-            'fiware-servicepath': ctx.obj['FIWARE_SERVICE_PATH'],
+            "Content-Type": "application/json",
+            "fiware-service": ctx.obj["FIWARE_SERVICE"],
+            "fiware-servicepath": ctx.obj["FIWARE_SERVICE_PATH"],
         }
         try:
             response = requests.post(url=url, headers=headers, json=data)
-            click.echo('[FIWARE] STATUS_CODE: {}'.format(response.status_code))
+            click.echo("[FIWARE] STATUS_CODE: {}".format(response.status_code))
         except requests.exceptions.ConnectionError:
-            click.echo('Error connecting with Orion Context Broker')
+            click.echo("Error connecting with Orion Context Broker")
 
     # create entity in Blackbox API
-    if ctx.obj['ON'] == 'blackbox' or ctx.obj['ON'] == 'both':
-        url = ctx.obj['BLACKBOX_HOST'] + '/api/v1/anomaly/entity/' + entity_id
+    if ctx.obj["ON"] == "blackbox" or ctx.obj["ON"] == "both":
+        url = ctx.obj["BLACKBOX_HOST"] + "/api/v1/anomaly/entity/" + entity_id
         attrs = [key for key in attrs_dict.keys()]
         try:
-            response = requests.post(url=url, json={'attrs': attrs})
+            response = requests.post(url=url, json={"attrs": attrs})
             click.echo(
-                '[BLACKBOX API] STATUS_CODE: {}, MSG: {}'.format(response.status_code, beautify_json(response.json())))
+                "[BLACKBOX API] STATUS_CODE: {}, MSG: {}".format(
+                    response.status_code, beautify_json(response.json())
+                )
+            )
         except requests.exceptions.ConnectionError:
-            click.echo('Error connecting with Blackbox API')
+            click.echo("Error connecting with Blackbox API")
 
 
-@tools.command('delete_entity')
-@click.argument('entity_id')
+@tools.command("delete_entity")
+@click.argument("entity_id")
 @click.pass_context
 def delete_entity(ctx, entity_id):
     """
@@ -144,32 +176,44 @@ def delete_entity(ctx, entity_id):
         ctx (object): click object
         entity_id (str): Orion Context Broker (FIWARE) entity id
     """
-    click.echo('Deleting {} in {} & {} (service: {})'.format(entity_id, ctx.obj['BLACKBOX_HOST'],
-                                                             ctx.obj['FIWARE_HOST'], ctx.obj['FIWARE_SERVICE']))
+    click.echo(
+        "Deleting {} in {} & {} (service: {})".format(
+            entity_id,
+            ctx.obj["BLACKBOX_HOST"],
+            ctx.obj["FIWARE_HOST"],
+            ctx.obj["FIWARE_SERVICE"],
+        )
+    )
 
     # deletes an entity in Orion Context Broker
-    if ctx.obj['ON'] == 'fiware' or ctx.obj['ON'] == 'both':
-        url = ctx.obj['FIWARE_HOST'] + '/v2/entities/' + entity_id
-        headers = {'fiware-service': ctx.obj['FIWARE_SERVICE'], 'fiware-servicepath': ctx.obj['FIWARE_SERVICE_PATH']}
+    if ctx.obj["ON"] == "fiware" or ctx.obj["ON"] == "both":
+        url = ctx.obj["FIWARE_HOST"] + "/v2/entities/" + entity_id
+        headers = {
+            "fiware-service": ctx.obj["FIWARE_SERVICE"],
+            "fiware-servicepath": ctx.obj["FIWARE_SERVICE_PATH"],
+        }
         try:
             response = requests.delete(url=url, headers=headers)
-            click.echo('[FIWARE] STATUS_CODE: {}'.format(response.status_code))
+            click.echo("[FIWARE] STATUS_CODE: {}".format(response.status_code))
         except requests.exceptions.ConnectionError:
-            click.echo('Error connecting with Orion Context Broker')
+            click.echo("Error connecting with Orion Context Broker")
 
     # deletes an entity in Blackbox API
-    if ctx.obj['ON'] == 'blackbox' or ctx.obj['ON'] == 'both':
-        url = ctx.obj['BLACKBOX_HOST'] + '/api/v1/anomaly/entity/' + entity_id
+    if ctx.obj["ON"] == "blackbox" or ctx.obj["ON"] == "both":
+        url = ctx.obj["BLACKBOX_HOST"] + "/api/v1/anomaly/entity/" + entity_id
         try:
             response = requests.delete(url=url)
             click.echo(
-                '[BLACKBOX API] STATUS_CODE: {}, MSG: {}'.format(response.status_code, beautify_json(response.json())))
+                "[BLACKBOX API] STATUS_CODE: {}, MSG: {}".format(
+                    response.status_code, beautify_json(response.json())
+                )
+            )
         except requests.exceptions.ConnectionError:
-            click.echo('Error connecting with Blackbox API')
+            click.echo("Error connecting with Blackbox API")
 
 
-@tools.command('update_entity')
-@click.argument('attrs', nargs=-1)
+@tools.command("update_entity")
+@click.argument("attrs", nargs=-1)
 @click.pass_context
 def update_entity(ctx, attrs):
     """
@@ -185,33 +229,38 @@ def update_entity(ctx, attrs):
     attr_dict = parse_attrs(attrs)
 
     # add attributes to Orion Context Broker
-    if ctx.obj['ON'] == 'fiware' or ctx.obj['ON'] == 'both':
-        url = ctx.obj['FIWARE_HOST'] + '/v2/entities/' + ctx.obj['ENTITY_ID'] + '/attrs'
+    if ctx.obj["ON"] == "fiware" or ctx.obj["ON"] == "both":
+        url = ctx.obj["FIWARE_HOST"] + "/v2/entities/" + ctx.obj["ENTITY_ID"] + "/attrs"
         headers = {
-            'Content-Type': 'application/json',
-            'fiware-service': ctx.obj['FIWARE_SERVICE'],
-            'fiware-servicepath': ctx.obj['FIWARE_SERVICE_PATH']
+            "Content-Type": "application/json",
+            "fiware-service": ctx.obj["FIWARE_SERVICE"],
+            "fiware-servicepath": ctx.obj["FIWARE_SERVICE_PATH"],
         }
         try:
             response = requests.post(url=url, headers=headers, json=attr_dict)
-            click.echo('[FIWARE] STATUS_CODE: {}'.format(response.status_code))
+            click.echo("[FIWARE] STATUS_CODE: {}".format(response.status_code))
         except requests.exceptions.ConnectionError:
-            click.echo('Error connecting with Orion Context Broker')
+            click.echo("Error connecting with Orion Context Broker")
 
     # add attributes to Blackbox API
-    if ctx.obj['ON'] == 'blackbox' or ctx.obj['ON'] == 'both':
-        url = ctx.obj['BLACKBOX_HOST'] + '/api/v1/anomaly/entity/' + ctx.obj['ENTITY_ID']
+    if ctx.obj["ON"] == "blackbox" or ctx.obj["ON"] == "both":
+        url = (
+            ctx.obj["BLACKBOX_HOST"] + "/api/v1/anomaly/entity/" + ctx.obj["ENTITY_ID"]
+        )
         attrs = [key for key in attr_dict.keys()]
         try:
-            response = requests.put(url=url, json={'attrs': attrs})
+            response = requests.put(url=url, json={"attrs": attrs})
             click.echo(
-                '[BLACKBOX API] STATUS_CODE: {}, MSG: {}'.format(response.status_code, beautify_json(response.json())))
+                "[BLACKBOX API] STATUS_CODE: {}, MSG: {}".format(
+                    response.status_code, beautify_json(response.json())
+                )
+            )
         except requests.exceptions.ConnectionError:
-            click.echo('Error connecting with Blackbox API')
+            click.echo("Error connecting with Blackbox API")
 
 
-@tools.command('get_entity')
-@click.argument('entity_id', default='')
+@tools.command("get_entity")
+@click.argument("entity_id", default="")
 @click.pass_context
 def get_entities(ctx, entity_id):
     """
@@ -222,39 +271,49 @@ def get_entities(ctx, entity_id):
         entity_id (str): Orion Context Broker (FIWARE) entity id
     """
     # get entities from Orion Context Broker
-    if ctx.obj['ON'] == 'fiware' or ctx.obj['ON'] == 'both':
-        url = ctx.obj['FIWARE_HOST'] + '/v2/entities/' + entity_id
-        headers = {'fiware-service': ctx.obj['FIWARE_SERVICE'], 'fiware-servicepath': ctx.obj['FIWARE_SERVICE_PATH']}
+    if ctx.obj["ON"] == "fiware" or ctx.obj["ON"] == "both":
+        url = ctx.obj["FIWARE_HOST"] + "/v2/entities/" + entity_id
+        headers = {
+            "fiware-service": ctx.obj["FIWARE_SERVICE"],
+            "fiware-servicepath": ctx.obj["FIWARE_SERVICE_PATH"],
+        }
         try:
             response = requests.get(url=url, headers=headers)
             click.echo(
-                '[FIWARE] STATUS_CODE: {}, JSON: {}'.format(response.status_code, beautify_json(response.json())))
+                "[FIWARE] STATUS_CODE: {}, JSON: {}".format(
+                    response.status_code, beautify_json(response.json())
+                )
+            )
         except requests.exceptions.ConnectionError:
-            click.echo('Error connecting with Orion Context Broker')
+            click.echo("Error connecting with Orion Context Broker")
 
     # get entities from Blackbox
-    if ctx.obj['ON'] == 'blackbox' or ctx.obj['ON'] == 'both':
-        if entity_id != '':
-            url = ctx.obj['BLACKBOX_HOST'] + '/api/v1/anomaly/entity/' + entity_id
+    if ctx.obj["ON"] == "blackbox" or ctx.obj["ON"] == "both":
+        if entity_id != "":
+            url = ctx.obj["BLACKBOX_HOST"] + "/api/v1/anomaly/entity/" + entity_id
         else:
-            url = ctx.obj['BLACKBOX_HOST'] + '/api/v1/anomaly/entities'
+            url = ctx.obj["BLACKBOX_HOST"] + "/api/v1/anomaly/entities"
 
         try:
             response = requests.get(url=url)
             click.echo(
-                '[BLACKBOX API] STATUS_CODE: {}, MSG: {}'.format(response.status_code, beautify_json(response.json())))
+                "[BLACKBOX API] STATUS_CODE: {}, MSG: {}".format(
+                    response.status_code, beautify_json(response.json())
+                )
+            )
         except requests.exceptions.ConnectionError:
-            click.echo('Error connecting with Blackbox API')
+            click.echo("Error connecting with Blackbox API")
 
 
 #################
 # SUBSCRIPTIONS #
 #################
 
-@tools.command('create_subs')
-@click.argument('id_pattern')
-@click.argument('url')
-@click.argument('attrs', nargs=-1)
+
+@tools.command("create_subs")
+@click.argument("id_pattern")
+@click.argument("url")
+@click.argument("attrs", nargs=-1)
 @click.pass_context
 def create_subs(ctx, id_pattern, url, attrs):
     """
@@ -270,35 +329,31 @@ def create_subs(ctx, id_pattern, url, attrs):
         "description": "Notify Anomaly Prediction API of changes in urn:ngsi-ld:Machine:001",
         "subject": {
             "entities": [{"idPattern": id_pattern}],
-            "condition": {
-                "attrs": attrs,
-            }
+            "condition": {"attrs": attrs,},
         },
         "notification": {
-            "http": {
-                "url": url
-            },
+            "http": {"url": url},
             "attrs": attrs,
-            "metadata": ["dateCreated", "dateModified"]
+            "metadata": ["dateCreated", "dateModified"],
         },
     }
 
-    url = ctx.obj['FIWARE_HOST'] + '/v2/subscriptions'
+    url = ctx.obj["FIWARE_HOST"] + "/v2/subscriptions"
     headers = {
-        'Content-Type': 'application/json',
-        'fiware-service': ctx.obj['FIWARE_SERVICE'],
-        'fiware-servicepath': ctx.obj['FIWARE_SERVICE_PATH']
+        "Content-Type": "application/json",
+        "fiware-service": ctx.obj["FIWARE_SERVICE"],
+        "fiware-servicepath": ctx.obj["FIWARE_SERVICE_PATH"],
     }
 
     try:
         response = requests.post(url=url, headers=headers, json=subscription)
-        click.echo('[FIWARE] STATUS_CODE: {}'.format(response.status_code))
+        click.echo("[FIWARE] STATUS_CODE: {}".format(response.status_code))
     except requests.exceptions.ConnectionError:
-        click.echo('Error connecting with Orion Context Broker')
+        click.echo("Error connecting with Orion Context Broker")
 
 
-@tools.command('delete_subs')
-@click.argument('subscription_id')
+@tools.command("delete_subs")
+@click.argument("subscription_id")
 @click.pass_context
 def delete_subs(ctx, subscription_id):
     """
@@ -308,18 +363,21 @@ def delete_subs(ctx, subscription_id):
         ctx (object): click object.
         subscription_id (str): Orion Context Broker (FIWARE) subscription id.
     """
-    url = ctx.obj['FIWARE_HOST'] + '/v2/subscriptions/' + subscription_id
-    headers = {'fiware-service': ctx.obj['FIWARE_SERVICE'], 'fiware-servicepath': ctx.obj['FIWARE_SERVICE_PATH']}
+    url = ctx.obj["FIWARE_HOST"] + "/v2/subscriptions/" + subscription_id
+    headers = {
+        "fiware-service": ctx.obj["FIWARE_SERVICE"],
+        "fiware-servicepath": ctx.obj["FIWARE_SERVICE_PATH"],
+    }
 
     try:
         response = requests.delete(url=url, headers=headers)
-        click.echo('[FIWARE] STATUS_CODE: {}'.format(response.status_code))
+        click.echo("[FIWARE] STATUS_CODE: {}".format(response.status_code))
     except requests.exceptions.ConnectionError:
-        click.echo('Error connecting with Orion Context Broker')
+        click.echo("Error connecting with Orion Context Broker")
 
 
-@tools.command('get_subs')
-@click.argument('subscription_id', default='')
+@tools.command("get_subs")
+@click.argument("subscription_id", default="")
 @click.pass_context
 def get_subs(ctx, subscription_id):
     """
@@ -329,15 +387,22 @@ def get_subs(ctx, subscription_id):
         ctx (object): click object
         subscription_id (str): Orion Context Broker (FIWARE) subscription id.
     """
-    url = ctx.obj['FIWARE_HOST'] + '/v2/subscriptions/' + subscription_id
-    headers = {'fiware-service': ctx.obj['FIWARE_SERVICE'], 'fiware-servicepath': ctx.obj['FIWARE_SERVICE_PATH']}
+    url = ctx.obj["FIWARE_HOST"] + "/v2/subscriptions/" + subscription_id
+    headers = {
+        "fiware-service": ctx.obj["FIWARE_SERVICE"],
+        "fiware-servicepath": ctx.obj["FIWARE_SERVICE_PATH"],
+    }
 
     try:
         response = requests.get(url=url, headers=headers)
-        click.echo('[FIWARE] STATUS_CODE: {}, JSON: {}'.format(response.status_code, beautify_json(response.json())))
+        click.echo(
+            "[FIWARE] STATUS_CODE: {}, JSON: {}".format(
+                response.status_code, beautify_json(response.json())
+            )
+        )
     except requests.exceptions.ConnectionError:
-        click.echo('Error connecting with Orion Context Broker')
+        click.echo("Error connecting with Orion Context Broker")
 
 
-if __name__ == '__main__':
-    tools()
+if __name__ == "__main__":
+    tools() # pylint: disable=no-value-for-parameter
