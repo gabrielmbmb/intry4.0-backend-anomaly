@@ -215,6 +215,11 @@ class AnomalyAutoencoder(AnomalyModel):
                 "Number of neurons should not exceed the number of features."
             )
 
+        if self.verbose:
+            verbosity_level = 1
+        else:
+            verbosity_level = 0
+
         self._autoencoder = self.build_autoencoder()
         self.history = self._autoencoder.fit(
             x=data,
@@ -223,7 +228,7 @@ class AnomalyAutoencoder(AnomalyModel):
             epochs=self._epochs,
             validation_split=self._validation_split,
             shuffle=True,
-            verbose=0,
+            verbose=verbosity_level,
         )
         predict = self._autoencoder.predict(data)
         self._loss = self.mean_absolute_error(data, predict)
