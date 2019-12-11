@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name="platinum-anomaly-detection",
+    name="blackbox",
     version=version.__version__,
     author="Gabriel Martín Blázquez",
     author_email="gmartin_b@usal.es",
