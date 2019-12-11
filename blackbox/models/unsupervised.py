@@ -822,3 +822,13 @@ class AnomalyIsolationForest(AnomalyModel):
         """
         scores = self.predict(data)
         return scores < 0
+
+
+class AnomalyLOF(AnomalyModel):
+    # TODO: Local Outlier Factor Anomaly Detection
+    pass
+
+
+class AnomalyKNN(AnomalyModel):
+    # TODO: k-Nearest Neighbor Anomaly Detection
+    pass
