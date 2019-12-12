@@ -139,12 +139,18 @@ class AnomalyAutoencoder(AnomalyModel):
             model validation. Defaults to 0.05.
         contamination (float): contamination fraction of the training dataset. Defaults 
             to 0.01.
+        early_stopping (boolean or int): indicates if early stopping is going to be used
+            in training process. This can speed up the training process stopping this
+            process when the validation_loss is not improving. If the value of this
+            argument is an integer, it will define the number of epochs with no improve
+            in validation_loss before stopping the training process. Defaults to False.
         verbose (bool): verbose mode. Defaults to False.
     """
 
     from keras import models
     from keras.layers import Dense, Dropout
     from keras import regularizers
+    from keras.callbacks.callbacks import EarlyStopping
 
     def __init__(
         self,
@@ -159,6 +165,7 @@ class AnomalyAutoencoder(AnomalyModel):
         batch_size=10,
         validation_split=0.05,
         contamination=0.01,
+        early_stopping=False,
         verbose=False,
     ):
         super().__init__()
@@ -177,6 +184,7 @@ class AnomalyAutoencoder(AnomalyModel):
         self._batch_size = batch_size
         self._validation_split = validation_split
         self._contamination = contamination
+        self._early_stopping = early_stopping
 
         # default values
         if self._kernel_regularizer is None:
@@ -220,6 +228,23 @@ class AnomalyAutoencoder(AnomalyModel):
         else:
             verbosity_level = 0
 
+        cb_list = []
+        if not isinstance(self._early_stopping, bool):
+            if self.verbose:
+                print(
+                    "Using EarlyStopping in trainning process. Number of epochs without"
+                    " improvement before stopping training process: {}".format(
+                        self._early_stopping
+                    )
+                )
+            es = self.EarlyStopping(
+                monitor="val_loss",
+                mode="min",
+                patience=self._early_stopping,
+                verbose=verbosity_level,
+            )
+            cb_list.append(es)
+
         self._autoencoder = self.build_autoencoder()
         self.history = self._autoencoder.fit(
             x=data,
@@ -229,6 +254,7 @@ class AnomalyAutoencoder(AnomalyModel):
             validation_split=self._validation_split,
             shuffle=True,
             verbose=verbosity_level,
+            callbacks=cb_list,
         )
         predict = self._autoencoder.predict(data)
         self._loss = self.mean_absolute_error(data, predict)
