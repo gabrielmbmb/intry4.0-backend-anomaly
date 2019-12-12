@@ -21,6 +21,9 @@ class BlackBoxAnomalyDetection:
 
     Raises:
         NotAnomalyModelClass: when trying to add a model that is not an instance of AnomalyModel.
+
+    Todo:
+        * Add n_jobs argument
     """
 
     AVAILABLE_MODELS = [

@@ -21,6 +21,9 @@ class AnomalyPCAMahalanobis(AnomalyModel):
         contamination (float): contamination fraction of training dataset. Defaults to 
             0.01.
         verbose (bool): verbose mode. Defaults to False.
+    
+    Todo:
+        * Add n_jobs argument
     """
 
     from sklearn.decomposition import PCA
@@ -382,6 +385,9 @@ class AnomalyKMeans(AnomalyModel):
     Args:
         _n_clusters (Int): indicates the number of clusters. Defaults to None.
         verbose (bool): verbose mode. Defaults to False.
+
+    Todo:
+        * Add n_jobs argument
     """
 
     from sklearn.cluster import KMeans
@@ -564,6 +570,9 @@ class AnomalyOneClassSVM(AnomalyModel):
         ‘precomputed’ or a callable. Defaults to 'rbf'.
         gamma (float): kernel coefficient. Defaults to 0.01.
         verbose (bool): verbose mode. Defaults to False.
+
+    Todo:
+        * Add n_jobs argument
     """
 
     from sklearn.svm import OneClassSVM
@@ -801,6 +810,9 @@ class AnomalyIsolationForest(AnomalyModel):
     Args:
         contamination (float): contamination fraction in dataset. Defaults to 0.01.
         verbose (bool): verbose mode. Defaults to False.
+
+    Todo:
+        * Add n_jobs argument
     """
 
     from sklearn.ensemble import IsolationForest
