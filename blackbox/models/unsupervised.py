@@ -383,7 +383,9 @@ class AnomalyKMeans(AnomalyModel):
     threshold, then the data point will be flagged as an anomaly.
 
     Args:
-        _n_clusters (Int): indicates the number of clusters. Defaults to None.
+        n_clusters (Int): indicates the number of clusters. Defaults to None.
+        contamination (float): contamination (float): contamination fraction of the training dataset. Defaults 
+            to 0.01.
         verbose (bool): verbose mode. Defaults to False.
 
     Todo:
@@ -392,11 +394,12 @@ class AnomalyKMeans(AnomalyModel):
 
     from sklearn.cluster import KMeans
 
-    def __init__(self, _n_clusters=None, verbose=False):
+    def __init__(self, n_clusters=None, contamination=0.1, verbose=False):
         super().__init__()
         self.verbose = verbose
         self._kmeans = None
-        self._n_clusters = _n_clusters
+        self._n_clusters = n_clusters
+        self._contamination = contamination
         self._threshold = None
         self._distances = None
 
@@ -473,9 +476,10 @@ class AnomalyKMeans(AnomalyModel):
         its cluster to be flagged as an anomaly.
 
         Returns:
-            float: threshold value
+            float: threshold value.
         """
-        return max(self._distances)
+        threshold = np.percentile(self._distances, 100 * (1 - self._contamination))
+        return threshold
 
     def elbow(self, data, max_clusters=100) -> tuple:
         """
