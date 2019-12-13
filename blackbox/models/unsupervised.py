@@ -969,7 +969,6 @@ class AnomalyLOF(AnomalyModel):
             novelty=True
         )
         self.verbose = verbose
-        self._training_outliers = None
 
     def train(self, data):
         """
@@ -984,7 +983,7 @@ class AnomalyLOF(AnomalyModel):
         if self.verbose:
             print("Training the Local Outlier Factor model...")
 
-        self._training_outliers = self._lof.fit_predict(data) < 0
+        self._lof.fit(data)
 
     def predict(self, data):
         """
