@@ -8,6 +8,7 @@ from blackbox.models.unsupervised import (
     AnomalyGaussianDistribution,
     AnomalyOneClassSVM,
     AnomalyKNN,
+    AnomalyLOF
 )
 from blackbox.utils.csv import CSVReader
 from keras.regularizers import l1
@@ -27,6 +28,7 @@ class TestBlackBoxAnomalyDetection(TestCase):
         self.model.add_model(AnomalyIsolationForest(verbose=True))
         self.model.add_model(AnomalyGaussianDistribution(verbose=True))
         self.model.add_model(AnomalyKNN(verbose=True))
+        self.model.add_model(AnomalyLOF(verbose=True))
 
         self.model_name = BlackBoxAnomalyDetection(verbose=True)
         self.model_name.add_model(AnomalyPCAMahalanobis(verbose=True), "PCAMahalanobis")
@@ -45,6 +47,7 @@ class TestBlackBoxAnomalyDetection(TestCase):
             AnomalyGaussianDistribution(verbose=True), "GaussianDistribution"
         )
         self.model_name.add_model(AnomalyKNN(verbose=True), "KNearestNeighbors")
+        self.model_name.add_model(AnomalyLOF(verbose=True), "LocalOutlierFactor")
 
     def test_add_model(self):
         """Tests that models are correctly added to the Blackbox"""
@@ -68,6 +71,9 @@ class TestBlackBoxAnomalyDetection(TestCase):
         self.assertIsInstance(
             self.model.models["AnomalyKNN"], AnomalyKNN,
         )
+        self.assertIsInstance(
+            self.model.models["AnomalyLOF"], AnomalyLOF,
+        )
 
         self.assertIsInstance(
             self.model_name.models["PCAMahalanobis"], AnomalyPCAMahalanobis
@@ -82,6 +88,7 @@ class TestBlackBoxAnomalyDetection(TestCase):
             self.model_name.models["GaussianDistribution"], AnomalyGaussianDistribution
         )
         self.assertIsInstance(self.model_name.models["KNearestNeighbors"], AnomalyKNN)
+        self.assertIsInstance(self.model_name.models["LocalOutlierFactor"], AnomalyLOF)
 
     def test_add_model_no_class_anomaly(self):
         """Tests that an error is raised if an instance of a class that doesn't inherit from AnomalyClassModel
