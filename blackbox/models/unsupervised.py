@@ -868,5 +868,144 @@ class AnomalyLOF(AnomalyModel):
 
 
 class AnomalyKNN(AnomalyModel):
-    # TODO: k-Nearest Neighbor Anomaly Detection
-    pass
+    """
+    Unsupervised anomaly detection model based on k-Nearest Neighbor. The model is 
+    trained with data that doesn't contain anomalies or data with anomalies in which the
+    contamination proportion is known. The outlier score can be calculated using the
+    distance to kth neighbor, the average of k neighbors or the median of the distance
+    of k neighbors.
+
+    Args:
+        n_neighbors (int): number of neighbors to use. Defaults to 5.
+        radius (float): range of parameter space to use by default for radius_neighbors
+            queries. Defaults to 1.0.
+        algorithm (string): algorithm used to compute the nearest neighbors. Available
+            algorithms are 'ball_tree', 'kd_tree', 'brute' or 'auto'. Defaults to 'auto'.
+        leaf_size (int): leaf size passed to BallTree or KDTree. Defaults to 30.
+        metric (string): the distance metric to use for the tree. Defaults to 
+            'minkowski'.
+        p (int): parameter for the Minkowski metric. If p = 1, then it's equivalent to
+            using Manhattan distance, and if p = 2 then it's equivalent to use Euclidean
+            distance. Defaults to 2.
+        contamination (float): contamination fraction in dataset. Defaults to 0.1.
+        score_func (string): the function used to score anomalies. Available scores
+            are 'distance', 'average' or 'median'. Defaults to 'distance'.
+        verbose (bool): verbose mode. Defaults to False.
+
+    References:
+        * Ramaswamy, S., Rastogi, R., & Shim, K. (2000, May). Efficient algorithms for 
+            mining outliers from large data sets. In ACM Sigmod Record (Vol. 29, No. 2, 
+            pp. 427-438). ACM.
+        * Angiulli, F., & Pizzuti, C. (2002, August). Fast outlier detection in high 
+            dimensional spaces. In European Conference on Principles of Data Mining and 
+            Knowledge Discovery (pp. 15-27). Springer, Berlin, Heidelberg.
+    """
+
+    from sklearn.neighbors import NearestNeighbors
+
+    def __init__(
+        self,
+        n_neighbors=5,
+        radius=1.0,
+        leaf_size=30,
+        metric="minkowski",
+        p=2,
+        algorithm="auto",
+        score_func="distance",
+        contamination=0.1,
+        verbose=False,
+    ):
+        self._n_neighbors = n_neighbors
+        self._score_func = score_func
+        self._contamination = contamination
+        self._distances = None
+        self._knn = self.NearestNeighbors(
+            n_neighbors=n_neighbors,
+            radius=radius,
+            leaf_size=leaf_size,
+            metric=metric,
+            p=p,
+            algorithm=algorithm,
+        )
+        self._distances = None
+        self._threshold = None
+        self.verbose = verbose
+
+    def train(self, data):
+        """
+        Trains the Nearest Neighbors
+
+        Args:
+            data (numpy.ndarray or pandas.DataFrame): data to predict.
+        """
+        self._knn.fit(data)
+        distances, _ = self._knn.kneighbors(
+            n_neighbors=self._n_neighbors, return_distance=True
+        )
+        self._distances = self.get_dist_by_score_func(distances)
+        self._threshold = self.calculate_threshold()
+
+    def predict(self, data):
+        """
+        Calculates the distance of data points to its k-neighbors.
+
+        Args:
+            data (numpy.ndarray or pandas.DataFrame): data
+
+        Returns:
+            np.ndarray: array with the distances of data point to its k-neighbors.
+        """
+        n_samples = data.shape[0]
+        scores = np.zeros((n_samples, 1))
+
+        for i in range(n_samples):
+            sample_features = np.array([data[i]])
+            distances, _ = self._knn._tree.query(sample_features, k=self._n_neighbors)
+            score = self.get_dist_by_score_func(distances)
+            scores[i] = score
+
+        return scores
+
+    def flag_anomaly(self, data):
+        """
+        Flags as anomaly or not the data points.
+
+        Args:
+            data (numpy.ndarray or pandas.DataFrame): data.
+
+        Returns:
+            list of bool: list of bool telling if a data point is an anomaly or not.
+        """
+        scores = self.predict(data)
+        return scores > self._threshold
+
+    def get_dist_by_score_func(self, distances) -> np.ndarray:
+        """
+        Calculates the outlier score of the distances.
+
+        Args:
+            distances (np.ndarray): array with the distances of data point to its k-neighbors.
+
+        Returns:
+            np.ndarray: outlier scores.
+        """
+        scores = None
+        if self._score_func == "distance":
+            scores = distances[:, -1]
+        elif self._score_func == "average":
+            scores = np.mean(distances, axis=1)
+        elif self._score_func == "median":
+            scores = np.median(distances, axis=1)
+
+        return scores
+
+    def calculate_threshold(self):
+        """
+        Calculates the threshold that has to surpass a distance between a data point and 
+        its cluster to be flagged as an anomaly.
+
+        Returns:
+            float: threshold value.
+        """
+        threshold = np.percentile(self._distances, 100 * (1 - self._contamination))
+        return threshold

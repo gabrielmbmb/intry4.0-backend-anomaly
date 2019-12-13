@@ -33,6 +33,7 @@ class BlackBoxAnomalyDetection:
         "OneClassSVM",
         "GaussianDistribution",
         "IsolationForest",
+        "KNearestNeighbors"
     ]
 
     def __init__(self, verbose=False):
