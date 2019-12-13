@@ -231,6 +231,12 @@ class AnomalyModel(Resource):
         if model_name == "IsolationForest":
             description = unsupervised.AnomalyIsolationForest.__doc__
 
+        if model_name == "KNearestNeighbors":
+            description = unsupervised.AnomalyKNN.__doc__
+
+        if model_name == "LocalOutlierFactor":
+            description = unsupervised.AnomalyLOF.__doc__   
+
         return {"model": model_name, "description": description}, 200
 
 
