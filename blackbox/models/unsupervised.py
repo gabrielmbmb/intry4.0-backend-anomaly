@@ -45,6 +45,9 @@ class AnomalyPCAMahalanobis(AnomalyModel):
         Args:
             data (numpy.ndarray or pandas.DataFrame): training data
         """
+        if isinstance(data, pd.DataFrame):
+            data = data.values
+
         self._data = self._pca.fit_transform(data)
         self._distances = self.mahalanobis_distance(self._data)
         self._threshold = self.calculate_threshold()
@@ -149,6 +152,10 @@ class AnomalyAutoencoder(AnomalyModel):
             argument is an integer, it will define the number of epochs with no improve
             in validation_loss before stopping the training process. Defaults to False.
         verbose (bool): verbose mode. Defaults to False.
+
+    References:
+        * An, J., & Cho, S. (2015). Variational autoencoder based anomaly detection 
+            using reconstruction probability. Special Lecture on IE, 2(1).
     """
 
     from keras import models
@@ -414,6 +421,8 @@ class AnomalyKMeans(AnomalyModel):
         Args:
             data (numpy.ndarray or pandas.DataFrame): training data
         """
+        if isinstance(data, pd.DataFrame):
+            data = data.values
 
         if self._n_clusters is None:
             if self.verbose:
@@ -626,6 +635,9 @@ class AnomalyOneClassSVM(AnomalyModel):
         Args:
             data (numpy.ndarray or pandas.DataFrame): training data
         """
+        if isinstance(data, pd.DataFrame):
+            data = data.values
+
         if self.verbose:
             print("Training the OneClassSVM model...")
 
@@ -870,10 +882,11 @@ class AnomalyIsolationForest(AnomalyModel):
             n_estimators=n_estimators,
             max_features=max_features,
             bootstrap=bootstrap,
-            behaviour="new"
+            behaviour="new",
         )
         self._contamination = contamination
         self.verbose = verbose
+        self._training_outliers = None
 
     def train(self, data) -> None:
         """
@@ -882,10 +895,13 @@ class AnomalyIsolationForest(AnomalyModel):
         Args:
             data (numpy.ndarray or pandas.DataFrame): training data
         """
+        if isinstance(data, pd.DataFrame):
+            data = data.values
+
         if self.verbose:
             print("Training the Isolation Forest model...")
 
-        self._forest.fit(data)
+        self._training_outliers = self._forest.fit_predict(data) < 0
 
     def predict(self, data) -> np.ndarray:
         """
@@ -913,8 +929,86 @@ class AnomalyIsolationForest(AnomalyModel):
 
 
 class AnomalyLOF(AnomalyModel):
-    # TODO: Local Outlier Factor Anomaly Detection
-    pass
+    """
+    Unsupervised anomaly detection model based using the Local Outlier Factor model.
+
+    Args:
+        contamination (float): contamination fraction in dataset. Defaults to 0.1.
+        n_neighbors (int): number of neighbors to use by default for kneighbors queries.
+            Defaults to 20.
+        algorithm (string): algorithm used to compute the nearest neighbors. Available
+            algorithms are 'ball_tree', 'kd_tree', 'brute' or 'auto'. Defaults to 'auto'.   
+        leaf_size (int): leaf size passed to BallTree or KDTree. Defaults to 30.
+        metric (string): the distance metric to use for the tree. Defaults to 
+            'minkowski'.
+        p (int): parameter for the Minkowski metric. If p = 1, then it's equivalent to
+            using Manhattan distance, and if p = 2 then it's equivalent to use Euclidean
+            distance. Defaults to 2.
+        verbose (bool): verbose mode. Defaults to False.
+    """
+    from sklearn.neighbors import LocalOutlierFactor
+
+    def __init__(
+        self,
+        contamination=0.1,
+        n_neighbors=20,
+        algorithm="auto",
+        leaf_size=30,
+        metric="minkowski",
+        p=2,
+        verbose=False,
+    ):
+        self._contamination = contamination
+        self._lof = self.LocalOutlierFactor(
+            contamination=contamination,
+            n_neighbors=n_neighbors,
+            algorithm=algorithm,
+            leaf_size=leaf_size,
+            metric=metric,
+            p=p,
+            novelty=True
+        )
+        self.verbose = verbose
+        self._training_outliers = None
+
+    def train(self, data):
+        """
+        Trains the Local Outlier Factor model.
+
+        Args:
+            data (numpy.ndarray or pandas.DataFrame): training data.
+        """
+        if isinstance(data, pd.DataFrame):
+            data = data.values
+
+        if self.verbose:
+            print("Training the Local Outlier Factor model...")
+
+        self._training_outliers = self._lof.fit_predict(data) < 0
+
+    def predict(self, data):
+        """
+        Predicts if the data points are anomalies or inliers.
+
+        Args:
+            data (numpy.ndarray or pandas.DataFrame): data to predict.
+
+        Returns:
+            numpy.ndarray: scores.
+        """
+        return self._lof.predict(data)
+
+    def flag_anomaly(self, data):
+        """
+        Flag a data point as an anomaly or as an inlier. If the score from the predict 
+        method is negative, then it's an anomaly, if it's positive then it's an inlier.
+
+        Returns:
+            numpy.ndarray: list containing bool values telling if data point is an 
+                anomaly or not.
+        """
+        scores = self.predict(data)
+        return scores < 0
 
 
 class AnomalyKNN(AnomalyModel):
@@ -986,8 +1080,14 @@ class AnomalyKNN(AnomalyModel):
         Trains the Nearest Neighbors
 
         Args:
-            data (numpy.ndarray or pandas.DataFrame): data to predict.
+            data (numpy.ndarray or pandas.DataFrame): training data.
         """
+        if isinstance(data, pd.DataFrame):
+            data = data.values
+
+        if self.verbose:
+            print("Training the k-Nearest Neighbors model...")
+
         self._knn.fit(data)
         distances, _ = self._knn.kneighbors(
             n_neighbors=self._n_neighbors, return_distance=True
@@ -997,13 +1097,15 @@ class AnomalyKNN(AnomalyModel):
 
     def predict(self, data):
         """
-        Calculates the distance of data points to its k-neighbors.
+        Calculates the distance of data points to its k-neighbors and then the outlier
+        score is calculated.
 
         Args:
-            data (numpy.ndarray or pandas.DataFrame): data
+            data (numpy.ndarray or pandas.DataFrame): data to calculate its outlier 
+                score.
 
         Returns:
-            np.ndarray: array with the distances of data point to its k-neighbors.
+            np.ndarray: array with the outlier score of the data points.
         """
         n_samples = data.shape[0]
         scores = np.zeros((n_samples, 1))
@@ -1016,7 +1118,7 @@ class AnomalyKNN(AnomalyModel):
 
         return scores.ravel()
 
-    def flag_anomaly(self, data):
+    def flag_anomaly(self, data) -> np.ndarray:
         """
         Flags as anomaly or not the data points.
 
@@ -1024,7 +1126,7 @@ class AnomalyKNN(AnomalyModel):
             data (numpy.ndarray or pandas.DataFrame): data.
 
         Returns:
-            list of bool: list of bool telling if a data point is an anomaly or not.
+            np.ndarray: list of bool telling if a data point is an anomaly or not.
         """
         scores = self.predict(data)
         return scores > self._threshold
