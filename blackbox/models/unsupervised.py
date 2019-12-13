@@ -889,7 +889,7 @@ class AnomalyKNN(AnomalyModel):
             distance. Defaults to 2.
         contamination (float): contamination fraction in dataset. Defaults to 0.1.
         score_func (string): the function used to score anomalies. Available scores
-            are 'distance', 'average' or 'median'. Defaults to 'distance'.
+            are 'max_distance', 'average' or 'median'. Defaults to 'distance'.
         verbose (bool): verbose mode. Defaults to False.
 
     References:
@@ -911,7 +911,7 @@ class AnomalyKNN(AnomalyModel):
         metric="minkowski",
         p=2,
         algorithm="auto",
-        score_func="distance",
+        score_func="max_distance",
         contamination=0.1,
         verbose=False,
     ):
@@ -964,7 +964,7 @@ class AnomalyKNN(AnomalyModel):
             score = self.get_dist_by_score_func(distances)
             scores[i] = score
 
-        return scores
+        return scores.ravel()
 
     def flag_anomaly(self, data):
         """
@@ -990,7 +990,7 @@ class AnomalyKNN(AnomalyModel):
             np.ndarray: outlier scores.
         """
         scores = None
-        if self._score_func == "distance":
+        if self._score_func == "max_distance":
             scores = distances[:, -1]
         elif self._score_func == "average":
             scores = np.mean(distances, axis=1)
