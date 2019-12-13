@@ -8,18 +8,18 @@ class AnomalyPCAMahalanobis(AnomalyModel):
     """
     Unsupervised anomaly detection model based on Primary Component Analysis and 
     Mahalanobis Distance. The model is trained with data that is considered to not have 
-    anomalies (normal operation) and reduces the dimensionality of the data with PCA, 
-    which is a technique very sensible to outliers. When the model receives a new data 
-    point, it will reduce the dimensionality of the point with PCA and then will 
-    calculate the distance of this point to the train distribution. If the distance 
-    surpass a threshold previously established, then the data point is flagged as an 
-    anomaly.
+    anomalies (normal operation) or with data in which the contamination proportion is 
+    known, and reduces the dimensionality of the data with PCA, which is a technique 
+    very sensible to outliers. When the model receives a new data point, it will reduce 
+    the dimensionality of the point with PCA and then will calculate the distance of 
+    this point to the train distribution. If the distance surpass a threshold previously
+    established, then the data point is flagged as an anomaly.
 
     Args:
         n_components (int or float): number of components to which the data have to be 
             reduced. Defaults to 2.
         contamination (float): contamination fraction of training dataset. Defaults to 
-            0.01.
+            0.1.
         verbose (bool): verbose mode. Defaults to False.
     
     Todo:
@@ -28,7 +28,7 @@ class AnomalyPCAMahalanobis(AnomalyModel):
 
     from sklearn.decomposition import PCA
 
-    def __init__(self, n_components=2, contamination=0.01, verbose=False) -> None:
+    def __init__(self, n_components=2, contamination=0.1, verbose=False) -> None:
         super().__init__()
         self._pca = self.PCA(n_components=n_components, svd_solver="full")
         self._data = None
@@ -114,13 +114,14 @@ class AnomalyPCAMahalanobis(AnomalyModel):
 class AnomalyAutoencoder(AnomalyModel):
     """
     Unsupervised anomaly detection model based on a Deep Neural Network of Autoencoder 
-    type. The model is trained with data that doesn't contains anomalies. This kind of 
-    DNN compress or reduce the data from the input and then amplify or reconstruct the 
-    data to the original size at the output. This way, the DNN will be generating new 
-    data very similar to the original data. This characteristic is used to train the 
-    Autoencoder with data without anomalies. The Autoencoder will be able to reconstruct
-    data similar to the training data (value of loss function will be low) and won't be 
-    able to reconstruct data with anomalies (value of loss function high).
+    type. The model is trained with data that doesn't contains anomalies or with data in
+    which the contamination proportion is known. This kind of DNN compress or reduce the 
+    data from the input and then amplify or reconstruct the data to the original size at 
+    the output. This way, the DNN will be generating new data very similar to the 
+    original data. This characteristic is used to train the Autoencoder with data 
+    without anomalies. The Autoencoder will be able to reconstruct data similar to the 
+    training data (value of loss function will be low) and won't be able to reconstruct 
+    data with anomalies (value of loss function high).
 
     Args:
         hidden_neurons (list): hidden layers and the number of neurons for each hidden 
@@ -141,7 +142,7 @@ class AnomalyAutoencoder(AnomalyModel):
         validation_split (float): percentage of the training data that will be used for 
             model validation. Defaults to 0.05.
         contamination (float): contamination fraction of the training dataset. Defaults 
-            to 0.01.
+            to 0.1.
         early_stopping (boolean or int): indicates if early stopping is going to be used
             in training process. This can speed up the training process stopping this
             process when the validation_loss is not improving. If the value of this
@@ -167,7 +168,7 @@ class AnomalyAutoencoder(AnomalyModel):
         epochs=100,
         batch_size=10,
         validation_split=0.05,
-        contamination=0.01,
+        contamination=0.1,
         early_stopping=False,
         verbose=False,
     ):
@@ -376,16 +377,17 @@ class AnomalyAutoencoder(AnomalyModel):
 class AnomalyKMeans(AnomalyModel):
     """
     Unsupervised anomaly detection model based on K-Means Clustering. The model is 
-    trained with data that doesn't contains anomalies. This will create 'k' similar 
-    clusters of data points. When new data points are received, we will predict the 
-    nearest cluster in which the data belongs, and then calculate the distance from the 
-    new data points to the cluster centroid. If this distance surpass a established 
-    threshold, then the data point will be flagged as an anomaly.
+    trained with data that doesn't contain anomalies or data with anomalies in which the
+    contamination proportion is known. This will create 'k' similar clusters of data 
+    points. When new data points are received, we will predict the nearest cluster in 
+    which the data belongs, and then calculate the distance from the new data points to 
+    the cluster centroid. If this distance surpass a established threshold, then the 
+    data point will be flagged as an anomaly.
 
     Args:
         n_clusters (Int): indicates the number of clusters. Defaults to None.
-        contamination (float): contamination (float): contamination fraction of the training dataset. Defaults 
-            to 0.01.
+        contamination (float): contamination (float): contamination fraction of the 
+            training dataset. Defaults to 0.1.
         verbose (bool): verbose mode. Defaults to False.
 
     Todo:
@@ -563,16 +565,26 @@ class AnomalyKMeans(AnomalyModel):
 class AnomalyOneClassSVM(AnomalyModel):
     """
     Unsupervised anomaly detection model based on One Class Support Vector Machine. The 
-    model is trained with data that doesn't contains anomalies. The idea of this model 
-    is to find a function that is positive for regions with high density of points (not 
-    anomaly), and negative for small densities (anomaly).
+    model is trained with data that doesn't contain anomalies or data with anomalies in 
+    which the contamination proportion is known. The idea of this model is to find a 
+    function that is positive for regions with high density of points (not anomaly), and
+    negative for small densities (anomaly).
 
     Args:
         contamination (float): contamination fraction of training dataset. Defaults to 
-            0.01.
+            0.1.
         kernel (str): kernel type. It must be one of ‘linear’, ‘poly’, ‘rbf’, ‘sigmoid’,
-        ‘precomputed’ or a callable. Defaults to 'rbf'.
-        gamma (float): kernel coefficient. Defaults to 0.01.
+            ‘precomputed’ or a callable. Defaults to 'rbf'.
+        degree (int): degree of the polynomial kernel function ('poly). Ignored by all
+            other kernels. Defaults to 3.
+        
+        gamma (str or float): kernel coefficient for 'rbf', 'poly' and 'sigmod'.
+            Available values are 'scale', 'auto' or float. Defaults to 'scale'.
+        coef0 (float): independent term in kernel function. Only significant in 'poly'
+            and 'sigmoid'. Defaults to 0.0.
+        tol (float): tolerance for stopping criterion. Defaults to 0.001.
+        shrinking (bool): wheter to use the shrinking heuristic. Defaults to True.
+        cache_size (float): specify the size of the kernel cache in MB. Defaults to 200.
         verbose (bool): verbose mode. Defaults to False.
 
     Todo:
@@ -581,13 +593,29 @@ class AnomalyOneClassSVM(AnomalyModel):
 
     from sklearn.svm import OneClassSVM
 
-    def __init__(self, contamination=0.01, kernel="rbf", gamma=0.01, verbose=False):
+    def __init__(
+        self,
+        contamination=0.1,
+        kernel="rbf",
+        degree=3,
+        gamma="scale",
+        coef0=0.0,
+        tol=0.001,
+        shrinking=True,
+        cache_size=200,
+        verbose=False,
+    ):
         super().__init__()
         self._contamination = contamination
-        self._gamma = gamma
-        self._kernel = kernel
         self._svm = self.OneClassSVM(
-            nu=self._contamination, kernel=self._kernel, gamma=self._gamma
+            nu=self._contamination,
+            kernel=kernel,
+            degree=degree,
+            gamma=gamma,
+            coef0=coef0,
+            shrinking=shrinking,
+            cache_size=cache_size,
+            tol=tol,
         )
         self.verbose = verbose
 
@@ -812,7 +840,14 @@ class AnomalyIsolationForest(AnomalyModel):
     separate them from normal values.
 
     Args:
-        contamination (float): contamination fraction in dataset. Defaults to 0.01.
+        contamination (float): contamination fraction in dataset. Defaults to 0.1.
+        n_estimators (int): the number of base estimators in the ensemble. Defaults to 
+            100.
+        max_features (int or float): number of features to draw from X to train each
+            base estimator. Defaults to 1.0.
+        bootstrap (bool): if True, individual trees are fit on random subsets of the
+            training data sampled with replacement. If False, sampling without 
+            replacement is permformed. Defaults to False.
         verbose (bool): verbose mode. Defaults to False.
 
     Todo:
@@ -821,10 +856,21 @@ class AnomalyIsolationForest(AnomalyModel):
 
     from sklearn.ensemble import IsolationForest
 
-    def __init__(self, contamination=0.01, verbose=False):
+    def __init__(
+        self,
+        contamination=0.1,
+        n_estimators=100,
+        max_features=1.0,
+        bootstrap=False,
+        verbose=False,
+    ):
         super().__init__()
         self._forest = self.IsolationForest(
-            contamination=contamination, behaviour="new"
+            contamination=contamination,
+            n_estimators=n_estimators,
+            max_features=max_features,
+            bootstrap=bootstrap,
+            behaviour="new"
         )
         self._contamination = contamination
         self.verbose = verbose
