@@ -461,7 +461,7 @@ class Train(Resource):
             )
 
         if parsed_args.get("n_clusters"):
-            additional_params["KMeans"]["_n_clusters"] = parsed_args.get(
+            additional_params["KMeans"]["n_clusters"] = parsed_args.get(
                 "n_clusters")
 
         if parsed_args.get("outliers_fraction"):
