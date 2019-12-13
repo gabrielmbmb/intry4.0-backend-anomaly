@@ -4,7 +4,7 @@ from blackbox import settings
 from celery import Celery
 from blackbox.utils.api import add_model_entity_json
 from blackbox.blackbox import BlackBoxAnomalyDetection
-from blackbox.models import (
+from blackbox.models.unsupervised import (
     AnomalyPCAMahalanobis,
     AnomalyAutoencoder,
     AnomalyKMeans,
