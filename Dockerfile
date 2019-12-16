@@ -21,4 +21,4 @@ RUN cd blackbox && \
 
 ENV PATH="/home/worker/.local/bin:${PATH}"
 
-CMD blackbox
+CMD ["python", "-u", "-m", "blackbox"]
