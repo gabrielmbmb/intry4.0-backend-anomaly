@@ -1,4 +1,5 @@
 from unittest import TestCase
+from keras.regularizers import l1
 from blackbox.blackbox import BlackBoxAnomalyDetection, NotAnomalyModelClass
 from blackbox.models.unsupervised import (
     AnomalyPCAMahalanobis,
@@ -11,7 +12,6 @@ from blackbox.models.unsupervised import (
     AnomalyLOF
 )
 from blackbox.utils.csv import CSVReader
-from keras.regularizers import l1
 
 
 class TestBlackBoxAnomalyDetection(TestCase):

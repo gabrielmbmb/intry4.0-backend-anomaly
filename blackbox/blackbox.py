@@ -1,26 +1,25 @@
 import os
 import pickle
 import numpy as np
-
-from blackbox.models.base_model import AnomalyModel
 from sklearn.preprocessing import MinMaxScaler
+from blackbox.models.base_model import AnomalyModel
 
 
 class NotAnomalyModelClass(Exception):
     """Raised when a model added to the blackbox is not an instance of AnomalyModel"""
 
-    pass
-
 
 class BlackBoxAnomalyDetection:
     """
-    Class in charge of reading the training data from a given source and executing the Anomaly Detections models.
+    Class in charge of reading the training data from a given source and executing the
+        Anomaly Detections models.
 
     Args:
          verbose (bool): verbose mode. Defaults to False.
 
     Raises:
-        NotAnomalyModelClass: when trying to add a model that is not an instance of AnomalyModel.
+        NotAnomalyModelClass: when trying to add a model that is not an instance of
+            AnomalyModel.
 
     Todo:
         * Add n_jobs argument
@@ -34,7 +33,7 @@ class BlackBoxAnomalyDetection:
         "GaussianDistribution",
         "IsolationForest",
         "KNearestNeighbors",
-        "LocalOutlierFactor"
+        "LocalOutlierFactor",
     ]
 
     def __init__(self, verbose=False):
@@ -65,9 +64,10 @@ class BlackBoxAnomalyDetection:
 
     def scale_data(self, data) -> np.ndarray:
         """
-        Scales the data before training or making a prediction with a Min Max Scaler which is sensitive to outliers. The
-        first time that the function is called, the scaler will be fitted with the data passed. Then, the trained scaler
-        will be used to scale the data.
+        Scales the data before training or making a prediction with a Min Max Scaler
+        which is sensitive to outliers. The first time that the function is called, the
+        scaler will be fitted with the data passed. Then, the trained scaler will be
+        used to scale the data.
 
         Args:
             data (numpy.ndarray or pandas.DataFrame): data to be scaled.
@@ -96,8 +96,9 @@ class BlackBoxAnomalyDetection:
 
         Args:
             data (numpy.ndarray or pandas.DataFrame): training data with no anomalies.
-            cb_func (function): callback function that will be executed when the training starts for a model. Progress
-                and a message will be passed to this function. Defaults to None.
+            cb_func (function): callback function that will be executed when the
+                training starts for a model. Progress and a message will be passed to
+                this function. Defaults to None.
         """
         data = self.scale_data(data)
 
@@ -147,7 +148,8 @@ class BlackBoxAnomalyDetection:
         Saves the trained models in the directory specified.
 
         Args:
-            path_dir (str): path to the directory where to save the files. Defaults to './saved_models'.
+            path_dir (str): path to the directory where to save the files. Defaults to
+                './saved_models'.
         """
         if not os.path.exists(path_dir):
             if self.verbose:
@@ -165,7 +167,8 @@ class BlackBoxAnomalyDetection:
         Loads the trained models from the directory specified.
 
         Args:
-            path_dir (str): path to the directory storing the saved models. Defaults to './saved_models'.
+            path_dir (str): path to the directory storing the saved models. Defaults to
+                './saved_models'.
         """
         for model in self.models:
             path = path_dir + "/" + self.models[model].__class__.__name__ + ".pkl"
@@ -175,8 +178,9 @@ class BlackBoxAnomalyDetection:
 
     def save_blackbox(self, path="./blackbox.pkl") -> str:
         """
-        Saves the entire Blackbox, that's means that all models will be saved in the same file and it will be easier to
-        load the Blackbox instead of loading every model one by one and then adding it to the Blackbox.
+        Saves the entire Blackbox, that's means that all models will be saved in the
+        same file and it will be easier to load the Blackbox instead of loading every
+        model one by one and then adding it to the Blackbox.
 
         Args:
             path (str): path to save the Blackbox. Defaults to './blackbox.pkl'
@@ -215,4 +219,3 @@ class BlackBoxAnomalyDetection:
 
         self.models = loaded_data["models"]
         self.scaler = loaded_data["scaler"]
-

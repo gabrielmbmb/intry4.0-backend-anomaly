@@ -1,27 +1,27 @@
+from typing import List, Tuple
 import numpy as np
 import pandas as pd
-from typing import List, Tuple
 from blackbox.models.base_model import AnomalyModel
 
 
 class AnomalyPCAMahalanobis(AnomalyModel):
     """
-    Unsupervised anomaly detection model based on Primary Component Analysis and 
-    Mahalanobis Distance. The model is trained with data that is considered to not have 
-    anomalies (normal operation) or with data in which the contamination proportion is 
-    known, and reduces the dimensionality of the data with PCA, which is a technique 
-    very sensible to outliers. When the model receives a new data point, it will reduce 
-    the dimensionality of the point with PCA and then will calculate the distance of 
+    Unsupervised anomaly detection model based on Primary Component Analysis and
+    Mahalanobis Distance. The model is trained with data that is considered to not have
+    anomalies (normal operation) or with data in which the contamination proportion is
+    known, and reduces the dimensionality of the data with PCA, which is a technique
+    very sensible to outliers. When the model receives a new data point, it will reduce
+    the dimensionality of the point with PCA and then will calculate the distance of
     this point to the train distribution. If the distance surpass a threshold previously
     established, then the data point is flagged as an anomaly.
 
     Args:
-        n_components (int or float): number of components to which the data have to be 
+        n_components (int or float): number of components to which the data have to be
             reduced. Defaults to 2.
-        contamination (float): contamination fraction of training dataset. Defaults to 
+        contamination (float): contamination fraction of training dataset. Defaults to
             0.1.
         verbose (bool): verbose mode. Defaults to False.
-    
+
     Todo:
         * Add n_jobs argument
     """
@@ -72,7 +72,7 @@ class AnomalyPCAMahalanobis(AnomalyModel):
         established threshold.
 
         Args:
-            data (numpy.ndarray or pandas.DataFrame): data to flag as anomalous or not 
+            data (numpy.ndarray or pandas.DataFrame): data to flag as anomalous or not
                 anomalous.
 
         Returns:
@@ -83,7 +83,7 @@ class AnomalyPCAMahalanobis(AnomalyModel):
 
     def calculate_threshold(self) -> float:
         """
-        Computes the threshold that has to surpass a distance of a point to be flagged 
+        Computes the threshold that has to surpass a distance of a point to be flagged
         as an anomaly.
 
         Returns:
@@ -94,11 +94,11 @@ class AnomalyPCAMahalanobis(AnomalyModel):
 
     def mahalanobis_distance(self, x) -> np.ndarray:
         """
-        Computes the Mahalanobis distance between each row of x and the data 
+        Computes the Mahalanobis distance between each row of x and the data
         distribution.
 
         Args:
-            x (numpy.ndarray or pandas.DataFrame): vector or matrix of data with p 
+            x (numpy.ndarray or pandas.DataFrame): vector or matrix of data with p
                 columns.
 
         Returns:
@@ -116,35 +116,35 @@ class AnomalyPCAMahalanobis(AnomalyModel):
 
 class AnomalyAutoencoder(AnomalyModel):
     """
-    Unsupervised anomaly detection model based on a Deep Neural Network of Autoencoder 
+    Unsupervised anomaly detection model based on a Deep Neural Network of Autoencoder
     type. The model is trained with data that doesn't contains anomalies or with data in
-    which the contamination proportion is known. This kind of DNN compress or reduce the 
-    data from the input and then amplify or reconstruct the data to the original size at 
-    the output. This way, the DNN will be generating new data very similar to the 
-    original data. This characteristic is used to train the Autoencoder with data 
-    without anomalies. The Autoencoder will be able to reconstruct data similar to the 
-    training data (value of loss function will be low) and won't be able to reconstruct 
+    which the contamination proportion is known. This kind of DNN compress or reduce the
+    data from the input and then amplify or reconstruct the data to the original size at
+    the output. This way, the DNN will be generating new data very similar to the
+    original data. This characteristic is used to train the Autoencoder with data
+    without anomalies. The Autoencoder will be able to reconstruct data similar to the
+    training data (value of loss function will be low) and won't be able to reconstruct
     data with anomalies (value of loss function high).
 
     Args:
-        hidden_neurons (list): hidden layers and the number of neurons for each hidden 
+        hidden_neurons (list): hidden layers and the number of neurons for each hidden
             layer. Defaults to [32, 16, 16, 32].
-        dropout_rate (float): dropout rate across all layers. Float between 0 and 1. 
+        dropout_rate (float): dropout rate across all layers. Float between 0 and 1.
             Defaults to 0.2.
         activation (str): activation function that layers will have. Defaults to 'elu'.
-        kernel_initializer (str): kernel initializer that layers will have. Defaults to 
+        kernel_initializer (str): kernel initializer that layers will have. Defaults to
             'glorot_uniform'.
-        kernel_regularizer (keras.regularizers): kernel regularizer that layers will 
+        kernel_regularizer (keras.regularizers): kernel regularizer that layers will
             have. Defaults to None.
-        loss_function (str): loss function that the Autoencoder will have. Defaults to 
+        loss_function (str): loss function that the Autoencoder will have. Defaults to
             'mse'.
         optimizer (str): optimizer that the Autoencoder will have. Defaults to 'adam'.
-        epochs (int): number of times that all the batches will be processed during the 
+        epochs (int): number of times that all the batches will be processed during the
             Autoencoder training. Defaults to 100.
         batch_size (int): batch size. Defaults to 10.
-        validation_split (float): percentage of the training data that will be used for 
+        validation_split (float): percentage of the training data that will be used for
             model validation. Defaults to 0.05.
-        contamination (float): contamination fraction of the training dataset. Defaults 
+        contamination (float): contamination fraction of the training dataset. Defaults
             to 0.1.
         early_stopping (boolean or int): indicates if early stopping is going to be used
             in training process. This can speed up the training process stopping this
@@ -154,7 +154,7 @@ class AnomalyAutoencoder(AnomalyModel):
         verbose (bool): verbose mode. Defaults to False.
 
     References:
-        * An, J., & Cho, S. (2015). Variational autoencoder based anomaly detection 
+        * An, J., & Cho, S. (2015). Variational autoencoder based anomaly detection
             using reconstruction probability. Special Lecture on IE, 2(1).
     """
 
@@ -286,14 +286,14 @@ class AnomalyAutoencoder(AnomalyModel):
 
     def flag_anomaly(self, data) -> np.ndarray:
         """
-        Flag a data point as an anomaly if the MAE (Mean Absolute Error) is higher than 
+        Flag a data point as an anomaly if the MAE (Mean Absolute Error) is higher than
         the established threshold.
 
         Args:
             data (numpy.ndarray or pandas.DataFrame): data
 
         Returns:
-            numpy.ndarray: list containing bool values telling if data point is an 
+            numpy.ndarray: list containing bool values telling if data point is an
                 anomaly or not.
         """
         predict = self._autoencoder.predict(data)
@@ -350,7 +350,7 @@ class AnomalyAutoencoder(AnomalyModel):
 
     def establish_threshold(self) -> float:
         """
-        Computes the threshold that has to surpass the calculated loss (MAE) of a point 
+        Computes the threshold that has to surpass the calculated loss (MAE) of a point
         to be flagged as an anomaly.
 
         Returns:
@@ -383,17 +383,17 @@ class AnomalyAutoencoder(AnomalyModel):
 
 class AnomalyKMeans(AnomalyModel):
     """
-    Unsupervised anomaly detection model based on K-Means Clustering. The model is 
+    Unsupervised anomaly detection model based on K-Means Clustering. The model is
     trained with data that doesn't contain anomalies or data with anomalies in which the
-    contamination proportion is known. This will create 'k' similar clusters of data 
-    points. When new data points are received, we will predict the nearest cluster in 
-    which the data belongs, and then calculate the distance from the new data points to 
-    the cluster centroid. If this distance surpass a established threshold, then the 
+    contamination proportion is known. This will create 'k' similar clusters of data
+    points. When new data points are received, we will predict the nearest cluster in
+    which the data belongs, and then calculate the distance from the new data points to
+    the cluster centroid. If this distance surpass a established threshold, then the
     data point will be flagged as an anomaly.
 
     Args:
         n_clusters (Int): indicates the number of clusters. Defaults to None.
-        contamination (float): contamination (float): contamination fraction of the 
+        contamination (float): contamination (float): contamination fraction of the
             training dataset. Defaults to 0.1.
         verbose (bool): verbose mode. Defaults to False.
 
@@ -414,8 +414,8 @@ class AnomalyKMeans(AnomalyModel):
 
     def train(self, data) -> None:
         """
-        Trains the model with the train data given. First, the optimal number of 
-        clusters is calculated with the Elbow Method. Then, a K-Means Cluster model is 
+        Trains the model with the train data given. First, the optimal number of
+        clusters is calculated with the Elbow Method. Then, a K-Means Cluster model is
         fitted with the optimal number of clusters.
 
         Args:
@@ -450,14 +450,14 @@ class AnomalyKMeans(AnomalyModel):
 
     def predict(self, data) -> List[float]:
         """
-        Calculates the cluster of each data point and then calculates the distance 
+        Calculates the cluster of each data point and then calculates the distance
         between the data point and the cluster centroid.
 
         Args:
             data (numpy.ndarray or pandas.DataFrame): data
 
         Returns:
-            list of float: distances between the data given and its assigned cluster 
+            list of float: distances between the data given and its assigned cluster
                 centroid.
         """
         data_labels = self._kmeans.predict(data)
@@ -472,7 +472,7 @@ class AnomalyKMeans(AnomalyModel):
         its assigned cluster centroid surpass a established threshold.
 
         Args:
-            data (numpy.ndarray or pandas.DataFrame): data to flag as anomalous or not 
+            data (numpy.ndarray or pandas.DataFrame): data to flag as anomalous or not
                 anomalous.
 
         Returns:
@@ -483,7 +483,7 @@ class AnomalyKMeans(AnomalyModel):
 
     def calculate_threshold(self) -> float:
         """
-        Calculates the threshold that has to surpass a distance between a data point and 
+        Calculates the threshold that has to surpass a distance between a data point and
         its cluster to be flagged as an anomaly.
 
         Returns:
@@ -494,8 +494,8 @@ class AnomalyKMeans(AnomalyModel):
 
     def elbow(self, data, max_clusters=100) -> tuple:
         """
-        Takes training data and computes K-Means model for each number of n_clusters 
-        given and get the score of each K-Means model. Then, calculate the distance 
+        Takes training data and computes K-Means model for each number of n_clusters
+        given and get the score of each K-Means model. Then, calculate the distance
         between the line that goes from the point of the first score to the point of the
         last score with each score of the K-Means models.
 
@@ -573,20 +573,19 @@ class AnomalyKMeans(AnomalyModel):
 
 class AnomalyOneClassSVM(AnomalyModel):
     """
-    Unsupervised anomaly detection model based on One Class Support Vector Machine. The 
-    model is trained with data that doesn't contain anomalies or data with anomalies in 
-    which the contamination proportion is known. The idea of this model is to find a 
+    Unsupervised anomaly detection model based on One Class Support Vector Machine. The
+    model is trained with data that doesn't contain anomalies or data with anomalies in
+    which the contamination proportion is known. The idea of this model is to find a
     function that is positive for regions with high density of points (not anomaly), and
     negative for small densities (anomaly).
 
     Args:
-        contamination (float): contamination fraction of training dataset. Defaults to 
+        contamination (float): contamination fraction of training dataset. Defaults to
             0.1.
         kernel (str): kernel type. It must be one of ‘linear’, ‘poly’, ‘rbf’, ‘sigmoid’,
             ‘precomputed’ or a callable. Defaults to 'rbf'.
         degree (int): degree of the polynomial kernel function ('poly). Ignored by all
             other kernels. Defaults to 3.
-        
         gamma (str or float): kernel coefficient for 'rbf', 'poly' and 'sigmod'.
             Available values are 'scale', 'auto' or float. Defaults to 'scale'.
         coef0 (float): independent term in kernel function. Only significant in 'poly'
@@ -671,9 +670,9 @@ class AnomalyOneClassSVM(AnomalyModel):
 
 class AnomalyGaussianDistribution(AnomalyModel):
     """
-    Unsupervised anomaly detection model based on Gaussian Distribution. The model is 
-    trained with data that doesn't contains anomalies. This model computes the mean and 
-    the variance for every feature in the dataset and then with these values calculates 
+    Unsupervised anomaly detection model based on Gaussian Distribution. The model is
+    trained with data that doesn't contains anomalies. This model computes the mean and
+    the variance for every feature in the dataset and then with these values calculates
     the probability of a data point to belong to the distribution.
 
     Args:
@@ -690,12 +689,12 @@ class AnomalyGaussianDistribution(AnomalyModel):
 
     def train(self, data, labels=None) -> None:
         """
-        Trains the model with the data passed. For that, the mean and the variance are 
+        Trains the model with the data passed. For that, the mean and the variance are
         calculated for every feature in the data.
 
         Args:
             data (numpy.ndarray or pandas.DataFrame): training data.
-            labels (numpy.ndarray or pandas.DataFrame): labels of training data. 
+            labels (numpy.ndarray or pandas.DataFrame): labels of training data.
                 Defaults to None.
         """
         if isinstance(data, pd.DataFrame):
@@ -714,7 +713,7 @@ class AnomalyGaussianDistribution(AnomalyModel):
 
     def predict(self, data) -> np.ndarray:
         """
-        Calculates the probability of a data point to belong to the Gaussian 
+        Calculates the probability of a data point to belong to the Gaussian
         Distribution.
 
         Args:
@@ -743,7 +742,7 @@ class AnomalyGaussianDistribution(AnomalyModel):
 
     def calculate_probability(self, data) -> np.ndarray:
         """
-        Calculates the probability of a list of data points to belong to the Gaussian 
+        Calculates the probability of a list of data points to belong to the Gaussian
         Distribution.
 
         Args:
@@ -803,7 +802,7 @@ class AnomalyGaussianDistribution(AnomalyModel):
 
         Args:
             labels (numpy.ndarray): label for each probability.
-            probabilities (numpy.ndarray): probabilities of belonging to the Gaussian 
+            probabilities (numpy.ndarray): probabilities of belonging to the Gaussian
                 Distribution.
 
         Returns:
@@ -844,21 +843,21 @@ class AnomalyGaussianDistribution(AnomalyModel):
 
 class AnomalyIsolationForest(AnomalyModel):
     """
-    Unsupervised anomaly detection model based on One Class Support Vector Machine. The 
-    model is trained with data that doesn't contains anomalies. The Isolation Forest 
-    algorithm isolates observations by randomly selecting a feature and then randomly 
-    selecting a split value between the maximum and the minimum values of the selected 
-    feature. Isolating anomalies is easier because only a few conditions are needed to 
+    Unsupervised anomaly detection model based on One Class Support Vector Machine. The
+    model is trained with data that doesn't contains anomalies. The Isolation Forest
+    algorithm isolates observations by randomly selecting a feature and then randomly
+    selecting a split value between the maximum and the minimum values of the selected
+    feature. Isolating anomalies is easier because only a few conditions are needed to
     separate them from normal values.
 
     Args:
         contamination (float): contamination fraction in dataset. Defaults to 0.1.
-        n_estimators (int): the number of base estimators in the ensemble. Defaults to 
+        n_estimators (int): the number of base estimators in the ensemble. Defaults to
             100.
         max_features (int or float): number of features to draw from X to train each
             base estimator. Defaults to 1.0.
         bootstrap (bool): if True, individual trees are fit on random subsets of the
-            training data sampled with replacement. If False, sampling without 
+            training data sampled with replacement. If False, sampling without
             replacement is permformed. Defaults to False.
         verbose (bool): verbose mode. Defaults to False.
 
@@ -917,11 +916,11 @@ class AnomalyIsolationForest(AnomalyModel):
 
     def flag_anomaly(self, data) -> np.ndarray:
         """
-        Flag a data point as an anomaly or as an inlier. If the score from the predict 
+        Flag a data point as an anomaly or as an inlier. If the score from the predict
         method is negative, then it's an anomaly, if it's positive then it's an inlier.
 
         Returns:
-            numpy.ndarray: list containing bool values telling if data point is an 
+            numpy.ndarray: list containing bool values telling if data point is an
                 anomaly or not.
         """
         scores = self.predict(data)
@@ -937,15 +936,16 @@ class AnomalyLOF(AnomalyModel):
         n_neighbors (int): number of neighbors to use by default for kneighbors queries.
             Defaults to 20.
         algorithm (string): algorithm used to compute the nearest neighbors. Available
-            algorithms are 'ball_tree', 'kd_tree', 'brute' or 'auto'. Defaults to 'auto'.   
+            algorithms are 'ball_tree', 'kd_tree', 'brute' or 'auto'. Defaults to 'auto'.
         leaf_size (int): leaf size passed to BallTree or KDTree. Defaults to 30.
-        metric (string): the distance metric to use for the tree. Defaults to 
+        metric (string): the distance metric to use for the tree. Defaults to
             'minkowski'.
         p (int): parameter for the Minkowski metric. If p = 1, then it's equivalent to
             using Manhattan distance, and if p = 2 then it's equivalent to use Euclidean
             distance. Defaults to 2.
         verbose (bool): verbose mode. Defaults to False.
     """
+
     from sklearn.neighbors import LocalOutlierFactor
 
     def __init__(
@@ -966,7 +966,7 @@ class AnomalyLOF(AnomalyModel):
             leaf_size=leaf_size,
             metric=metric,
             p=p,
-            novelty=True
+            novelty=True,
         )
         self.verbose = verbose
 
@@ -999,11 +999,11 @@ class AnomalyLOF(AnomalyModel):
 
     def flag_anomaly(self, data):
         """
-        Flag a data point as an anomaly or as an inlier. If the score from the predict 
+        Flag a data point as an anomaly or as an inlier. If the score from the predict
         method is negative, then it's an anomaly, if it's positive then it's an inlier.
 
         Returns:
-            numpy.ndarray: list containing bool values telling if data point is an 
+            numpy.ndarray: list containing bool values telling if data point is an
                 anomaly or not.
         """
         scores = self.predict(data)
@@ -1012,7 +1012,7 @@ class AnomalyLOF(AnomalyModel):
 
 class AnomalyKNN(AnomalyModel):
     """
-    Unsupervised anomaly detection model based on k-Nearest Neighbor. The model is 
+    Unsupervised anomaly detection model based on k-Nearest Neighbor. The model is
     trained with data that doesn't contain anomalies or data with anomalies in which the
     contamination proportion is known. The outlier score can be calculated using the
     distance to kth neighbor, the average of k neighbors or the median of the distance
@@ -1025,7 +1025,7 @@ class AnomalyKNN(AnomalyModel):
         algorithm (string): algorithm used to compute the nearest neighbors. Available
             algorithms are 'ball_tree', 'kd_tree', 'brute' or 'auto'. Defaults to 'auto'.
         leaf_size (int): leaf size passed to BallTree or KDTree. Defaults to 30.
-        metric (string): the distance metric to use for the tree. Defaults to 
+        metric (string): the distance metric to use for the tree. Defaults to
             'minkowski'.
         p (int): parameter for the Minkowski metric. If p = 1, then it's equivalent to
             using Manhattan distance, and if p = 2 then it's equivalent to use Euclidean
@@ -1036,11 +1036,11 @@ class AnomalyKNN(AnomalyModel):
         verbose (bool): verbose mode. Defaults to False.
 
     References:
-        * Ramaswamy, S., Rastogi, R., & Shim, K. (2000, May). Efficient algorithms for 
-            mining outliers from large data sets. In ACM Sigmod Record (Vol. 29, No. 2, 
+        * Ramaswamy, S., Rastogi, R., & Shim, K. (2000, May). Efficient algorithms for
+            mining outliers from large data sets. In ACM Sigmod Record (Vol. 29, No. 2,
             pp. 427-438). ACM.
-        * Angiulli, F., & Pizzuti, C. (2002, August). Fast outlier detection in high 
-            dimensional spaces. In European Conference on Principles of Data Mining and 
+        * Angiulli, F., & Pizzuti, C. (2002, August). Fast outlier detection in high
+            dimensional spaces. In European Conference on Principles of Data Mining and
             Knowledge Discovery (pp. 15-27). Springer, Berlin, Heidelberg.
     """
 
@@ -1100,7 +1100,7 @@ class AnomalyKNN(AnomalyModel):
         score is calculated.
 
         Args:
-            data (numpy.ndarray or pandas.DataFrame): data to calculate its outlier 
+            data (numpy.ndarray or pandas.DataFrame): data to calculate its outlier
                 score.
 
         Returns:
@@ -1135,7 +1135,8 @@ class AnomalyKNN(AnomalyModel):
         Calculates the outlier score of the distances.
 
         Args:
-            distances (np.ndarray): array with the distances of data point to its k-neighbors.
+            distances (np.ndarray): array with the distances of data point to its
+                k-neighbors.
 
         Returns:
             np.ndarray: outlier scores.
@@ -1152,7 +1153,7 @@ class AnomalyKNN(AnomalyModel):
 
     def calculate_threshold(self):
         """
-        Calculates the threshold that has to surpass a distance between a data point and 
+        Calculates the threshold that has to surpass a distance between a data point and
         its cluster to be flagged as an anomaly.
 
         Returns:
