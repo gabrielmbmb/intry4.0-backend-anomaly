@@ -3,8 +3,7 @@ import threading
 from datetime import datetime
 from dateutil import parser
 from flask import request
-from flask_restplus import Resource, Namespace, cors, fields
-from werkzeug.datastructures import FileStorage
+from flask_restplus import Resource, Namespace, cors
 from werkzeug.utils import secure_filename
 from blackbox import settings
 from blackbox.utils.api import (
@@ -15,6 +14,13 @@ from blackbox.utils.api import (
     delete_entity_json,
     match_regex,
     parse_float,
+)
+from blackbox.api.anomaly.parsers import train_parser
+from blackbox.api.anomaly.models import (
+    new_entity_model,
+    update_entity,
+    update_entity_model,
+    update_entity_models,
 )
 from blackbox.utils.worker import celery_app
 from blackbox.blackbox import BlackBoxAnomalyDetection
@@ -28,146 +34,11 @@ anomaly_ns = Namespace(
     settings.API_ANOMALY_ENDPOINT, description="Anomaly Detection Operations"
 )
 
-# API parsers
-train_parser = anomaly_ns.parser()
-
-# Train file
-train_parser.add_argument(
-    "file", type=FileStorage, required=True, location="files", help="CSV training file"
-)
-
-# Train file features
-train_parser.add_argument(
-    "input_arguments",
-    type=str,
-    required=True,
-    help="List of input arguments for Anomaly Detection models separated by a comma.",
-)
-train_parser.add_argument(
-    "contamination", type=float, help="Contamination fraction in training dataset."
-)
-
-# Model name
-train_parser.add_argument(
-    "name",
-    type=str,
-    help="Optional name to identify the Blackbox model that will be trained.",
-)
-
-# List of models
-train_parser.add_argument(
-    "models",
-    type=str,
-    choices=(
-        "PCAMahalanobis",
-        "Autoencoder",
-        "KMeans",
-        "OneClassSVM",
-        "GaussianDistribution",
-        "IsolationForest",
-    ),
-    help="List of the models that are going to be inside the Blackbox separated by a"
-    " comma. If not specified, then every anomaly detection model available will be used.",
-)
-
-# PCA + Mahalanobis params
-train_parser.add_argument(
-    "n_components", type=int, help="Numbers of components for the PCA technique."
-)
-
-# K-Means params
-train_parser.add_argument(
-    "n_clusters", type=int, help="Number of cluster for the K-Means technique."
-)
-
-# OCSVM params
-train_parser.add_argument(
-    "kernel",
-    type=str,
-    choices=("linear", "poly", "rbf", "sigmoid", "precomputed"),
-    help="Kernel type for One Class SVM technique.",
-)
-train_parser.add_argument(
-    "gamma",
-    type=float,
-    help="Kernel coefficient for 'rbf', 'poly' and 'sigmoid' in One Class SVM technique.",
-)
-
-# Autoencoder params
-train_parser.add_argument(
-    "hidden_neurons",
-    type=str,
-    help="Hidden layers and the number of neurons in each layer for the Autoencoder"
-    " model. Example: 32,16,16,32.",
-)
-train_parser.add_argument(
-    "dropout_rate",
-    type=float,
-    help="Dropout rate across all the layers of the Autoencoder.",
-)
-train_parser.add_argument("activation", type=str, help="Layers activation function.")
-train_parser.add_argument(
-    "kernel_initializer", type=str, help="Layers kernel initializer."
-)
-train_parser.add_argument(
-    "kernel_regularizer", type=str, help="Layers kernel regularizer."
-)
-train_parser.add_argument(
-    "loss_function", type=str, help="Loss funcion of Autoencoder."
-)
-train_parser.add_argument("optimizer", type=str, help="Autoencoder optimizer.")
-train_parser.add_argument(
-    "epochs",
-    type=int,
-    help="Number of times that all the batches will be processed in the Autoencoder"
-    " model.",
-)
-train_parser.add_argument("batch_size", type=int, help="Batch size")
-train_parser.add_argument(
-    "validation_split",
-    type=float,
-    help="Percentage of the training data that will be used for validation in the"
-    " Autoencoder model.",
-)
-
-# API Models
-new_entity_model = anomaly_ns.model(
-    "new_entity",
-    {
-        "attrs": fields.List(
-            fields.String(),
-            description="New entity attributes expected to train the models.",
-            required=True,
-        )
-    },
-)
-
-update_entity_model = anomaly_ns.model(
-    "model",
-    {
-        "model_path": fields.String(description="Path of the model", required=False),
-        "train_data_path": fields.String(
-            description="Path of the training data", required=False
-        ),
-    },
-)
-
-update_entity_models = anomaly_ns.model(
-    "models", {"model": fields.Nested(update_entity_model)}
-)
-
-update_entity = anomaly_ns.model(
-    "update_entity",
-    {
-        "new_entity_id": fields.String(description="New entity id", required=False),
-        "default": fields.String(description="New default model", required=False),
-        "attrs": fields.List(
-            fields.String(), description="New entity attributes", required=False
-        ),
-        "models": fields.Nested(update_entity_model),
-    },
-)
-
+# Add models of namespace
+anomaly_ns.add_model("new_entity", new_entity_model)
+anomaly_ns.add_model("model", update_entity_model)
+anomaly_ns.add_model("models", update_entity_models)
+anomaly_ns.add_model("update_entity", update_entity)
 
 # API Routes
 @anomaly_ns.route("/models")
@@ -438,85 +309,68 @@ class Train(Resource):
             "OneClassSVM": {},
             "GaussianDistribution": {},
             "IsolationForest": {},
+            "KNearestNeighbors": {},
+            "LocalOutlierFactor": {},
         }
 
-        if parsed_args.get("n_components"):
-            additional_params["PCAMahalanobis"]["n_components"] = parsed_args.get(
-                "n_components"
-            )
+        model_params_names = {
+            "PCAMahalanobis": ["n_components"],
+            "Autoencoder": [
+                "hidden_neurons",
+                "dropout_rate",
+                "activation",
+                "kernel_initializer",
+                "loss_function",
+                "optimizer",
+                "epochs",
+                "batch_size",
+                "validation_split",
+                "early_stopping",
+            ],
+            "KMeans": ["n_clusters"],
+            "OneClassSVM": [
+                "kernel",
+                "degree",
+                "gamma",
+                "coef0",
+                "tol",
+                "shrinking",
+                "cache_size",
+            ],
+            "GaussianDistribution": [],
+            "IsolationForest": ["n_estimators", "max_features", "bootstrap"],
+            "LocalOutlierFactor": [
+                ("n_neighbors_lof", "n_neighbors"),
+                ("algorithm_lof", "algorithm"),
+                ("leaf_size_lof", "leaf_size"),
+                ("metric_lof", "metric"),
+                ("p_lof", "p"),
+            ],
+            "KNearestNeighbors": [
+                ("n_neighbors_knn", "n_neighbors"),
+                ("algorithm_knn", "algorithm"),
+                ("leaf_size_knn", "leaf_size"),
+                ("metric_knn", "metric"),
+                ("p_knn", "p"),
+            ],
+        }
 
-        if parsed_args.get("std_deviation_num"):
-            additional_params["PCAMahalanobis"]["std_deviation_num"] = parsed_args.get(
-                "std_deviation_num"
-            )
+        for model_name in model_params_names.keys():
+            for param in model_params_names[model_name]:
+                # Translation tuple from param API name to model param name
+                if isinstance(param, tuple):
+                    param_api_name, param_model_real_name = param
+                    param_value = parsed_args.get(param_api_name)
+                    if param_value:
+                        additional_params[model_name][
+                            param_model_real_name
+                        ] = param_value
+                else:
+                    param_value = parsed_args.get(param)
+                    if param_value:
+                        additional_params[model_name][param] = param_value
 
-        if parsed_args.get("n_clusters"):
-            additional_params["KMeans"]["n_clusters"] = parsed_args.get("n_clusters")
-
-        if parsed_args.get("outliers_fraction"):
-            additional_params["OneClassSVM"]["outliers_fraction"] = parsed_args.get(
-                "outliers_fraction"
-            )
-            additional_params["IsolationForest"]["outliers_fraction"] = parsed_args.get(
-                "outliers_fraction"
-            )
-
-        if parsed_args.get("kernel"):
-            additional_params["OneClassSVM"]["kernel"] = parsed_args.get("kernel")
-
-        if parsed_args.get("gamma"):
-            additional_params["OneClassSVM"]["gamma"] = parsed_args.get("gamma")
-
-        if parsed_args.get("hidden_neurons"):
-            additional_params["Autoencoder"]["hidden_neurons"] = list(
-                map(int, parsed_args.get("hidden_neurons").split(","))
-            )
-
-        if parsed_args.get("dropout_rate"):
-            additional_params["Autoencoder"]["dropout_rate"] = parsed_args.get(
-                "dropout_rate"
-            )
-
-        if parsed_args.get("activation"):
-            additional_params["Autoencoder"]["activation"] = parsed_args.get(
-                "activation"
-            )
-
-        if parsed_args.get("kernel_initializer"):
-            additional_params["Autoencoder"]["kernel_initializer"] = parsed_args.get(
-                "kernel_initializer"
-            )
-
-        if parsed_args.get("kernel_regularizer"):
-            additional_params["Autoencoder"]["kernel_regularizer"] = parsed_args.get(
-                "kernel_regularizer"
-            )
-
-        if parsed_args.get("loss_function"):
-            additional_params["Autoencoder"]["loss_function"] = parsed_args.get(
-                "loss_function"
-            )
-
-        if parsed_args.get("optimizer"):
-            additional_params["Autoencoder"]["optimizer"] = parsed_args.get("optimizer")
-
-        if parsed_args.get("epochs"):
-            additional_params["Autoencoder"]["epochs"] = parsed_args.get("epochs")
-
-        if parsed_args.get("batch_size"):
-            additional_params["Autoencoder"]["batch_size"] = parsed_args.get(
-                "batch_size"
-            )
-
-        if parsed_args.get("validation_split"):
-            additional_params["Autoencoder"]["validation_split"] = parsed_args.get(
-                "validation_split"
-            )
-
-        if parsed_args.get("std_dev_num"):
-            additional_params["Autoencoder"]["std_dev_num"] = parsed_args.get(
-                "std_dev_num"
-            )
+        print(additional_params)
 
         # Save the file
         file = request.files["file"]

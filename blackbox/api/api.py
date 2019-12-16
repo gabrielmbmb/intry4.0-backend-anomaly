@@ -3,7 +3,7 @@ from flask_restplus import Api
 from blackbox import settings
 from blackbox import version
 from blackbox.utils.orion import check_orion_connection
-from blackbox.api.anomaly.anomaly import anomaly_ns
+from blackbox.api.anomaly.namespace import anomaly_ns
 
 # Create Flask App
 app = Flask(settings.APP_NAME)
