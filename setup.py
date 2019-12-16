@@ -16,7 +16,7 @@ setuptools.setup(
     data_files=[],
     entry_points={
         "console_scripts": [
-            "blackbox = blackbox.api.api:run_api",
+            "blackbox = blackbox.__main__:main",
             "blackbox-tools = tools.blackbox_tools:tools",
         ]
     },
