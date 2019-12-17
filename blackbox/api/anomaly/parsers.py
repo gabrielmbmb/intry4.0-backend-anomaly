@@ -276,7 +276,7 @@ train_parser.add_argument(
     help="The distance metric to use for the tree in KNN.",
 )
 train_parser.add_argument(
-    "p_knn", type=int, default="2", help="Parameter of the Minkowski metric in KNN."
+    "p_knn", type=int, default=2, help="Parameter of the Minkowski metric in KNN."
 )
 train_parser.add_argument(
     "score_func",
