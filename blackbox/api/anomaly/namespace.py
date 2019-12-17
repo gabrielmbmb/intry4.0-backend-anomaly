@@ -22,6 +22,7 @@ from blackbox.api.anomaly.models import (
     update_entity_model,
     update_entity_models,
 )
+from blackbox.api.anomaly.models_params import MODEL_PARAMS_NAMES
 from blackbox.utils.worker import celery_app
 from blackbox.blackbox import BlackBoxAnomalyDetection
 from blackbox.models import unsupervised
@@ -313,62 +314,15 @@ class Train(Resource):
             "LocalOutlierFactor": {},
         }
 
-        model_params_names = {
-            "PCAMahalanobis": ["n_components"],
-            "Autoencoder": [
-                "hidden_neurons",
-                "dropout_rate",
-                "activation",
-                "kernel_initializer",
-                "loss_function",
-                "optimizer",
-                "epochs",
-                "batch_size",
-                "validation_split",
-                "early_stopping",
-            ],
-            "KMeans": ["n_clusters"],
-            "OneClassSVM": [
-                "kernel",
-                "degree",
-                "gamma",
-                "coef0",
-                "tol",
-                "shrinking",
-                "cache_size",
-            ],
-            "GaussianDistribution": [],
-            "IsolationForest": ["n_estimators", "max_features", "bootstrap"],
-            "LocalOutlierFactor": [
-                ("n_neighbors_lof", "n_neighbors"),
-                ("algorithm_lof", "algorithm"),
-                ("leaf_size_lof", "leaf_size"),
-                ("metric_lof", "metric"),
-                ("p_lof", "p"),
-            ],
-            "KNearestNeighbors": [
-                ("n_neighbors_knn", "n_neighbors"),
-                ("algorithm_knn", "algorithm"),
-                ("leaf_size_knn", "leaf_size"),
-                ("metric_knn", "metric"),
-                ("p_knn", "p"),
-            ],
-        }
-
-        for anomaly_model_name in model_params_names.keys():
-            for param in model_params_names[anomaly_model_name]:
+        for anomaly_model_name in MODEL_PARAMS_NAMES.keys():
+            for param in MODEL_PARAMS_NAMES[anomaly_model_name]:
                 # Translation tuple from param API name to model param name
-                if isinstance(param, tuple):
-                    param_api_name, param_model_real_name = param
-                    param_value = parsed_args.get(param_api_name)
-                    if param_value:
-                        additional_params[anomaly_model_name][
-                            param_model_real_name
-                        ] = param_value
-                else:
-                    param_value = parsed_args.get(param)
-                    if param_value:
-                        additional_params[anomaly_model_name][param] = param_value
+                param_api_name, param_model_real_name = param
+                param_value = parsed_args.get(param_api_name)
+                if param_value:
+                    additional_params[anomaly_model_name][
+                        param_model_real_name
+                    ] = param_value
 
         # Save the file
         file = request.files["file"]
