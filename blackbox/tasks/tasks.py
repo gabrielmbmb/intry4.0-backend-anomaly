@@ -11,6 +11,8 @@ from blackbox.models.unsupervised import (
     AnomalyIsolationForest,
     AnomalyGaussianDistribution,
     AnomalyOneClassSVM,
+    AnomalyLOF,
+    AnomalyKNN,
 )
 from blackbox.utils.csv import CSVReader
 from blackbox.utils.orion import update_entity_attrs
@@ -28,16 +30,19 @@ def train_blackbox(
     self, entity_id, filename, model_name, models, input_arguments, additional_params
 ):
     """
-    Celery's task which will read the training data and train the Blackbox model for the specified entity.
+    Celery's task which will read the training data and train the Blackbox model for the
+    specified entity.
 
     Args:
         self (object): Celery app object.
         entity_id (str): Orion Context Broker (FIWARE component) entity ID
         filename (str): path of the file which will be used for training the model.
-        model_name (str): model name which will be used to refer to the Blackbox trained model.
-        models (list of str): list of strings containing the name of anomaly prediction models
-            that are going to be used.
-        input_arguments (list of str): name of the inputs variables of the Blackbox model.
+        model_name (str): model name which will be used to refer to the Blackbox trained
+            model.
+        models (list of str): list of strings containing the name of anomaly prediction
+            models that are going to be used.
+        input_arguments (list of str): name of the inputs variables of the Blackbox
+            model.
         additional_params (dict): dictionary containing additional params to specify
             to each anomaly detection model.
 
@@ -51,68 +56,49 @@ def train_blackbox(
             meta={"current": progress, "total": 100, "status": message},
         )
 
-    # read CSV file
+    # Read CSV file
     reader = CSVReader(filename)
     data = reader.get_df()
 
-    # create and train Blackbox model
-    model = BlackBoxAnomalyDetection(verbose=True)
+    # Create Blackbox
+    blackbox = BlackBoxAnomalyDetection(verbose=True)
 
-    # PCAMahalanobis
-    if BlackBoxAnomalyDetection.AVAILABLE_MODELS[0] in models:
-        params = additional_params["PCAMahalanobis"]
-        if bool(params):
-            model.add_model(AnomalyPCAMahalanobis(**params))
-        else:
-            model.add_model(AnomalyPCAMahalanobis())
+    # Add models to the Blackbox
+    for anomaly_model_name in BlackBoxAnomalyDetection.AVAILABLE_MODELS:
+        params = additional_params[anomaly_model_name]
 
-    # Autoencoder
-    if BlackBoxAnomalyDetection.AVAILABLE_MODELS[1] in models:
-        params = additional_params["Autoencoder"]
-        if bool(params):
-            model.add_model(AnomalyAutoencoder(**params))
-        else:
-            model.add_model(AnomalyAutoencoder())
+        if anomaly_model_name == "PCAMahalanobis":
+            blackbox.add_model(AnomalyPCAMahalanobis(**params))
 
-    # KMeans
-    if BlackBoxAnomalyDetection.AVAILABLE_MODELS[2] in models:
-        params = additional_params["KMeans"]
-        if bool(params):
-            model.add_model(AnomalyKMeans(**params))
-        else:
-            model.add_model(AnomalyKMeans())
+        elif anomaly_model_name == "Autoencoder":
+            blackbox.add_model(AnomalyAutoencoder(**params))
 
-    # OneClassSVM
-    if BlackBoxAnomalyDetection.AVAILABLE_MODELS[3] in models:
-        params = additional_params["OneClassSVM"]
-        if bool(params):
-            model.add_model(AnomalyOneClassSVM(**params))
-        else:
-            model.add_model(AnomalyOneClassSVM())
+        elif anomaly_model_name == "KMeans":
+            blackbox.add_model(AnomalyKMeans(**params))
 
-    # GaussianDistribution
-    if BlackBoxAnomalyDetection.AVAILABLE_MODELS[4] in models:
-        params = additional_params["GaussianDistribution"]
-        if bool(params):
-            model.add_model(AnomalyIsolationForest(**params))
-        else:
-            model.add_model(AnomalyIsolationForest())
+        elif anomaly_model_name == "OneClassSVM":
+            blackbox.add_model(AnomalyOneClassSVM(**params))
 
-    # IsolationForest
-    if BlackBoxAnomalyDetection.AVAILABLE_MODELS[5] in models:
-        params = additional_params["IsolationForest"]
-        if bool(params):
-            model.add_model(AnomalyIsolationForest(**params))
-        else:
-            model.add_model(AnomalyIsolationForest())
+        elif anomaly_model_name == "GaussianDistribution":
+            blackbox.add_model(AnomalyGaussianDistribution(**params))
 
-    model.train_models(data, cb_func=cb_function)
+        elif anomaly_model_name == "IsolationForest":
+            blackbox.add_model(AnomalyIsolationForest(**params))
 
-    # save the model
+        elif anomaly_model_name == "KNearestNeighbors":
+            blackbox.add_model(AnomalyKNN(**params))
+
+        elif anomaly_model_name == "LocalOutlierFactor":
+            blackbox.add_model(AnomalyLOF(**params))
+
+    # Train the models in Blackbox
+    blackbox.train_models(data, cb_func=cb_function)
+
+    # Save the Blackbox
     model_path = settings.MODELS_ROUTE + "/" + entity_id + "/" + model_name + ".pkl"
-    model.save_blackbox(model_path)
+    blackbox.save_blackbox(model_path)
 
-    # add the model to the JSON
+    # Add the Blackbox to the JSON
     add_model_entity_json(
         settings.MODELS_ROUTE_JSON,
         entity_id,
