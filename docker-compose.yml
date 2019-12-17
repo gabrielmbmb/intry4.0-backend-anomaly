@@ -13,7 +13,7 @@ services:
 
   celery:
     build: .
-    image: 'platinum/blackbox:0.1.1'
+    image: 'platinum/blackbox:0.2.0'
     depends_on:
       - redis
     command: celery -A blackbox.tasks.tasks worker -l info
@@ -28,7 +28,7 @@ services:
       - ORION_CONTEXT_BROKER=http://orion:1026
 
   blackbox:
-    image: 'platinum/blackbox:0.1.1'
+    image: 'platinum/blackbox:0.2.0'
     depends_on:
       - celery
     ports:
