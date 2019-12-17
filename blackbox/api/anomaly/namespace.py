@@ -355,22 +355,20 @@ class Train(Resource):
             ],
         }
 
-        for model_name in model_params_names.keys():
-            for param in model_params_names[model_name]:
+        for anomaly_model_name in model_params_names.keys():
+            for param in model_params_names[anomaly_model_name]:
                 # Translation tuple from param API name to model param name
                 if isinstance(param, tuple):
                     param_api_name, param_model_real_name = param
                     param_value = parsed_args.get(param_api_name)
                     if param_value:
-                        additional_params[model_name][
+                        additional_params[anomaly_model_name][
                             param_model_real_name
                         ] = param_value
                 else:
                     param_value = parsed_args.get(param)
                     if param_value:
-                        additional_params[model_name][param] = param_value
-
-        print(additional_params)
+                        additional_params[anomaly_model_name][param] = param_value
 
         # Save the file
         file = request.files["file"]
