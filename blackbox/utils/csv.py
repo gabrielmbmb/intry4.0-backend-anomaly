@@ -11,7 +11,8 @@ class CSVReader:
         path (str): path of the file.
 
     Todo:
-        * Autodetect if the file has index column (the index is usually a date or succession of numbers, try to detect this?)
+        * Autodetect if the file has index column (the index is usually a date or 
+            succession of numbers, try to detect this?)
     """
 
     def __init__(self, path):
@@ -48,10 +49,12 @@ class CSVReader:
 
     def append_to_csv(self, to_append) -> None:
         """
-        Appends a DataFrame at the end of the CSV file. If the CSV file doesn't exist, then it will be created.
+        Appends a DataFrame at the end of the CSV file. If the CSV file doesn't exist, 
+        then it will be created.
 
         Args:
-            to_append (pandas.DataFrame): dataframe to be appended or to be written in the new CSV file.
+            to_append (pandas.DataFrame): dataframe to be appended or to be written in 
+                the new CSV file.
 
         Returns:
 

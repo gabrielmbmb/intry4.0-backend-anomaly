@@ -25,9 +25,12 @@ def update_entity_attrs(entity_id, attrs) -> Union[None, requests.Response]:
 
     Args:
         entity_id (str): entity ID in Orion Context Broker
-        attrs (dict): dictionary containing the attributes that will be created or updated in the entity.
+        attrs (dict): dictionary containing the attributes that will be created or
+            updated in the entity.
 
     Returns:
+        None or Response: None if the attributes could not be updated in OCB or the OCB
+            response.
     """
     if not isinstance(attrs, dict):
         print("Attributes passed are not in a dictionary")

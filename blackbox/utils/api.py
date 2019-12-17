@@ -15,7 +15,8 @@ def read_json(path) -> Dict:
         path (str): path of the JSON file.
 
     Returns:
-        dict: dict with the content of the JSON file or None if the JSON couldn't be read.
+        dict: dict with the content of the JSON file or None if the JSON couldn't be 
+            read.
     """
     try:
         with open(path, "r") as f:
@@ -50,17 +51,20 @@ def write_json(path, data, sort=False) -> None:
 
 def add_entity_json(path_json, entity_id, path_entity_dir, attrs) -> Tuple[bool, str]:
     """
-    Add an entity to the JSON file. If the JSON file is not created, then it will be created and add the entity will be
-    added inside of it. If the entity already exist, the entity will not be created.
+    Add an entity to the JSON file. If the JSON file is not created, then it will be
+    created and add the entity will be added inside of it. If the entity already exist,
+    the entity will not be created.
 
     Args:
         path_json (str): JSON models file path.
         entity_id (str): entity ID (Orion Context Broker)
         path_entity_dir (str): path of the entity directory.
-        attrs (list of str): attributes of the entity (same name as in Orion Context Broker).
+        attrs (list of str): attributes of the entity (same name as in Orion Context 
+            Broker).
 
     Returns:
-        tuple: bool which indicates if the entity was created and str which is a descriptive message.
+        tuple: bool which indicates if the entity was created and str which is a 
+            descriptive message.
     """
     try:
         os.makedirs(os.path.join(path_entity_dir, "train_data"))
@@ -108,15 +112,18 @@ def add_model_entity_json(
         model_name (str): model name.
         model_path (str): path of the pickle file storing the Anomaly Detection model.
         train_data_path (str): path of the file used to train the model.
-        models (list of str): contains the names of the Anomaly Detection models that are inside the Blackbox.
-        input_arguments (list of str): name of the inputs variables of the Blackbox model.
+        models (list of str): contains the names of the Anomaly Detection models that 
+            are inside the Blackbox.
+        input_arguments (list of str): name of the inputs variables of the Blackbox
+            model.
 
 
     Returns:
         bool: indicating whether the model was added or not.
 
     Raises:
-        FileNotFoundError: if the JSON file storing the entities and its models does not exist.
+        FileNotFoundError: if the JSON file storing the entities and its models does not
+            exist.
     """
     json_entities = read_json(path_json)
     if not json_entities:
@@ -159,16 +166,20 @@ def update_entity_json(
         entity_id (str): entity ID (Orion Context Broker).
         path_json (str): path of the JSON file storing the entities info.
         path_models (str): path where the models are stored.
-        new_entity_id (str): new entity ID (Orion Context Broker) that will replace entity_id. Defaults to None.
+        new_entity_id (str): new entity ID (Orion Context Broker) that will replace
+            entity_id. Defaults to None.
         default (str): new default model. Defaults to None.
-        attrs (list of str): new attributes of the entity (same name as in Orion Context Broker).
+        attrs (list of str): new attributes of the entity (same name as in Orion Context
+            Broker).
         models (dict): new models. Defaults to None.
 
     Returns:
-        tuple: bool which indicates if the entity was updated and list of str containing descriptive messages.
+        tuple: bool which indicates if the entity was updated and list of str containing
+            descriptive messages.
 
     Raises:
-        FileNotFoundError: if the JSON file storing the entities and its models does not exist.
+        FileNotFoundError: if the JSON file storing the entities and its models does not
+            exist.
     """
     json_entities = read_json(path_json)
     if not json_entities:
@@ -242,17 +253,19 @@ def delete_entity_json(
     entity_id, path_json, path_models, path_trash
 ) -> Tuple[bool, str]:
     """
-    Deletes an entity from the JSON storing the entities and its models. The directory of the entity will be moved
-    to the deleted entities folder.
+    Deletes an entity from the JSON storing the entities and its models. The directory
+    of the entity will be movedto the deleted entities folder.
 
     Args:
         entity_id (str): entity ID (Orion Context Broker).
         path_json (str): path of the JSON file storing the entities info.
         path_models (str): path where the models are stored.
-        path_trash (str): path where the directory of the deleted entities will be stored.
+        path_trash (str): path where the directory of the deleted entities will be
+            stored.
 
     Returns:
-        tuple: tuple containing one bool indicating if the entity was deleted and str that is a descriptive message.
+        tuple: tuple containing one bool indicating if the entity was deleted and str
+            that is a descriptive message.
     """
     if not os.path.exists(path_trash):
         os.mkdir(path_trash)
@@ -291,8 +304,8 @@ def build_url(url_root, base_endpoint, *args):
     Args:
         url_root (str): root URL. i.e: 'http://localhost:5678'
         base_endpoint (str): endpoint base. i.e: 'api/v1/anomaly'
-        *args: arbitrary number of strings that will be added to the end of the URL. i.e: 'api', 'anomaly' ->
-            'api/anomaly'
+        *args: arbitrary number of strings that will be added to the end of the URL.
+            i.e: 'api', 'anomaly' -> 'api/anomaly'
 
     Returns:
         str: the build URL.
@@ -342,8 +355,8 @@ def parse_float(to_parse) -> Union[float, list, None]:
         to_parse(list or str): a single string or a list of strings.
 
     Returns:
-        float or list: floating point number parsed from a string or a list of floatings point numbers parsed from a
-            list of strings
+        float or list: floating point number parsed from a string or a list of floatings
+            point numbers parsed from a list of strings.
     """
     if isinstance(to_parse, list):
         parsed_floats = []

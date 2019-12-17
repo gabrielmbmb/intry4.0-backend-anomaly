@@ -115,8 +115,8 @@ def train_blackbox(
 @celery_app.task(name="tasks.predict")
 def predict_blackbox(entity_id, date, model_path, predict_data):
     """
-    Flag a data point received from Orion Context Broker (FIWARE component) as an anomaly or not using an already
-    trained model loaded from a pickle file.
+    Flag a data point received from Orion Context Broker (FIWARE component) as an 
+    anomaly or not using an already trained model loaded from a pickle file.
 
     Args:
         entity_id (str): Orion Context Broker (FIWARE component) entity ID

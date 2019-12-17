@@ -126,7 +126,8 @@ class BlackBoxAnomalyDetection:
             data (numpy.ndarray or pandas.DataFrame or list): data.
 
         Returns:
-            numpy.ndarray: list containing list of bool indicating if the data point is an anomaly.
+            numpy.ndarray: list containing list of bool indicating if the data point is
+                an anomaly.
         """
         if isinstance(data, list):
             data = np.array(data)
@@ -205,7 +206,8 @@ class BlackBoxAnomalyDetection:
         Loads a Blackbox from a pickle file.
 
         Args:
-            path (str): path from where to load the Blackbox. Defaults to './blackbox.pkl'.
+            path (str): path from where to load the Blackbox. Defaults to 
+                './blackbox.pkl'.
         """
         loaded_data = None
 
