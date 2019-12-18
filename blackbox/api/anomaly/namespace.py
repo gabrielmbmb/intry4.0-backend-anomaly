@@ -128,10 +128,14 @@ class Entity(Resource):
         if not json_entities:
             return {"error": "The JSON file does not exist"}, 400
 
-        if entity_id not in json_entities:
-            return {"error": "The entity {} does not exist".format(entity_id)}, 400
+        entity_regex = match_regex(list(json_entities.keys()), entity_id)
+        if not entity_regex:
+            return (
+                {"error": "The entity does not match any entity name in model.json"},
+                400,
+            )
 
-        entity_data = json_entities[entity_id]
+        entity_data = json_entities[entity_regex]
         return {entity_id: entity_data}, 200
 
     @cors.crossdomain(origin="*")
