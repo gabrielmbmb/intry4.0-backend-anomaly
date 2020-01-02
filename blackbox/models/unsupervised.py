@@ -34,6 +34,8 @@ class AnomalyPCAMahalanobis(AnomalyModel):
         self._data = None
         self._distances = None
         self._cov = None
+        self._inv_cov = None
+        self._mean_data = None
         self._threshold = None
         self._contamination = contamination
         self.verbose = verbose
@@ -109,9 +111,17 @@ class AnomalyPCAMahalanobis(AnomalyModel):
 
         if self._cov is None:
             self._cov = np.cov(self._data, rowvar=False)
-        inv_cov_mat = np.linalg.inv(self._cov)
-        diff = x - np.mean(self._data)
-        return np.sqrt(np.diagonal(np.dot(np.dot(diff, inv_cov_mat), diff.T)))
+            self._inv_cov = np.linalg.inv(self._cov)
+
+        if self._mean_data is None:
+            self._mean_data = np.mean(self._data)
+
+        distances = []
+        for point in x:
+            diff = point - self._mean_data
+            distances.append(np.sqrt(np.dot(np.dot(diff, self._inv_cov), diff.T)))
+
+        return np.array(distances)
 
 
 class AnomalyAutoencoder(AnomalyModel):
@@ -843,12 +853,12 @@ class AnomalyGaussianDistribution(AnomalyModel):
 
 class AnomalyIsolationForest(AnomalyModel):
     """
-    Unsupervised anomaly detection model based on One Class Support Vector Machine. The
-    model is trained with data that doesn't contains anomalies. The Isolation Forest
-    algorithm isolates observations by randomly selecting a feature and then randomly
-    selecting a split value between the maximum and the minimum values of the selected
-    feature. Isolating anomalies is easier because only a few conditions are needed to
-    separate them from normal values.
+    Unsupervised anomaly detection model based on Isolation Forest. The model is trained
+    with data that doesn't contains anomalies. The Isolation Forest algorithm isolates
+    observations by randomly selecting a feature and then randomly selecting a split
+    value between the maximum and the minimum values of the selected feature. Isolating
+    anomalies is easier because only a few conditions are needed to separate them from
+    normal values.
 
     Args:
         contamination (float): contamination fraction in dataset. Defaults to 0.1.

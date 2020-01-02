@@ -15,17 +15,24 @@ class AnomalyModel(metaclass=ABCMeta):
 
     @abstractmethod
     def predict(self, data):
-        """This method should implement all the logic to predict a value in order to flag as anomaly."""
+        """
+        This method should implement all the logic to predict a value in order to 
+        flag as anomaly.
+        """
         pass
 
     @abstractmethod
     def flag_anomaly(self, data):
-        """This method should implement a metric to flag a data point as anomaly or not anomalous."""
+        """
+        This method should implement a metric to flag a data point as anomaly or not
+        anomalous.
+        """
         pass
 
     def save_model(self, path=None) -> str:
         """
-        Saves the trained model in a Pickle file. Only Class Attributes that start with '_' will be saved.
+        Saves the trained model in a Pickle file. Only Class Attributes that start with
+        '_' will be saved.
 
         Args:
             path (str): path to save the model. Defaults to './<Class Name>.pkl'
@@ -61,7 +68,8 @@ class AnomalyModel(metaclass=ABCMeta):
         Load a trained model from a Pickle file.
 
         Args:
-            path (str): path from where to load the model. Defaults to './<Class Name>.pkl'
+            path (str): path from where to load the model. Defaults to
+                './<Class Name>.pkl'
         """
         loaded_data = None
 
