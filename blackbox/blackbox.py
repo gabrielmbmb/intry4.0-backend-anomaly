@@ -1,5 +1,6 @@
 import os
 import pickle
+import multiprocessing
 import numpy as np
 from sklearn.preprocessing import MinMaxScaler
 from blackbox.models.base_model import AnomalyModel
@@ -20,9 +21,6 @@ class BlackBoxAnomalyDetection:
     Raises:
         NotAnomalyModelClass: when trying to add a model that is not an instance of
             AnomalyModel.
-
-    Todo:
-        * Add n_jobs argument
     """
 
     AVAILABLE_MODELS = [

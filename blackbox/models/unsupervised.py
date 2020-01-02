@@ -20,6 +20,7 @@ class AnomalyPCAMahalanobis(AnomalyModel):
             reduced. Defaults to 2.
         contamination (float): contamination fraction of training dataset. Defaults to
             0.1.
+
         verbose (bool): verbose mode. Defaults to False.
 
     Todo:
@@ -38,7 +39,7 @@ class AnomalyPCAMahalanobis(AnomalyModel):
         self._mean_data = None
         self._threshold = None
         self._contamination = contamination
-        self.verbose = verbose
+        self._verbose = verbose
 
     def train(self, data) -> None:
         """
@@ -221,11 +222,10 @@ class AnomalyAutoencoder(AnomalyModel):
             )
 
         self._autoencoder = None
-        self.history = None
+        self._history = None
         self._loss = None
         self._threshold = None
-
-        self.verbose = verbose
+        self._verbose = verbose
 
     def train(self, data) -> None:
         """
@@ -244,14 +244,14 @@ class AnomalyAutoencoder(AnomalyModel):
                 "Number of neurons should not exceed the number of features."
             )
 
-        if self.verbose:
+        if self._verbose:
             verbosity_level = 1
         else:
             verbosity_level = 0
 
         cb_list = []
         if not isinstance(self._early_stopping, bool):
-            if self.verbose:
+            if self._verbose:
                 print(
                     "Using EarlyStopping in trainning process. Number of epochs without"
                     " improvement before stopping training process: {}".format(
@@ -353,7 +353,7 @@ class AnomalyAutoencoder(AnomalyModel):
         # compile
         model.compile(optimizer=self._optimizer, loss=self._loss_function)
 
-        if self.verbose:
+        if self._verbose:
             print(model.summary())
 
         return model
@@ -405,6 +405,8 @@ class AnomalyKMeans(AnomalyModel):
         n_clusters (Int): indicates the number of clusters. Defaults to None.
         contamination (float): contamination (float): contamination fraction of the
             training dataset. Defaults to 0.1.
+        n_jobs (int): number of cores to use in training and predicting process.
+            Defaults to 1.
         verbose (bool): verbose mode. Defaults to False.
 
     Todo:
@@ -413,12 +415,13 @@ class AnomalyKMeans(AnomalyModel):
 
     from sklearn.cluster import KMeans
 
-    def __init__(self, n_clusters=None, contamination=0.1, verbose=False):
+    def __init__(self, n_clusters=None, contamination=0.1, n_jobs=1, verbose=False):
         super().__init__()
-        self.verbose = verbose
+        self._verbose = verbose
         self._kmeans = None
         self._n_clusters = n_clusters
         self._contamination = contamination
+        self._n_jobs = n_jobs
         self._threshold = None
         self._distances = None
 
@@ -435,25 +438,25 @@ class AnomalyKMeans(AnomalyModel):
             data = data.values
 
         if self._n_clusters is None:
-            if self.verbose:
+            if self._verbose:
                 print("Calculating optimal number of clusters with Elbow Method...")
 
             (self._n_clusters, _) = self.elbow(data)
 
-            if self.verbose:
+            if self._verbose:
                 print(
                     "Optimal number of n_clusters: {}. Fitting model...".format(
                         self._n_clusters
                     )
                 )
 
-        self._kmeans = self.KMeans(n_clusters=self._n_clusters)
+        self._kmeans = self.KMeans(n_clusters=self._n_clusters, n_jobs=self._n_jobs)
         self._kmeans.fit(data)
         self._distances = self.get_distance_by_point(
             data, self._kmeans.cluster_centers_, self._kmeans.labels_
         )
 
-        if self.verbose:
+        if self._verbose:
             print("Calculating threshold value to flag an anomaly...")
 
         self._threshold = self.calculate_threshold()
@@ -518,15 +521,17 @@ class AnomalyKMeans(AnomalyModel):
                 n_cluster (float): optimal number of clusters (Elbow point)
                 scores (list): list of float with scores for every K-Means model.
         """
-        if self.verbose:
+        if self._verbose:
             print("Computing K-Means models...")
 
         n_clusters = range(1, max_clusters)
-        kmeans = [self.KMeans(n_clusters=i).fit(data) for i in n_clusters]
+        kmeans = [
+            self.KMeans(n_clusters=i, n_jobs=self._n_jobs).fit(data) for i in n_clusters
+        ]
         scores = [kmeans[i].score(data) for i in range(len(kmeans))]
         line_p1, line_p2 = (0, scores[0]), (max_clusters, scores[-1])
 
-        if self.verbose:
+        if self._verbose:
             print("Calculating Elbow point...")
 
         distances = []
@@ -603,6 +608,8 @@ class AnomalyOneClassSVM(AnomalyModel):
         tol (float): tolerance for stopping criterion. Defaults to 0.001.
         shrinking (bool): wheter to use the shrinking heuristic. Defaults to True.
         cache_size (float): specify the size of the kernel cache in MB. Defaults to 200.
+        n_jobs (int): number of cores to use in training and predicting process.
+            Defaults to 1.
         verbose (bool): verbose mode. Defaults to False.
 
     Todo:
@@ -621,6 +628,7 @@ class AnomalyOneClassSVM(AnomalyModel):
         tol=0.001,
         shrinking=True,
         cache_size=200,
+        n_jobs=1,
         verbose=False,
     ):
         super().__init__()
@@ -634,8 +642,9 @@ class AnomalyOneClassSVM(AnomalyModel):
             shrinking=shrinking,
             cache_size=cache_size,
             tol=tol,
+            n_jobs=n_jobs,
         )
-        self.verbose = verbose
+        self._verbose = verbose
 
     def train(self, data) -> None:
         """
@@ -647,7 +656,7 @@ class AnomalyOneClassSVM(AnomalyModel):
         if isinstance(data, pd.DataFrame):
             data = data.values
 
-        if self.verbose:
+        if self._verbose:
             print("Training the OneClassSVM model...")
 
         self._svm.fit(data)
@@ -695,7 +704,7 @@ class AnomalyGaussianDistribution(AnomalyModel):
         self._variance = None
         self._epsilon = None
         self._probabilities = None
-        self.verbose = verbose
+        self._verbose = verbose
 
     def train(self, data, labels=None) -> None:
         """
@@ -869,6 +878,8 @@ class AnomalyIsolationForest(AnomalyModel):
         bootstrap (bool): if True, individual trees are fit on random subsets of the
             training data sampled with replacement. If False, sampling without
             replacement is permformed. Defaults to False.
+        n_jobs (int): number of cores to use in training and predicting process.
+            Defaults to 1.
         verbose (bool): verbose mode. Defaults to False.
 
     Todo:
@@ -883,6 +894,7 @@ class AnomalyIsolationForest(AnomalyModel):
         n_estimators=100,
         max_features=1.0,
         bootstrap=False,
+        n_jobs=1,
         verbose=False,
     ):
         super().__init__()
@@ -892,9 +904,10 @@ class AnomalyIsolationForest(AnomalyModel):
             max_features=max_features,
             bootstrap=bootstrap,
             behaviour="new",
+            n_jobs=n_jobs,
         )
         self._contamination = contamination
-        self.verbose = verbose
+        self._verbose = verbose
         self._training_outliers = None
 
     def train(self, data) -> None:
@@ -907,7 +920,7 @@ class AnomalyIsolationForest(AnomalyModel):
         if isinstance(data, pd.DataFrame):
             data = data.values
 
-        if self.verbose:
+        if self._verbose:
             print("Training the Isolation Forest model...")
 
         self._training_outliers = self._forest.fit_predict(data) < 0
@@ -953,6 +966,8 @@ class AnomalyLOF(AnomalyModel):
         p (int): parameter for the Minkowski metric. If p = 1, then it's equivalent to
             using Manhattan distance, and if p = 2 then it's equivalent to use Euclidean
             distance. Defaults to 2.
+        n_jobs (int): number of cores to use in training and predicting process.
+            Defaults to 1.
         verbose (bool): verbose mode. Defaults to False.
     """
 
@@ -966,6 +981,7 @@ class AnomalyLOF(AnomalyModel):
         leaf_size=30,
         metric="minkowski",
         p=2,
+        n_jobs=1,
         verbose=False,
     ):
         self._contamination = contamination
@@ -977,8 +993,9 @@ class AnomalyLOF(AnomalyModel):
             metric=metric,
             p=p,
             novelty=True,
+            n_jobs=n_jobs,
         )
-        self.verbose = verbose
+        self._verbose = verbose
 
     def train(self, data):
         """
@@ -990,7 +1007,7 @@ class AnomalyLOF(AnomalyModel):
         if isinstance(data, pd.DataFrame):
             data = data.values
 
-        if self.verbose:
+        if self._verbose:
             print("Training the Local Outlier Factor model...")
 
         self._lof.fit(data)
@@ -1043,6 +1060,8 @@ class AnomalyKNN(AnomalyModel):
         contamination (float): contamination fraction in dataset. Defaults to 0.1.
         score_func (string): the function used to score anomalies. Available scores
             are 'max_distance', 'average' or 'median'. Defaults to 'distance'.
+        n_jobs (int): number of cores to use in training and predicting process.
+            Defaults to 1.
         verbose (bool): verbose mode. Defaults to False.
 
     References:
@@ -1066,6 +1085,7 @@ class AnomalyKNN(AnomalyModel):
         algorithm="auto",
         score_func="max_distance",
         contamination=0.1,
+        n_jobs=1,
         verbose=False,
     ):
         self._n_neighbors = n_neighbors
@@ -1079,10 +1099,11 @@ class AnomalyKNN(AnomalyModel):
             metric=metric,
             p=p,
             algorithm=algorithm,
+            n_jobs=n_jobs,
         )
         self._distances = None
         self._threshold = None
-        self.verbose = verbose
+        self._verbose = verbose
 
     def train(self, data):
         """
@@ -1094,7 +1115,7 @@ class AnomalyKNN(AnomalyModel):
         if isinstance(data, pd.DataFrame):
             data = data.values
 
-        if self.verbose:
+        if self._verbose:
             print("Training the k-Nearest Neighbors model...")
 
         self._knn.fit(data)
