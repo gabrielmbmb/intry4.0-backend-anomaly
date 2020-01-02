@@ -405,6 +405,8 @@ class AnomalyKMeans(AnomalyModel):
         n_clusters (Int): indicates the number of clusters. Defaults to None.
         contamination (float): contamination (float): contamination fraction of the
             training dataset. Defaults to 0.1.
+        max_cluster_elbow (int): maximum number of cluster to test in the Elbow Method.
+            Defaults to 100.
         n_jobs (int): number of cores to use in training and predicting process.
             Defaults to 1.
         verbose (bool): verbose mode. Defaults to False.
@@ -415,12 +417,20 @@ class AnomalyKMeans(AnomalyModel):
 
     from sklearn.cluster import KMeans
 
-    def __init__(self, n_clusters=None, contamination=0.1, n_jobs=1, verbose=False):
+    def __init__(
+        self,
+        n_clusters=None,
+        contamination=0.1,
+        max_cluster_elbow=100,
+        n_jobs=1,
+        verbose=False,
+    ):
         super().__init__()
         self._verbose = verbose
         self._kmeans = None
         self._n_clusters = n_clusters
         self._contamination = contamination
+        self._max_cluster_elbow = max_cluster_elbow
         self._n_jobs = n_jobs
         self._threshold = None
         self._distances = None
@@ -441,7 +451,7 @@ class AnomalyKMeans(AnomalyModel):
             if self._verbose:
                 print("Calculating optimal number of clusters with Elbow Method...")
 
-            (self._n_clusters, _) = self.elbow(data)
+            (self._n_clusters, _) = self.elbow(data, self._max_cluster_elbow)
 
             if self._verbose:
                 print(
