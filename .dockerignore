@@ -7,3 +7,5 @@ run-redis.sh
 __pycache__/
 redis-stable/
 venv/
+codecov.yml
+test-requirements.txt
