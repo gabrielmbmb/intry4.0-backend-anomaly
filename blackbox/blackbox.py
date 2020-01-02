@@ -139,9 +139,6 @@ class BlackBoxAnomalyDetection:
             results.append(model.flag_anomaly(data))
 
         np_array = np.array(results)
-        # pylint: disable=E1136 # pylint/issues/3139
-        np_array = np_array.reshape((np_array.shape[1], np_array.shape[0]))
-
         return np_array
 
     def save_models(self, path_dir="./saved_models") -> None:
