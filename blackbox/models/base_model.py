@@ -2,11 +2,19 @@ import pickle
 from abc import ABCMeta, abstractmethod
 
 
+class ModelNotTrained(Exception):
+    """Raised when a model is not trained"""
+
+    pass
+
+
 class AnomalyModel(metaclass=ABCMeta):
     """Abstract base class for anomaly detection model."""
 
+    TRAIN_PARAMS = []
+
     def __init__(self):
-        self.verbose = None
+        self._verbose = None
 
     @abstractmethod
     def train(self, train):
@@ -50,7 +58,7 @@ class AnomalyModel(metaclass=ABCMeta):
             if key[0] == "_":
                 data_to_pickle[key] = value
 
-        if self.verbose:
+        if self._verbose:
             print("Saving model to {}".format(path))
 
         try:
@@ -76,7 +84,7 @@ class AnomalyModel(metaclass=ABCMeta):
         if path is None:
             path = "./" + self.__class__.__name__ + ".pkl"
 
-        if self.verbose:
+        if self._verbose:
             print("Loading model from {}".format(path))
 
         try:
@@ -90,3 +98,17 @@ class AnomalyModel(metaclass=ABCMeta):
         if loaded_data:
             for key, value in loaded_data.items():
                 self.__setattr__(key, value)
+
+    def check_if_trained(self):
+        """
+        Check if the model is already trained.
+
+        Returns:
+            bool: indicating whether the model is trained or not.
+        """
+
+        for param in self.TRAIN_PARAMS:
+            if self.__dict__.get(param) is None:
+                return False
+
+        return True

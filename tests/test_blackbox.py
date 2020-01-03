@@ -9,8 +9,9 @@ from blackbox.models.unsupervised import (
     AnomalyGaussianDistribution,
     AnomalyOneClassSVM,
     AnomalyKNN,
-    AnomalyLOF
+    AnomalyLOF,
 )
+from blackbox.models.base_model import ModelNotTrained
 from blackbox.utils.csv import CSVReader
 
 
@@ -108,6 +109,8 @@ class TestBlackBoxAnomalyDetection(TestCase):
 
         def cb_function(progress, message):
             print(message, "Progress: ", progress)
+
+        self.assertRaises(ModelNotTrained, self.model.flag_anomaly, df2)
 
         self.model.train_models(df, cb_function)  # train model
 

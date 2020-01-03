@@ -1,7 +1,7 @@
 from typing import List, Tuple
 import numpy as np
 import pandas as pd
-from blackbox.models.base_model import AnomalyModel
+from blackbox.models.base_model import AnomalyModel, ModelNotTrained
 
 
 class AnomalyPCAMahalanobis(AnomalyModel):
@@ -28,6 +28,8 @@ class AnomalyPCAMahalanobis(AnomalyModel):
     """
 
     from sklearn.decomposition import PCA
+
+    TRAIN_PARAMS = ["_distances", "_threshold", "_cov", "_data", "_mean_data"]
 
     def __init__(self, n_components=2, contamination=0.1, verbose=False) -> None:
         super().__init__()
@@ -81,6 +83,9 @@ class AnomalyPCAMahalanobis(AnomalyModel):
         Returns:
             numpy.ndarray: list of booleans telling if point is anomalous or not.
         """
+        if not self.check_if_trained():
+            raise ModelNotTrained("The model has not been trained!")
+
         distances = self.predict(data)
         return distances > self._threshold
 
@@ -173,6 +178,8 @@ class AnomalyAutoencoder(AnomalyModel):
     from keras.layers import Dense, Dropout
     from keras import regularizers
     from keras.callbacks.callbacks import EarlyStopping
+
+    TRAIN_PARAMS = ["_autoencoder", "_loss", "_threshold"]
 
     def __init__(
         self,
@@ -306,6 +313,9 @@ class AnomalyAutoencoder(AnomalyModel):
             numpy.ndarray: list containing bool values telling if data point is an
                 anomaly or not.
         """
+        if not self.check_if_trained():
+            raise ModelNotTrained("The model has not been trained!")
+
         predict = self._autoencoder.predict(data)
         loss = self.mean_absolute_error(data, predict)
         return loss > self._threshold
@@ -415,6 +425,8 @@ class AnomalyKMeans(AnomalyModel):
         * Add n_jobs argument
     """
 
+    TRAIN_PARAMS = ["_kmeans", "_threshold", "_distances", "_n_clusters"]
+
     from sklearn.cluster import KMeans
 
     def __init__(
@@ -501,6 +513,9 @@ class AnomalyKMeans(AnomalyModel):
         Returns:
             numpy.ndarray: list of booleans telling if point is anomalous or not.
         """
+        if not self.check_if_trained():
+            raise ModelNotTrained("The model has not been trained!")
+
         distances = self.predict(data)
         return distances > self._threshold
 
@@ -618,8 +633,6 @@ class AnomalyOneClassSVM(AnomalyModel):
         tol (float): tolerance for stopping criterion. Defaults to 0.001.
         shrinking (bool): wheter to use the shrinking heuristic. Defaults to True.
         cache_size (float): specify the size of the kernel cache in MB. Defaults to 200.
-        n_jobs (int): number of cores to use in training and predicting process.
-            Defaults to 1.
         verbose (bool): verbose mode. Defaults to False.
 
     Todo:
@@ -627,6 +640,8 @@ class AnomalyOneClassSVM(AnomalyModel):
     """
 
     from sklearn.svm import OneClassSVM
+
+    TRAIN_PARAMS = ["_svm"]
 
     def __init__(
         self,
@@ -638,7 +653,6 @@ class AnomalyOneClassSVM(AnomalyModel):
         tol=0.001,
         shrinking=True,
         cache_size=200,
-        n_jobs=1,
         verbose=False,
     ):
         super().__init__()
@@ -652,7 +666,6 @@ class AnomalyOneClassSVM(AnomalyModel):
             shrinking=shrinking,
             cache_size=cache_size,
             tol=tol,
-            n_jobs=n_jobs,
         )
         self._verbose = verbose
 
@@ -693,6 +706,9 @@ class AnomalyOneClassSVM(AnomalyModel):
         Returns:
             list of bool: list of bool telling if a data point is an anomaly or not.
         """
+        if not self.check_if_trained():
+            raise ModelNotTrained("The model has not been trained!")
+
         predictions = self.predict(data)
         return predictions == -1
 
@@ -707,6 +723,8 @@ class AnomalyGaussianDistribution(AnomalyModel):
     Args:
         verbose (bool): verbose mode. Defaults to False.
     """
+
+    TRAIN_PARAMS = ["_mean", "_variance", "_probabilities", "_epsilon"]
 
     def __init__(self, verbose=False):
         super().__init__()
@@ -766,6 +784,9 @@ class AnomalyGaussianDistribution(AnomalyModel):
         Returns:
             numpy.ndarray: list of bool telling if a data point is an anomaly or not.
         """
+        if not self.check_if_trained():
+            raise ModelNotTrained("The model has not been trained!")
+
         probabilities = self.predict(data)
         return probabilities < self._epsilon
 
@@ -898,6 +919,8 @@ class AnomalyIsolationForest(AnomalyModel):
 
     from sklearn.ensemble import IsolationForest
 
+    TRAIN_PARAMS = {"_forest", "_training_outliers"}
+
     def __init__(
         self,
         contamination=0.1,
@@ -956,6 +979,9 @@ class AnomalyIsolationForest(AnomalyModel):
             numpy.ndarray: list containing bool values telling if data point is an
                 anomaly or not.
         """
+        if not self.check_if_trained():
+            raise ModelNotTrained("The model has not been trained!")
+
         scores = self.predict(data)
         return scores < 0
 
@@ -982,6 +1008,8 @@ class AnomalyLOF(AnomalyModel):
     """
 
     from sklearn.neighbors import LocalOutlierFactor
+
+    TRAIN_PARAMS = ["_lof"]
 
     def __init__(
         self,
@@ -1043,6 +1071,9 @@ class AnomalyLOF(AnomalyModel):
             numpy.ndarray: list containing bool values telling if data point is an
                 anomaly or not.
         """
+        if not self.check_if_trained():
+            raise ModelNotTrained("The model has not been trained!")
+
         scores = self.predict(data)
         return scores < 0
 
@@ -1085,6 +1116,8 @@ class AnomalyKNN(AnomalyModel):
 
     from sklearn.neighbors import NearestNeighbors
 
+    TRAIN_PARAMS = ["_knn", "_distances", "_threshold"]
+
     def __init__(
         self,
         n_neighbors=5,
@@ -1101,7 +1134,6 @@ class AnomalyKNN(AnomalyModel):
         self._n_neighbors = n_neighbors
         self._score_func = score_func
         self._contamination = contamination
-        self._distances = None
         self._knn = self.NearestNeighbors(
             n_neighbors=n_neighbors,
             radius=radius,
@@ -1168,6 +1200,9 @@ class AnomalyKNN(AnomalyModel):
         Returns:
             np.ndarray: list of bool telling if a data point is an anomaly or not.
         """
+        if not self.check_if_trained():
+            raise ModelNotTrained("The model has not been trained!")
+
         scores = self.predict(data)
         return scores > self._threshold
 
