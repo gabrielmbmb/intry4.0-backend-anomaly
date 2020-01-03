@@ -706,9 +706,6 @@ class AnomalyOneClassSVM(AnomalyModel):
         Returns:
             list of bool: list of bool telling if a data point is an anomaly or not.
         """
-        if not self.check_if_trained():
-            raise ModelNotTrained("The model has not been trained!")
-
         predictions = self.predict(data)
         return predictions == -1
 
