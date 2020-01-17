@@ -733,30 +733,28 @@ class AnomalyGaussianDistribution(AnomalyModel):
         self._probabilities = None
         self._verbose = verbose
 
-    def train(self, X, y=None, labels=None) -> None:
+    def train(self, X, y=None) -> None:
         """
         Trains the model with the data passed. For that, the mean and the variance are
         calculated for every feature in the data.
 
         Args:
             X (numpy.ndarray or pandas.DataFrame): training data.
-            y (numpy.ndarray or pandas.DataFrame): training labels. Ignored.
-            labels (numpy.ndarray or pandas.DataFrame): labels of training data.
-                Defaults to None.
+            y (numpy.ndarray or pandas.DataFrame): training labels.
         """
         if isinstance(X, pd.DataFrame):
             X = X.values
 
-        if isinstance(labels, pd.DataFrame):
-            labels = labels.values
+        if isinstance(y, pd.DataFrame):
+            y = y.values
 
         # all data is healthy, so ones
-        if labels is None:
-            labels = np.ones((X.shape[0],))
+        if y is None:
+            y = np.ones((X.shape[0],))
 
         (self._mean, self._variance) = self.estimate_parameters(X)
         self._probabilities = self.calculate_probability(X)
-        (self._epsilon, _) = self.establish_threshold(labels, self._probabilities)
+        (self._epsilon, _) = self.establish_threshold(y, self._probabilities)
 
     def predict(self, X) -> np.ndarray:
         """
@@ -846,12 +844,12 @@ class AnomalyGaussianDistribution(AnomalyModel):
         return mu, sigma_squared
 
     @staticmethod
-    def establish_threshold(labels, probabilities) -> Tuple[float, float]:
+    def establish_threshold(y, probabilities) -> Tuple[float, float]:
         """
         Calculates the threshold for defining an anomaly.
 
         Args:
-            labels (numpy.ndarray): label for each probability.
+            y (numpy.ndarray): label for each probability.
             probabilities (numpy.ndarray): probabilities of belonging to the Gaussian
                 Distribution.
 
@@ -870,9 +868,9 @@ class AnomalyGaussianDistribution(AnomalyModel):
         for epsilon in np.arange(min_prob, max_prob, step_size):
             predictions = probabilities < epsilon
 
-            false_positives = np.sum((predictions == 1) & (labels == 0))
-            false_negatives = np.sum((predictions == 0) & (labels == 1))
-            true_positives = np.sum((predictions == 1) & (labels == 1))
+            false_positives = np.sum((predictions == 1) & (y == 0))
+            false_negatives = np.sum((predictions == 0) & (y == 1))
+            true_positives = np.sum((predictions == 1) & (y == 1))
 
             # prevent division by 0
             if (true_positives + false_positives) == 0 or (
@@ -912,9 +910,6 @@ class AnomalyIsolationForest(AnomalyModel):
         n_jobs (int): number of cores to use in training and predicting process.
             Defaults to 1.
         verbose (bool): verbose mode. Defaults to False.
-
-    Todo:
-        * Add n_jobs argument
     """
 
     from sklearn.ensemble import IsolationForest
