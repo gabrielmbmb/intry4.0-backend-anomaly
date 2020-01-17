@@ -2,7 +2,7 @@ import os
 import pickle
 import multiprocessing
 import numpy as np
-from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import MinMaxScaler, StandardScaler
 from blackbox.models.base_model import AnomalyModel
 
 
@@ -16,7 +16,9 @@ class BlackBoxAnomalyDetection:
         Anomaly Detections models.
 
     Args:
-         verbose (bool): verbose mode. Defaults to False.
+        scaler (str): scaler that will be to scale the data before training. Available
+            scalers are 'minmax' and 'standard'. Defaults to 'minmax.
+        verbose (bool): verbose mode. Defaults to False.
 
     Raises:
         NotAnomalyModelClass: when trying to add a model that is not an instance of
@@ -34,10 +36,11 @@ class BlackBoxAnomalyDetection:
         "LocalOutlierFactor",
     ]
 
-    def __init__(self, verbose=False):
+    def __init__(self, scaler="minmax", verbose=False):
         self.models = {}
+        self.scaler = scaler
         self.verbose = verbose
-        self.scaler = None
+        self.scaler_model = None
 
     def add_model(self, model, name=None) -> None:
         """
@@ -60,7 +63,7 @@ class BlackBoxAnomalyDetection:
 
         self.models[name] = model
 
-    def scale_data(self, data) -> np.ndarray:
+    def scale_data(self, X) -> np.ndarray:
         """
         Scales the data before training or making a prediction with a Min Max Scaler
         which is sensitive to outliers. The first time that the function is called, the
@@ -68,37 +71,48 @@ class BlackBoxAnomalyDetection:
         used to scale the data.
 
         Args:
-            data (numpy.ndarray or pandas.DataFrame): data to be scaled.
+            X (numpy.ndarray or pandas.DataFrame): data to be scaled.
 
         Returns:
             numpy.ndarray: scaled data.
         """
-        if self.scaler is None:
+        if self.scaler is "minmax" and self.scaler_model is None:
             if self.verbose:
-                print("Fitting data scaler...")
+                print("Fitting Min Max scaler...")
 
             scaler = MinMaxScaler()
-            scaled_data = scaler.fit_transform(data)
+            scaled_data = scaler.fit_transform(X)
             self.scaler = scaler
             return scaled_data
+        
+        elif self.scaler is "standard" and self.scaler_model is None:
+            if self.verbose:
+                print("Fitting Standard scaler")
 
+            scaler = StandardScaler()
+            scaled_data = scaler.fit_transform(X)
+            self.scaler = scaler
+            return scaled_data
+            
         if self.verbose:
             print("Scaling data...")
 
-        scaled_data = self.scaler.transform(data)
+        scaled_data = self.scaler.transform(X)
         return scaled_data
 
-    def train_models(self, data, cb_func=None) -> None:
+    def train_models(self, X, y=None, cb_func=None) -> None:
         """
         Trains the models in the blackbox.
 
         Args:
-            data (numpy.ndarray or pandas.DataFrame): training data with no anomalies.
+            X (numpy.ndarray or pandas.DataFrame): training data.
+            y (numpy.ndarray or pandas.DataFrame): training labels which will be only
+                used with the supervised models.
             cb_func (function): callback function that will be executed when the
                 training starts for a model. Progress and a message will be passed to
                 this function. Defaults to None.
         """
-        data = self.scale_data(data)
+        X = self.scale_data(X)
 
         model_n = 0
         for name, model in self.models.items():
@@ -110,31 +124,31 @@ class BlackBoxAnomalyDetection:
             if self.verbose:
                 print("Training model {}...".format(name))
 
-            model.train(data)
+            model.train(X)
             model_n += 1
 
         if self.verbose:
             print("Models trained!")
 
-    def flag_anomaly(self, data) -> np.ndarray:
+    def flag_anomaly(self, X) -> np.ndarray:
         """
         Determines if a data point is an anomaly or not using the models in the blackbox.
 
         Args:
-            data (numpy.ndarray or pandas.DataFrame or list): data.
+            X (numpy.ndarray or pandas.DataFrame or list): data.
 
         Returns:
             numpy.ndarray: list containing list of bool indicating if the data point is
                 an anomaly.
         """
-        if isinstance(data, list):
-            data = np.array(data)
+        if isinstance(X, list):
+            X = np.array(X)
 
-        data = self.scale_data(data)
+        X = self.scale_data(X)
 
         results = []
         for _, model in self.models.items():
-            results.append(model.flag_anomaly(data))
+            results.append(model.flag_anomaly(X))
 
         np_array = np.array(results)
         return np_array

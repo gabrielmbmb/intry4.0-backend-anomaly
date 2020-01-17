@@ -19,7 +19,7 @@ class TestBlackBoxAnomalyDetection(TestCase):
     """Tests for Blackbox"""
 
     def setUp(self) -> None:
-        self.model = BlackBoxAnomalyDetection(verbose=True)
+        self.model = BlackBoxAnomalyDetection(scaler="minmax", verbose=True)
         self.model.add_model(AnomalyPCAMahalanobis(verbose=True))
         self.model.add_model(
             AnomalyAutoencoder(verbose=True, hidden_neurons=[4, 2, 2, 4])
@@ -31,7 +31,7 @@ class TestBlackBoxAnomalyDetection(TestCase):
         self.model.add_model(AnomalyKNN(verbose=True))
         self.model.add_model(AnomalyLOF(verbose=True))
 
-        self.model_name = BlackBoxAnomalyDetection(verbose=True)
+        self.model_name = BlackBoxAnomalyDetection(scaler="standard", verbose=True)
         self.model_name.add_model(AnomalyPCAMahalanobis(verbose=True), "PCAMahalanobis")
         self.model_name.add_model(
             AnomalyAutoencoder(
