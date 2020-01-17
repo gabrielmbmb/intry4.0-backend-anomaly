@@ -17,12 +17,12 @@ class AnomalyModel(metaclass=ABCMeta):
         self._verbose = None
 
     @abstractmethod
-    def train(self, train):
+    def train(self, X, y):
         """This method should implement all the logic to train the model."""
         pass
 
     @abstractmethod
-    def predict(self, data):
+    def predict(self, X):
         """
         This method should implement all the logic to predict a value in order to 
         flag as anomaly.
@@ -30,7 +30,7 @@ class AnomalyModel(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def flag_anomaly(self, data):
+    def flag_anomaly(self, X):
         """
         This method should implement a metric to flag a data point as anomaly or not
         anomalous.

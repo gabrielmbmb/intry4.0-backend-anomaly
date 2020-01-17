@@ -29,7 +29,7 @@ class AnomalyPCAMahalanobis(AnomalyModel):
 
     from sklearn.decomposition import PCA
 
-    TRAIN_PARAMS = ["_distances", "_threshold", "_cov", "_data", "_mean_data"]
+    TRAIN_PARAMS = ["_distances", "_threshold", "_cov", "_X", "_mean_data"]
 
     def __init__(self, n_components=2, contamination=0.1, verbose=False) -> None:
         super().__init__()
@@ -43,21 +43,22 @@ class AnomalyPCAMahalanobis(AnomalyModel):
         self._contamination = contamination
         self._verbose = verbose
 
-    def train(self, data) -> None:
+    def train(self, X, y=None) -> None:
         """
         Trains the model with the train data given.
 
         Args:
-            data (numpy.ndarray or pandas.DataFrame): training data
+            X (numpy.ndarray or pandas.DataFrame): training data
+            y (numpy.ndarray or pandas.DataFrame): training labels. Ignored.
         """
-        if isinstance(data, pd.DataFrame):
-            data = data.values
+        if isinstance(X, pd.DataFrame):
+            X = X.values
 
-        self._data = self._pca.fit_transform(data)
-        self._distances = self.mahalanobis_distance(self._data)
+        self._X = self._pca.fit_transform(X)
+        self._distances = self.mahalanobis_distance(self._X)
         self._threshold = self.calculate_threshold()
 
-    def predict(self, data) -> np.ndarray:
+    def predict(self, X) -> np.ndarray:
         """
         Calculates the Mahalanobis distance from the data given to the training data.
 
@@ -67,17 +68,17 @@ class AnomalyPCAMahalanobis(AnomalyModel):
         Returns:
             numpy.ndarray: distances between the data given and training data.
         """
-        data_pca = self._pca.transform(data)
-        data_distance = self.mahalanobis_distance(data_pca)
-        return data_distance
+        X_pca = self._pca.transform(X)
+        distances = self.mahalanobis_distance(X_pca)
+        return distances
 
-    def flag_anomaly(self, data) -> np.ndarray:
+    def flag_anomaly(self, X) -> np.ndarray:
         """
         Flag the data points as anomaly if the calculated Mahalanobis distance surpass a
         established threshold.
 
         Args:
-            data (numpy.ndarray or pandas.DataFrame): data to flag as anomalous or not
+            X (numpy.ndarray or pandas.DataFrame): data to flag as anomalous or not
                 anomalous.
 
         Returns:
@@ -86,7 +87,7 @@ class AnomalyPCAMahalanobis(AnomalyModel):
         if not self.check_if_trained():
             raise ModelNotTrained("The model has not been trained!")
 
-        distances = self.predict(data)
+        distances = self.predict(X)
         return distances > self._threshold
 
     def calculate_threshold(self) -> float:
@@ -100,30 +101,30 @@ class AnomalyPCAMahalanobis(AnomalyModel):
         threshold = np.percentile(self._distances, 100 * (1 - self._contamination))
         return threshold
 
-    def mahalanobis_distance(self, x) -> np.ndarray:
+    def mahalanobis_distance(self, X) -> np.ndarray:
         """
-        Computes the Mahalanobis distance between each row of x and the data
+        Computes the Mahalanobis distance between each row of X and the data
         distribution.
 
         Args:
-            x (numpy.ndarray or pandas.DataFrame): vector or matrix of data with p
+            X (numpy.ndarray or pandas.DataFrame): vector or matrix of data with p
                 columns.
 
         Returns:
             numpy.ndarray: distance between each row of x and the data distribution.
         """
-        if isinstance(x, pd.DataFrame):
-            x = x.values
+        if isinstance(X, pd.DataFrame):
+            X = X.values
 
         if self._cov is None:
-            self._cov = np.cov(self._data, rowvar=False)
+            self._cov = np.cov(self._X, rowvar=False)
             self._inv_cov = np.linalg.inv(self._cov)
 
         if self._mean_data is None:
-            self._mean_data = np.mean(self._data)
+            self._mean_data = np.mean(self._X)
 
         distances = []
-        for point in x:
+        for point in X:
             diff = point - self._mean_data
             distances.append(np.sqrt(np.dot(np.dot(diff, self._inv_cov), diff.T)))
 
@@ -234,18 +235,19 @@ class AnomalyAutoencoder(AnomalyModel):
         self._threshold = None
         self._verbose = verbose
 
-    def train(self, data) -> None:
+    def train(self, X, y=None) -> None:
         """
         Trains the Autoencoder.
 
         Args:
-            data (numpy.ndarray or pandas.DataFrame): training data.
+            X (numpy.ndarray or pandas.DataFrame): training data.
+            y (numpy.ndarray or pandas.DataFrame): training labels. Ignored.
         """
-        if isinstance(data, pd.DataFrame):
-            data = data.values
+        if isinstance(X, pd.DataFrame):
+            X = X.values
 
         # Verify that number of neurons doesn't exceeds the number of features
-        self._n_features = data.shape[1]
+        self._n_features = X.shape[1]
         if self._n_features < min(self._hidden_neurons):
             raise ValueError(
                 "Number of neurons should not exceed the number of features."
@@ -275,8 +277,8 @@ class AnomalyAutoencoder(AnomalyModel):
 
         self._autoencoder = self.build_autoencoder()
         self.history = self._autoencoder.fit(
-            x=data,
-            y=data,
+            x=X,
+            y=X,
             batch_size=self._batch_size,
             epochs=self._epochs,
             validation_split=self._validation_split,
@@ -284,30 +286,30 @@ class AnomalyAutoencoder(AnomalyModel):
             verbose=verbosity_level,
             callbacks=cb_list,
         )
-        predict = self._autoencoder.predict(data)
-        self._loss = self.mean_absolute_error(data, predict)
+        predict = self._autoencoder.predict(X)
+        self._loss = self.mean_absolute_error(X, predict)
         self._threshold = self.establish_threshold()
 
-    def predict(self, data) -> np.ndarray:
+    def predict(self, X) -> np.ndarray:
         """
         Tries to reconstruct the input.
 
         Args:
-            data (numpy.ndarray or pandas.DataFrame): data
+            X (numpy.ndarray or pandas.DataFrame): data
 
         Returns:
             numpy.ndarray: reconstructed inputs.
         """
-        reconstructed_data = self._autoencoder.predict(data)
+        reconstructed_data = self._autoencoder.predict(X)
         return reconstructed_data
 
-    def flag_anomaly(self, data) -> np.ndarray:
+    def flag_anomaly(self, X) -> np.ndarray:
         """
         Flag a data point as an anomaly if the MAE (Mean Absolute Error) is higher than
         the established threshold.
 
         Args:
-            data (numpy.ndarray or pandas.DataFrame): data
+            X (numpy.ndarray or pandas.DataFrame): data
 
         Returns:
             numpy.ndarray: list containing bool values telling if data point is an
@@ -316,8 +318,8 @@ class AnomalyAutoencoder(AnomalyModel):
         if not self.check_if_trained():
             raise ModelNotTrained("The model has not been trained!")
 
-        predict = self._autoencoder.predict(data)
-        loss = self.mean_absolute_error(data, predict)
+        predict = self._autoencoder.predict(X)
+        loss = self.mean_absolute_error(X, predict)
         return loss > self._threshold
 
     def build_autoencoder(self):
@@ -447,23 +449,24 @@ class AnomalyKMeans(AnomalyModel):
         self._threshold = None
         self._distances = None
 
-    def train(self, data) -> None:
+    def train(self, X, y=None) -> None:
         """
         Trains the model with the train data given. First, the optimal number of
         clusters is calculated with the Elbow Method. Then, a K-Means Cluster model is
         fitted with the optimal number of clusters.
 
         Args:
-            data (numpy.ndarray or pandas.DataFrame): training data
+            X (numpy.ndarray or pandas.DataFrame): training data
+            y (numpy.ndarray or pandas.DataFrame): training labels. Ignored.
         """
-        if isinstance(data, pd.DataFrame):
-            data = data.values
+        if isinstance(X, pd.DataFrame):
+            X = X.values
 
         if self._n_clusters is None:
             if self._verbose:
                 print("Calculating optimal number of clusters with Elbow Method...")
 
-            (self._n_clusters, _) = self.elbow(data, self._max_cluster_elbow)
+            (self._n_clusters, _) = self.elbow(X, self._max_cluster_elbow)
 
             if self._verbose:
                 print(
@@ -473,9 +476,9 @@ class AnomalyKMeans(AnomalyModel):
                 )
 
         self._kmeans = self.KMeans(n_clusters=self._n_clusters, n_jobs=self._n_jobs)
-        self._kmeans.fit(data)
+        self._kmeans.fit(X)
         self._distances = self.get_distance_by_point(
-            data, self._kmeans.cluster_centers_, self._kmeans.labels_
+            X, self._kmeans.cluster_centers_, self._kmeans.labels_
         )
 
         if self._verbose:
@@ -483,31 +486,29 @@ class AnomalyKMeans(AnomalyModel):
 
         self._threshold = self.calculate_threshold()
 
-    def predict(self, data) -> List[float]:
+    def predict(self, X) -> List[float]:
         """
         Calculates the cluster of each data point and then calculates the distance
         between the data point and the cluster centroid.
 
         Args:
-            data (numpy.ndarray or pandas.DataFrame): data
+            X (numpy.ndarray or pandas.DataFrame): data
 
         Returns:
             list of float: distances between the data given and its assigned cluster
                 centroid.
         """
-        data_labels = self._kmeans.predict(data)
-        distances = self.get_distance_by_point(
-            data, self._kmeans.cluster_centers_, data_labels
-        )
+        labels = self._kmeans.predict(X)
+        distances = self.get_distance_by_point(X, self._kmeans.cluster_centers_, labels)
         return distances
 
-    def flag_anomaly(self, data) -> np.ndarray:
+    def flag_anomaly(self, X) -> np.ndarray:
         """
         Flag the data points as anomaly if the calculated distance between the point and
         its assigned cluster centroid surpass a established threshold.
 
         Args:
-            data (numpy.ndarray or pandas.DataFrame): data to flag as anomalous or not
+            X (numpy.ndarray or pandas.DataFrame): data to flag as anomalous or not
                 anomalous.
 
         Returns:
@@ -516,7 +517,7 @@ class AnomalyKMeans(AnomalyModel):
         if not self.check_if_trained():
             raise ModelNotTrained("The model has not been trained!")
 
-        distances = self.predict(data)
+        distances = self.predict(X)
         return distances > self._threshold
 
     def calculate_threshold(self) -> float:
@@ -530,7 +531,7 @@ class AnomalyKMeans(AnomalyModel):
         threshold = np.percentile(self._distances, 100 * (1 - self._contamination))
         return threshold
 
-    def elbow(self, data, max_clusters=100) -> tuple:
+    def elbow(self, X, max_clusters=100) -> tuple:
         """
         Takes training data and computes K-Means model for each number of n_clusters
         given and get the score of each K-Means model. Then, calculate the distance
@@ -538,7 +539,7 @@ class AnomalyKMeans(AnomalyModel):
         last score with each score of the K-Means models.
 
         Args:
-            data (pandas.DataFrame): training data.
+            X (pandas.DataFrame): training data.
             max_clusters (int): number of maximum clusters.
 
         Returns:
@@ -551,9 +552,9 @@ class AnomalyKMeans(AnomalyModel):
 
         n_clusters = range(1, max_clusters)
         kmeans = [
-            self.KMeans(n_clusters=i, n_jobs=self._n_jobs).fit(data) for i in n_clusters
+            self.KMeans(n_clusters=i, n_jobs=self._n_jobs).fit(X) for i in n_clusters
         ]
-        scores = [kmeans[i].score(data) for i in range(len(kmeans))]
+        scores = [kmeans[i].score(X) for i in range(len(kmeans))]
         line_p1, line_p2 = (0, scores[0]), (max_clusters, scores[-1])
 
         if self._verbose:
@@ -587,13 +588,13 @@ class AnomalyKMeans(AnomalyModel):
         return d
 
     @staticmethod
-    def get_distance_by_point(data, clusters_centers, labels) -> List[float]:
+    def get_distance_by_point(data, centroids, labels) -> List[float]:
         """
         Calculates the distance between a data point and its assigned cluster centroid.
 
         Args:
             data (numpy.ndarray or pandas.DataFrame): data points.
-            clusters_centers (numpy.ndarray): cluster centroids.
+            centroids (numpy.ndarray): cluster centroids.
             labels (numpy.ndarray): assigned cluster to every data point.
 
         Returns:
@@ -605,7 +606,7 @@ class AnomalyKMeans(AnomalyModel):
         distances = []
         for i in range(0, len(data)):
             xa = np.array(data[i])
-            xb = clusters_centers[labels[i] - 1]
+            xb = centroids[labels[i] - 1]
             distances.append(np.linalg.norm(xa - xb))
 
         return distances
@@ -669,44 +670,45 @@ class AnomalyOneClassSVM(AnomalyModel):
         )
         self._verbose = verbose
 
-    def train(self, data) -> None:
+    def train(self, X, y=None) -> None:
         """
         Trains the One Class Support Vector Machine Model.
 
         Args:
-            data (numpy.ndarray or pandas.DataFrame): training data
+            X (numpy.ndarray or pandas.DataFrame): training data.
+            y (numpy.ndarray or pandas.DataFrame): training labels. Ignored.
         """
-        if isinstance(data, pd.DataFrame):
-            data = data.values
+        if isinstance(X, pd.DataFrame):
+            X = X.values
 
         if self._verbose:
             print("Training the OneClassSVM model...")
 
-        self._svm.fit(data)
+        self._svm.fit(X)
 
-    def predict(self, data) -> np.ndarray:
+    def predict(self, X) -> np.ndarray:
         """
         Predicts if the data point belongs to the positive region or the negative region.
 
         Args:
-            data (numpy.ndarray or pandas.DataFrame): data
+            X (numpy.ndarray or pandas.DataFrame): data
 
         Returns:
             numpy.ndarray: scores
         """
-        return self._svm.predict(data)
+        return self._svm.predict(X)
 
-    def flag_anomaly(self, data) -> List[bool]:
+    def flag_anomaly(self, X) -> List[bool]:
         """
         Flags as anomaly or not the data points.
 
         Args:
-            data (numpy.ndarray or pandas.DataFrame): data
+            X (numpy.ndarray or pandas.DataFrame): data
 
         Returns:
             list of bool: list of bool telling if a data point is an anomaly or not.
         """
-        predictions = self.predict(data)
+        predictions = self.predict(X)
         return predictions == -1
 
 
@@ -731,52 +733,53 @@ class AnomalyGaussianDistribution(AnomalyModel):
         self._probabilities = None
         self._verbose = verbose
 
-    def train(self, data, labels=None) -> None:
+    def train(self, X, y=None, labels=None) -> None:
         """
         Trains the model with the data passed. For that, the mean and the variance are
         calculated for every feature in the data.
 
         Args:
-            data (numpy.ndarray or pandas.DataFrame): training data.
+            X (numpy.ndarray or pandas.DataFrame): training data.
+            y (numpy.ndarray or pandas.DataFrame): training labels. Ignored.
             labels (numpy.ndarray or pandas.DataFrame): labels of training data.
                 Defaults to None.
         """
-        if isinstance(data, pd.DataFrame):
-            data = data.values
+        if isinstance(X, pd.DataFrame):
+            X = X.values
 
         if isinstance(labels, pd.DataFrame):
             labels = labels.values
 
         # all data is healthy, so ones
         if labels is None:
-            labels = np.ones((data.shape[0],))
+            labels = np.ones((X.shape[0],))
 
-        (self._mean, self._variance) = self.estimate_parameters(data)
-        self._probabilities = self.calculate_probability(data)
+        (self._mean, self._variance) = self.estimate_parameters(X)
+        self._probabilities = self.calculate_probability(X)
         (self._epsilon, _) = self.establish_threshold(labels, self._probabilities)
 
-    def predict(self, data) -> np.ndarray:
+    def predict(self, X) -> np.ndarray:
         """
         Calculates the probability of a data point to belong to the Gaussian
         Distribution.
 
         Args:
-            data (numpy.ndarray or pandas.DataFrame): data
+            X (numpy.ndarray or pandas.DataFrame): data
 
         Returns:
             numpy.ndarray: probabilities.
         """
-        if isinstance(data, pd.DataFrame):
-            data = data.values
+        if isinstance(X, pd.DataFrame):
+            X = X.values
 
-        return self.calculate_probability(data)
+        return self.calculate_probability(X)
 
-    def flag_anomaly(self, data) -> np.ndarray:
+    def flag_anomaly(self, X) -> np.ndarray:
         """
         Flag the data point as an anomaly if the probability surpass epsilon (threshold).
 
         Args:
-            data (numpy.ndarray or pandas.DataFrame): data to flag as an anomaly or not.
+            X (numpy.ndarray or pandas.DataFrame): data to flag as an anomaly or not.
 
         Returns:
             numpy.ndarray: list of bool telling if a data point is an anomaly or not.
@@ -784,22 +787,22 @@ class AnomalyGaussianDistribution(AnomalyModel):
         if not self.check_if_trained():
             raise ModelNotTrained("The model has not been trained!")
 
-        probabilities = self.predict(data)
+        probabilities = self.predict(X)
         return probabilities < self._epsilon
 
-    def calculate_probability(self, data) -> np.ndarray:
+    def calculate_probability(self, X) -> np.ndarray:
         """
         Calculates the probability of a list of data points to belong to the Gaussian
         Distribution.
 
         Args:
-            data (numpy.ndarray or pandas.DataFrame): data
+            X (numpy.ndarray or pandas.DataFrame): data
         """
-        if isinstance(data, pd.DataFrame):
-            data = data.values
+        if isinstance(X, pd.DataFrame):
+            X = X.values
 
-        num_samples = data.shape[0]
-        num_features = data.shape[1]
+        num_samples = X.shape[0]
+        num_features = X.shape[1]
 
         probabilities = np.ones((num_samples, 1))
 
@@ -808,7 +811,7 @@ class AnomalyGaussianDistribution(AnomalyModel):
             for feature_index in range(num_features):
                 # power of e
                 power_dividend = np.power(
-                    data[sample_index, feature_index] - self._mean[feature_index], 2
+                    X[sample_index, feature_index] - self._mean[feature_index], 2
                 )
                 power_divider = 2 * self._variance[feature_index]
                 e_power = -1 * power_dividend / power_divider
@@ -825,20 +828,20 @@ class AnomalyGaussianDistribution(AnomalyModel):
         return probabilities.reshape(-1,)
 
     @staticmethod
-    def estimate_parameters(data) -> Tuple[np.ndarray, np.ndarray]:
+    def estimate_parameters(X) -> Tuple[np.ndarray, np.ndarray]:
         """
         Computes mu (mean) and sigma^2 (variance) values for a data distribution.
 
         Args:
-            data (numpy.ndarray): data
+            X (numpy.ndarray): data
 
         Returns:
             tuple:
                 mu (numpy.ndarray): mean,
                 sigma^2 (numpy.ndarray): variance
         """
-        mu = np.mean(data, axis=0)
-        sigma_squared = np.power(np.std(data, axis=0), 2)
+        mu = np.mean(X, axis=0)
+        sigma_squared = np.power(np.std(X, axis=0), 2)
 
         return mu, sigma_squared
 
@@ -940,37 +943,41 @@ class AnomalyIsolationForest(AnomalyModel):
         self._verbose = verbose
         self._training_outliers = None
 
-    def train(self, data) -> None:
+    def train(self, X, y=None) -> None:
         """
         Trains the Isolation Forest Model.
 
         Args:
-            data (numpy.ndarray or pandas.DataFrame): training data
+            X (numpy.ndarray or pandas.DataFrame): training data
+            y (numpy.ndarray or pandas.DataFrame): training labels. Ignored.
         """
-        if isinstance(data, pd.DataFrame):
-            data = data.values
+        if isinstance(X, pd.DataFrame):
+            X = X.values
 
         if self._verbose:
             print("Training the Isolation Forest model...")
 
-        self._training_outliers = self._forest.fit_predict(data) < 0
+        self._training_outliers = self._forest.fit_predict(X) < 0
 
-    def predict(self, data) -> np.ndarray:
+    def predict(self, X) -> np.ndarray:
         """
         Predicts if the data points are anomalies or inliers.
 
         Args:
-            data (numpy.ndarray or pandas.DataFrame): data to predict.
+            X (numpy.ndarray or pandas.DataFrame): data to predict.
 
         Returns:
             numpy.ndarray: scores.
         """
-        return self._forest.predict(data)
+        return self._forest.predict(X)
 
-    def flag_anomaly(self, data) -> np.ndarray:
+    def flag_anomaly(self, X) -> np.ndarray:
         """
         Flag a data point as an anomaly or as an inlier. If the score from the predict
         method is negative, then it's an anomaly, if it's positive then it's an inlier.
+
+        Args:
+            X (numpy.ndarray or pandas.DataFrame): data to be flagged.
 
         Returns:
             numpy.ndarray: list containing bool values telling if data point is an
@@ -979,7 +986,7 @@ class AnomalyIsolationForest(AnomalyModel):
         if not self.check_if_trained():
             raise ModelNotTrained("The model has not been trained!")
 
-        scores = self.predict(data)
+        scores = self.predict(X)
         return scores < 0
 
 
@@ -1032,20 +1039,21 @@ class AnomalyLOF(AnomalyModel):
         )
         self._verbose = verbose
 
-    def train(self, data):
+    def train(self, X, y=None):
         """
         Trains the Local Outlier Factor model.
 
         Args:
-            data (numpy.ndarray or pandas.DataFrame): training data.
+            X (numpy.ndarray or pandas.DataFrame): training data.
+            y (numpy.ndarray or pandas.DataFrame): training labels. Ignored.
         """
-        if isinstance(data, pd.DataFrame):
-            data = data.values
+        if isinstance(X, pd.DataFrame):
+            X = X.values
 
         if self._verbose:
             print("Training the Local Outlier Factor model...")
 
-        self._lof.fit(data)
+        self._lof.fit(X)
 
     def predict(self, data):
         """
@@ -1144,55 +1152,56 @@ class AnomalyKNN(AnomalyModel):
         self._threshold = None
         self._verbose = verbose
 
-    def train(self, data):
+    def train(self, X, y=None):
         """
         Trains the Nearest Neighbors
 
         Args:
-            data (numpy.ndarray or pandas.DataFrame): training data.
+            X (numpy.ndarray or pandas.DataFrame): training data.
+            y (numpy.ndarray or pandas.DataFrame): training labels. Ignored.
         """
-        if isinstance(data, pd.DataFrame):
-            data = data.values
+        if isinstance(X, pd.DataFrame):
+            X = X.values
 
         if self._verbose:
             print("Training the k-Nearest Neighbors model...")
 
-        self._knn.fit(data)
+        self._knn.fit(X)
         distances, _ = self._knn.kneighbors(
             n_neighbors=self._n_neighbors, return_distance=True
         )
         self._distances = self.get_dist_by_score_func(distances)
         self._threshold = self.calculate_threshold()
 
-    def predict(self, data):
+    def predict(self, X):
         """
         Calculates the distance of data points to its k-neighbors and then the outlier
         score is calculated.
 
         Args:
-            data (numpy.ndarray or pandas.DataFrame): data to calculate its outlier
+            X (numpy.ndarray or pandas.DataFrame): data to calculate its outlier
                 score.
 
         Returns:
             np.ndarray: array with the outlier score of the data points.
         """
-        n_samples = data.shape[0]
+        n_samples = X.shape[0]
         scores = np.zeros((n_samples, 1))
 
         for i in range(n_samples):
-            sample_features = np.array([data[i]])
+            sample_features = np.array([X[i]])
             distances, _ = self._knn._tree.query(sample_features, k=self._n_neighbors)
             score = self.get_dist_by_score_func(distances)
             scores[i] = score
 
         return scores.ravel()
 
-    def flag_anomaly(self, data) -> np.ndarray:
+    def flag_anomaly(self, X) -> np.ndarray:
         """
         Flags as anomaly or not the data points.
 
         Args:
-            data (numpy.ndarray or pandas.DataFrame): data.
+            X (numpy.ndarray or pandas.DataFrame): data.
 
         Returns:
             np.ndarray: list of bool telling if a data point is an anomaly or not.
@@ -1200,7 +1209,7 @@ class AnomalyKNN(AnomalyModel):
         if not self.check_if_trained():
             raise ModelNotTrained("The model has not been trained!")
 
-        scores = self.predict(data)
+        scores = self.predict(X)
         return scores > self._threshold
 
     def get_dist_by_score_func(self, distances) -> np.ndarray:
