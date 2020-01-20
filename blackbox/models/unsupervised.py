@@ -681,9 +681,6 @@ class AnomalyOneClassSVM(AnomalyModel):
         if isinstance(X, pd.DataFrame):
             X = X.values
 
-        if self._verbose:
-            print("Training the OneClassSVM model...")
-
         self._svm.fit(X)
 
     def predict(self, X) -> np.ndarray:
@@ -1052,22 +1049,25 @@ class AnomalyLOF(AnomalyModel):
 
         self._lof.fit(X)
 
-    def predict(self, data):
+    def predict(self, X):
         """
         Predicts if the data points are anomalies or inliers.
 
         Args:
-            data (numpy.ndarray or pandas.DataFrame): data to predict.
+            X (numpy.ndarray or pandas.DataFrame): data to predict.
 
         Returns:
             numpy.ndarray: scores.
         """
-        return self._lof.predict(data)
+        return self._lof.predict(X)
 
-    def flag_anomaly(self, data):
+    def flag_anomaly(self, X):
         """
         Flag a data point as an anomaly or as an inlier. If the score from the predict
         method is negative, then it's an anomaly, if it's positive then it's an inlier.
+
+        Args:
+            X (numpy.ndarray or pandas.DataFrame): data to be flagged.
 
         Returns:
             numpy.ndarray: list containing bool values telling if data point is an
@@ -1076,7 +1076,7 @@ class AnomalyLOF(AnomalyModel):
         if not self.check_if_trained():
             raise ModelNotTrained("The model has not been trained!")
 
-        scores = self.predict(data)
+        scores = self.predict(X)
         return scores < 0
 
 
