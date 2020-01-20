@@ -124,7 +124,7 @@ class BlackBoxAnomalyDetection:
             if self.verbose:
                 print("Training model {}...".format(name))
 
-            model.train(X)
+            model.train(X, y)
             model_n += 1
 
         if self.verbose:
