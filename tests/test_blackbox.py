@@ -92,8 +92,8 @@ class TestBlackBoxAnomalyDetection(TestCase):
         self.assertIsInstance(self.model_name.models["LocalOutlierFactor"], AnomalyLOF)
 
     def test_add_model_no_class_anomaly(self):
-        """Tests that an error is raised if an instance of a class that doesn't inherit from AnomalyClassModel
-        is added to the blackbox"""
+        """Tests that an error is raised if an instance of a class that doesn't inherit 
+        from AnomalyClassModel is added to the blackbox"""
         bb = BlackBoxAnomalyDetection()
         self.assertRaises(NotAnomalyModelClass, bb.add_model, 1)
 
@@ -112,7 +112,7 @@ class TestBlackBoxAnomalyDetection(TestCase):
 
         self.assertRaises(ModelNotTrained, self.model.flag_anomaly, df2)
 
-        self.model.train_models(df, cb_function)  # train model
+        self.model.train_models(df, y=None, cb_func=cb_function)  # train model
 
         # save the whole Blackbox and one by one each model
         self.model.save_blackbox()

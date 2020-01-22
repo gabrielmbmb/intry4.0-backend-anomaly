@@ -1,6 +1,5 @@
 import os
 import pickle
-import multiprocessing
 import numpy as np
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
 from blackbox.models.base_model import AnomalyModel
@@ -76,7 +75,7 @@ class BlackBoxAnomalyDetection:
         Returns:
             numpy.ndarray: scaled data.
         """
-        if self.scaler is "minmax" and self.scaler_model is None:
+        if self.scaler == "minmax" and self.scaler_model is None:
             if self.verbose:
                 print("Fitting Min Max scaler...")
 
@@ -84,8 +83,8 @@ class BlackBoxAnomalyDetection:
             scaled_data = scaler.fit_transform(X)
             self.scaler = scaler
             return scaled_data
-        
-        elif self.scaler is "standard" and self.scaler_model is None:
+
+        elif self.scaler == "standard" and self.scaler_model is None:
             if self.verbose:
                 print("Fitting Standard scaler")
 
@@ -93,7 +92,7 @@ class BlackBoxAnomalyDetection:
             scaled_data = scaler.fit_transform(X)
             self.scaler = scaler
             return scaled_data
-            
+
         if self.verbose:
             print("Scaling data...")
 
@@ -215,7 +214,7 @@ class BlackBoxAnomalyDetection:
         Loads a Blackbox from a pickle file.
 
         Args:
-            path (str): path from where to load the Blackbox. Defaults to 
+            path (str): path from where to load the Blackbox. Defaults to
                 './blackbox.pkl'.
         """
         loaded_data = None
