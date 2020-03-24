@@ -4,6 +4,17 @@ import numpy as np
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
 from blackbox.models.base_model import AnomalyModel
 
+AVAILABLE_MODELS = [
+    "PCAMahalanobis",
+    "Autoencoder",
+    "KMeans",
+    "OneClassSVM",
+    "GaussianDistribution",
+    "IsolationForest",
+    "KNearestNeighbors",
+    "LocalOutlierFactor",
+]
+
 
 class NotAnomalyModelClass(Exception):
     """Raised when a model added to the blackbox is not an instance of AnomalyModel"""
@@ -23,17 +34,6 @@ class BlackBoxAnomalyDetection:
         NotAnomalyModelClass: when trying to add a model that is not an instance of
             AnomalyModel.
     """
-
-    AVAILABLE_MODELS = [
-        "PCAMahalanobis",
-        "Autoencoder",
-        "KMeans",
-        "OneClassSVM",
-        "GaussianDistribution",
-        "IsolationForest",
-        "KNearestNeighbors",
-        "LocalOutlierFactor",
-    ]
 
     def __init__(self, scaler="minmax", verbose=False):
         self.models = {}
