@@ -1,9 +1,8 @@
 import numpy as np
 import pandas as pd
 from blackbox import settings
-from celery import Celery
 from blackbox.utils.api import add_model_entity_json
-from blackbox.blackbox import BlackBoxAnomalyDetection
+from blackbox.blackbox import BlackBoxAnomalyDetection, AVAILABLE_MODELS
 from blackbox.models.unsupervised import (
     AnomalyPCAMahalanobis,
     AnomalyAutoencoder,
@@ -16,16 +15,10 @@ from blackbox.models.unsupervised import (
 )
 from blackbox.utils.csv import CSVReader
 from blackbox.utils.orion import update_entity_attrs
-
-# Todo: add logging to tasks
-
-celery_app = Celery(
-    "tasks", broker=settings.CELERY_BROKER_URL, backend=settings.CELERY_RESULT_BACKEND
-)
-
+from .celery import celery
 
 # Tasks
-@celery_app.task(name="tasks.train", bind=True)
+@celery.task(name="tasks.train", bind=True)
 def train_blackbox(
     self, entity_id, filename, model_name, models, input_arguments, additional_params
 ):
@@ -64,7 +57,7 @@ def train_blackbox(
     blackbox = BlackBoxAnomalyDetection(verbose=True)
 
     # Add models to the Blackbox
-    for anomaly_model_name in BlackBoxAnomalyDetection.AVAILABLE_MODELS:
+    for anomaly_model_name in AVAILABLE_MODELS:
         params = additional_params[anomaly_model_name]
 
         if anomaly_model_name == "PCAMahalanobis":
@@ -112,10 +105,10 @@ def train_blackbox(
     return {"current": 100, "total": 100, "status": "TASK ENDED"}
 
 
-@celery_app.task(name="tasks.predict")
+@celery.task(name="tasks.predict")
 def predict_blackbox(entity_id, date, model_path, predict_data):
     """
-    Flag a data point received from Orion Context Broker (FIWARE component) as an 
+    Flag a data point received from Orion Context Broker (FIWARE component) as an
     anomaly or not using an already trained model loaded from a pickle file.
 
     Args:

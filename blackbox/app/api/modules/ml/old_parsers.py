@@ -1,7 +1,9 @@
-from flask_restplus.reqparse import RequestParser
+from flask_restx.reqparse import RequestParser
+from blackbox.blackbox import AVAILABLE_MODELS
 from werkzeug.datastructures import FileStorage
 
-# Train parser for '/api/v1/train/{entity}' endpoint
+
+# Train parser
 train_parser = RequestParser()
 
 # Model name
@@ -15,14 +17,7 @@ train_parser.add_argument(
 train_parser.add_argument(
     "models",
     type=str,
-    choices=(
-        "PCAMahalanobis",
-        "Autoencoder",
-        "KMeans",
-        "OneClassSVM",
-        "GaussianDistribution",
-        "IsolationForest",
-    ),
+    choices=AVAILABLE_MODELS,
     help="List of the models that are going to be inside the Blackbox separated by a"
     " comma. If not specified, then every anomaly detection model available will be used.",
 )
@@ -285,4 +280,3 @@ train_parser.add_argument(
     choices=("max_distance", "average", "median"),
     help="The function used to score anomalies in KNN.",
 )
-
