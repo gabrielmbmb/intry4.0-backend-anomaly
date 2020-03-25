@@ -1,7 +1,9 @@
+from flask import request
 from flask_restx import Namespace, Resource
 from flask_mongoengine import DoesNotExist, MultipleObjectsReturned, ValidationError
 from mongoengine.errors import NotUniqueError
 from blackbox.app.celery_app.celery import celery
+from blackbox.app.celery_app.tasks_names import CELERY_TRAIN_TASK
 from .models import (
     BlackboxModel,
     BlackboxModelApi,
@@ -16,6 +18,8 @@ from .models import (
     BlackboxIsolationForestApi,
     BlackboxKNNApi,
     BlackboxLOFApi,
+    BlackboxResponseApi,
+    BlackboxTrainResponseApi,
 )
 
 
@@ -41,6 +45,8 @@ ml_ns.add_model(
 ml_ns.add_model("BlackboxIsolationForest", BlackboxIsolationForestApi)
 ml_ns.add_model("BlackboxKNN", BlackboxKNNApi)
 ml_ns.add_model("BlackboxLOF", BlackboxLOFApi)
+ml_ns.add_model("BlackboxResponse", BlackboxResponseApi)
+ml_ns.add_model("BlackboxTrainResponse", BlackboxTrainResponseApi)
 
 
 # Error handling
@@ -102,6 +108,7 @@ class BlackboxModelMethods(Resource):
         description="Creates a new Blackbox model",
     )
     @ml_ns.expect(BlackboxModelApi, validate=True)
+    @ml_ns.marshal_with(BlackboxResponseApi)
     def post(self, model_id):
         """Create a Blackbox model"""
         payload = ml_ns.payload
@@ -121,6 +128,7 @@ class BlackboxModelMethods(Resource):
             500: "Could not remove the Blackbox model with the specified id",
         },
     )
+    @ml_ns.marshal_with(BlackboxResponseApi)
     def delete(self, model_id):
         """Delete a Blackbox model"""
         query = BlackboxModel.objects.get(model_id=model_id)
@@ -139,6 +147,7 @@ class BlackboxModelMethods(Resource):
         },
     )
     @ml_ns.expect(BlackboxModelApi, validate=True)
+    @ml_ns.marshal_with(BlackboxResponseApi)
     def put(self, model_id):
         """Update an entire Blackbox model"""
         payload = ml_ns.payload
@@ -162,6 +171,7 @@ class BlackboxModelMethods(Resource):
         },
     )
     @ml_ns.expect(BlackboxModelPatchApi, validate=True)
+    @ml_ns.marshal_with(BlackboxResponseApi)
     def patch(self, model_id):
         """Update a Blackbox model"""
         payload = ml_ns.payload
@@ -178,18 +188,100 @@ class BlackboxModelMethods(Resource):
         return {"message": f"Blackbox model with id {model_id} has been updated"}, 200
 
 
-@ml_ns.route("/<int:model_id>/train")
+@ml_ns.route("/models/<string:model_id>/train")
 @ml_ns.param("model_id", "Blackbox model id")
 class TrainMethods(Resource):
-    @ml_ns.doc(body=BlackboxTrainApi)
+    @ml_ns.doc(
+        body=BlackboxTrainApi,
+        responses={
+            202: "Success",
+            400: "Payload validation error",
+            404: "Blackbox model with specified id does not exist",
+        },
+    )
+    @ml_ns.expect(BlackboxTrainApi, validate=True)
+    @ml_ns.marshal_with(BlackboxTrainResponseApi, code=202)
     def post(self, model_id):
         """Train a Blackbox model"""
-        pass
+        payload = ml_ns.payload
+        blackbox_model = BlackboxModel.objects.get(model_id=model_id)
+
+        # Check that columns provided are the same as the ones in the model
+        if not all(column in blackbox_model.columns for column in payload["columns"]):
+            return (
+                {
+                    "errors": {
+                        "columns": "the provided columns are not the same as those "
+                        "previously created in the Blackbox model"
+                    },
+                    "message": "Input payload validation error",
+                },
+                400,
+            )
+
+        # Check that data list is not empty
+        if not payload.get("data", None):
+            return (
+                {
+                    "errors": {"data": "data cannot be empty"},
+                    "message": "Input payload validation failed",
+                },
+                400,
+            )
+
+        # Check if every row in training data has the same length
+        rows_lengths = set(list(map(len, payload["data"])))
+        if len(rows_lengths) != 1:
+            return (
+                {
+                    "errors": {"data": "the rows have to be the same length"},
+                    "message": "Input payload validation error",
+                },
+                400,
+            )
+
+        # Check if the rows length is equal to the columns length
+        columns_length = len(payload["columns"])
+        rows_length = rows_lengths.pop()
+        if rows_length != columns_length:
+            return (
+                {
+                    "errors": {
+                        "data": f"the rows have {rows_length} elements but "
+                        f"{columns_length} columns were provided"
+                    },
+                    "message": "Input payload validation error",
+                },
+                400,
+            )
+
+        # Create training task
+        task = celery.send_task(
+            CELERY_TRAIN_TASK, args=[payload["columns"], payload["data"]],
+        )
+
+        return (
+            (
+                {
+                    "message": "A task to train the model has been started",
+                    "task_status": f"http://{request.host}/{ml_ns.path}/task/{task.id}",
+                }
+            ),
+            202,
+        )
 
 
-@ml_ns.route("/<int:model_id>/predict")
+@ml_ns.route("/models/<string:model_id>/predict")
 @ml_ns.param("model_id", "Blackbox model id")
 class PredictMethods(Resource):
+    @ml_ns.doc(
+        body=BlackboxDataApi,
+        responses={
+            202: "Success",
+            400: "Payload validation error",
+            404: "Blackbox model with specified id does not exist",
+        },
+    )
     @ml_ns.expect(BlackboxDataApi)
     def post(self, model_id):
         """Predict with a Blackbox model"""
