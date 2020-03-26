@@ -136,3 +136,6 @@ redis-stable/
 
 # vscode
 .vscode/
+
+# json
+*.json
