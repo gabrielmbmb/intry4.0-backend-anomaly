@@ -14,21 +14,14 @@ setuptools.setup(
     url="https://github.com/bisite/PLATINUM-anomaly-detection",
     packages=setuptools.find_packages(),
     data_files=[],
-    entry_points={
-        "console_scripts": [
-            "blackbox = blackbox.__main__:main",
-            "blackbox-tools = tools.blackbox_tools:tools",
-        ]
-    },
     classifiers=[
-        "Programming Language :: Python :: 3.5",
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Operating System :: OS Independent",
         "Intended Audience :: Developers",
         "Framework :: Flask",
     ],
-    python_requires=">=3.5",
+    python_requires=">=3.6",
     keywords="PLATINUM, anomaly-detection",
     project_urls={
         "Bug Reports": "https://github.com/bisite/PLATINUM-anomaly-detection/issues",
