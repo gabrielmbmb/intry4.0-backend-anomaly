@@ -3,7 +3,7 @@ from flask_restx.model import Model
 from flask_restx import fields
 from flask_mongoengine import Document
 from mongoengine.fields import (
-    FileField,
+    BinaryField,
     StringField,
     ListField,
     DateTimeField,
@@ -11,7 +11,7 @@ from mongoengine.fields import (
 )
 from mongoengine import signals
 from mongoengine.errors import ValidationError
-from blackbox.blackbox import AVAILABLE_MODELS
+from blackbox.available_models import AVAILABLE_MODELS
 
 
 # MongoDB Models
@@ -21,8 +21,8 @@ class BlackboxModel(Document):
     last_update_date = DateTimeField()
     models = ListField(StringField(), required=True)
     columns = ListField(StringField(), required=True)
-    model_trained = BooleanField(default=False)
-    model_file = FileField()
+    trained = BooleanField(default=False)
+    saved = BinaryField()
 
     def to_dict(self):
         return {
@@ -31,11 +31,10 @@ class BlackboxModel(Document):
             "last_update_date": self.last_update_date.isoformat(),
             "models": self.models,
             "columns": self.columns,
-            "model_trained": self.model_trained,
+            "trained": self.trained,
         }
 
     def clean(self):
-        print("cleaning")
         if not all(model in AVAILABLE_MODELS for model in self.models):
             print("yup")
             raise ValidationError(
@@ -77,7 +76,7 @@ BlackboxModelApi = Model(
             required=True,
             example=["pressure", "temperature", "humidity"],
         ),
-        "model_trained": fields.Boolean(
+        "trained": fields.Boolean(
             description="Whether the model is already trained or not", readonly=True
         ),
     },
@@ -419,6 +418,24 @@ BlackboxTrainApi = BlackboxDataApi.inherit(
 
 BlackboxResponseApi = Model("BlackboxResponse", {"message": fields.String()})
 
+
 BlackboxTrainResponseApi = BlackboxResponseApi.inherit(
     "BlackboxTrainResponse", {"task_status": fields.String()}
+)
+
+
+BlackboxResponseErrorApi = Model(
+    "BlackboxResponseError",
+    {"errors": fields.Wildcard(fields.String), "message": fields.String},
+)
+
+
+BlackboxResponseTaskApi = Model(
+    "BlackboxResponseTask",
+    {
+        "state": fields.String,
+        "current": fields.Float,
+        "total": fields.Integer,
+        "status": fields.String,
+    },
 )
