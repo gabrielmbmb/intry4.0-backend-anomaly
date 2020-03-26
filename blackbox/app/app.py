@@ -3,6 +3,7 @@ import sys
 from flask import Flask
 from blackbox.app.celery_app.celery import celery, init_celery
 from blackbox.app.extensions import cors, cache, db, api
+from blackbox.app import commands
 
 CONFIG_NAME_MAPPER = {
     "development": "blackbox.app.config.DevelopConfig",
@@ -46,6 +47,7 @@ def create_app(config=None, **kwargs):
 
     app.config.from_object(config)
     register_extensions(app)
+    register_commands(app)
     init_celery(celery, app)
     return app
 
@@ -61,3 +63,13 @@ def register_extensions(app):
     cache.init_app(app)
     db.init_app(app)
     api.init_app(app, title=app.config["API_NAME"], description=app.config["API_DESC"])
+
+
+def register_commands(app):
+    """
+    Register Click commands.
+
+    Args:
+        app (flask.app.Flask): the Flask app.
+    """
+    app.cli.add_command(commands.postman)
