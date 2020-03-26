@@ -1,5 +1,6 @@
 
 class BaseConfig(object):
+    SERVER_NAME = "localhost:5678"
     DEBUG = False
     TESTING = False
     SECRET_KEY = "some secret key here"
