@@ -19,6 +19,7 @@ class BaseConfig(object):
     RESTX_MASK_SWAGGER = False
 
     # MongoDB
+    MONGODB_CONNECT = False
     MONGODB_DB = "blackbox"
     MONGODB_HOST = "localhost"
     MONGODB_PORT = 27017
