@@ -1,8 +1,12 @@
+from warnings import simplefilter
 import sys
 from typing import List, Tuple
 import numpy as np
 import pandas as pd
 from blackbox.models.base_model import AnomalyModel, ModelNotTrained
+
+# Don't show Tensorflow numpy deprecations warnings
+simplefilter(action="ignore", category=FutureWarning)
 
 
 class AnomalyPCAMahalanobis(AnomalyModel):
@@ -840,7 +844,7 @@ class AnomalyGaussianDistribution(AnomalyModel):
                 sigma^2 (numpy.ndarray): variance
         """
         mu = np.mean(X, axis=0)
-        sigma_squared = np.power(np.std(X, axis=0), 2)
+        sigma_squared = np.var(X, axis=0)
 
         return mu, sigma_squared
 
