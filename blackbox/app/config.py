@@ -30,9 +30,6 @@ class BaseConfig(object):
     BROKER_URL = "redis://localhost:6379/0"
     CELERY_RESULT_BACKEND = "redis://localhost:6379/1"
 
-    # Models storing
-    BLACKBOX_MODELS_PATH = "./models"
-
 
 class DevelopConfig(BaseConfig):
     ENV = "development"
