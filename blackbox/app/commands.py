@@ -5,9 +5,9 @@ from blackbox.app.extensions import api
 from flask.cli import with_appcontext
 
 
-@click.command(help="Export API as a Postman collection")
+@click.command(help="Export API as a Postman collection.")
 @click.option(
-    "--path", default="./", help="Directory where to save the Postman collection",
+    "--path", default="./", help="Directory where to save the Postman collection.",
 )
 @with_appcontext
 def postman(path):
