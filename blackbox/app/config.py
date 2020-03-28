@@ -1,16 +1,18 @@
+import os
+
 
 class BaseConfig(object):
-    SERVER_NAME = "localhost:5678"
     DEBUG = False
     TESTING = False
     SECRET_KEY = "some secret key here"
+    SERVER_NAME = os.getenv("SERVER_NAME")
 
     # API
     API_NAME = "PLATINUM - Blackbox Anomaly Detection"
     API_DESC = "An API to call the Blackbox Anomaly Detection model"
 
     # Cache
-    CACHE_TYPE = 'simple'
+    CACHE_TYPE = "simple"
     CACHE_DEFAULT_TIMEOUT = 300
 
     # CORS
@@ -21,15 +23,29 @@ class BaseConfig(object):
 
     # MongoDB
     MONGODB_CONNECT = False
-    MONGODB_DB = "blackbox"
-    MONGODB_HOST = "localhost"
-    MONGODB_PORT = 27017
-    MONGODB_USERNAME = ""
-    MONGODB_PASSWORD = ""
+    MONGODB_DB = os.getenv("MONGODB_DB", "blackbox")
+    MONGODB_HOST = os.getenv("MONGODB_HOST", "localhost")
+    MONGODB_PORT = int(os.getenv("MONGODB_PORT", 27017))
+    MONGODB_USERNAME = os.getenv("MONGODB_USERNAME", "")
+    MONGODB_PASSWORD = os.getenv("MONGODB_PASSWORD", "")
 
     # Celery
-    BROKER_URL = "redis://localhost:6379/0"
-    CELERY_RESULT_BACKEND = "redis://localhost:6379/1"
+    BROKER_URL = os.getenv("CELERY_BROKER_URL", "redis://localhost:6379/0")
+    CELERY_RESULT_BACKEND = os.getenv(
+        "CELERY_RESULT_BACKEND", "redis://localhost:6379/1"
+    )
+    CELERY_OCB_PREDICTIONS_FREQUENCY = float(
+        os.getenv("CELERY_OCB_PREDICTIONS_FREQUENCY", "3600.0")
+    )
+
+    # Train ended webhook
+    TRAIN_WEBHOOK = os.getenv("TRAIN_WEBHOOK", "localhost")
+
+    # Orion Context Broker
+    ORION_HOST = os.getenv("ORION_HOST", "localhost")
+    ORION_PORT = os.getenv("ORION_PORT", "1026")
+    FIWARE_SERVICE = os.getenv("FIWARE_SERVICE", "blackbox")
+    FIWARE_SERVICEPATH = os.getenv("FIWARE_SERVICEPATH", "/")
 
 
 class DevelopConfig(BaseConfig):

@@ -1,3 +1,4 @@
+import uuid
 import datetime
 from flask_restx.model import Model
 from flask_restx import fields
@@ -8,14 +9,18 @@ from mongoengine.fields import (
     ListField,
     DateTimeField,
     BooleanField,
+    DictField,
+    ReferenceField,
 )
-from mongoengine import signals
+from mongoengine import signals, CASCADE
 from mongoengine.errors import ValidationError
 from blackbox.available_models import AVAILABLE_MODELS
 
 
 # MongoDB Models
 class BlackboxModel(Document):
+    """A class which describes the model of a Blackbox inside MongoDB."""
+
     model_id = StringField(unique=True, required=True)
     creation_date = DateTimeField(default=datetime.datetime.utcnow())
     last_update_date = DateTimeField()
@@ -36,7 +41,6 @@ class BlackboxModel(Document):
 
     def clean(self):
         if not all(model in AVAILABLE_MODELS for model in self.models):
-            print("yup")
             raise ValidationError(
                 f"There is at least one model in the list of models that does not "
                 f"exist. Passed models: {', '.join(self.models)}. "
@@ -49,6 +53,23 @@ class BlackboxModel(Document):
 
 
 signals.pre_save.connect(BlackboxModel.pre_save, sender=BlackboxModel)
+
+
+class BlackboxPrediction(Document):
+    """A class which describes the model of a Blackbox prediction inside MongoDB."""
+
+    prediction_id = StringField(unique=True, required=True, default=str(uuid.uuid4()))
+    prediction_date = DateTimeField(default=datetime.datetime.utcnow())
+    predictions = DictField(required=True)
+    model = ReferenceField(BlackboxModel, reverse_delete_rule=CASCADE, required=True)
+
+    def to_dict(self):
+        return {
+            "prediction_id": self.prediction_id,
+            "prediction_date": self.prediction_date,
+            "predictions": self.predictions,
+        }
+
 
 # API Models
 BlackboxModelApi = Model(
