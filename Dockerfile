@@ -10,15 +10,14 @@ RUN apt-get update && \
 USER worker
 WORKDIR /home/worker
 
-# install requirements first to leverage Docker cache
+# Install requirements first to leverage Docker cache
 ADD --chown=worker:worker requirements.txt blackbox/requirements.txt
 RUN python -m pip install --user --no-warn-script-location -r blackbox/requirements.txt
 
-# install the app
+# Install the app
 ADD --chown=worker:worker . blackbox/
-RUN cd blackbox && \
-    python -m pip install --user --no-warn-script-location .
+WORKDIR "/home/worker/blackbox/"
 
 ENV PATH="/home/worker/.local/bin:${PATH}"
 
-CMD ["python", "-u", "-m", "blackbox"]
+CMD ["gunicorn", "--bind", "0.0.0.0:5678", "-w", "4", "blackbox.app.app:create_app()"]

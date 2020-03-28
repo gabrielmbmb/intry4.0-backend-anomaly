@@ -9,3 +9,7 @@ redis-stable/
 venv/
 codecov.yml
 test-requirements.txt
+*.json
+celerybeat-schedule
+blackbox.egg-info/
+test_csv/

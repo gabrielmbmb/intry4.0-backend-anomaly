@@ -1,76 +1,83 @@
-version: '3.7'
+version: "3.7"
 
 services:
   redis:
-    image: 'redis:5.0.6-alpine'
+    image: "redis:5.0.6-alpine"
     command: redis-server
     volumes:
-      - 'redis:/data'
+      - "redis:/data"
     networks:
       - blackbox-net
     expose:
-      - '6739'
+      - "6739"
 
   celery:
     build: .
-    image: 'platinum/blackbox:0.2.0'
+    image: "platinum/blackbox:0.3.0"
     depends_on:
       - redis
-    command: celery -A blackbox.tasks.tasks worker -l info
-    volumes:
-      - 'models:/home/worker/blackbox'
+    command: celery worker -A blackbox.app.celery_app.tasks -l info --beat
     networks:
       - blackbox-net
-      - orion-net
     environment:
+      - MONGODB_DB=blackbox
+      - MONGODB_HOST=mongo
+      - MONGODB_PORT=27017
       - CELERY_BROKER_URL=redis://redis:6379/0
-      - CELERY_RESULT_BACKEND=redis://redis:6379/0
-      - ORION_CONTEXT_BROKER=http://orion:1026
+      - CELERY_RESULT_BACKEND=redis://redis:6379/1
+      - CELERY_OCB_PREDICTIONS_FREQUENCY=3600.0
+      - TRAIN_WEBHOOK=
+      - ORION_HOST=orion
+      - ORION_PORT=1026
+      - FIWARE_SERVICE=blackbox
+      - FIWARE_SERVICEPATH=/
 
   blackbox:
-    image: 'platinum/blackbox:0.2.0'
+    image: "platinum/blackbox:0.3.0"
     depends_on:
       - celery
     ports:
-      - '5678:5678'
-    volumes:
-      - 'models:/home/worker/blackbox'
+      - "5678:5678"
     networks:
       - blackbox-net
-      - orion-net
     environment:
+      - MONGODB_DB=blackbox
+      - MONGODB_HOST=mongo
+      - MONGODB_PORT=27017
       - CELERY_BROKER_URL=redis://redis:6379/0
-      - CELERY_RESULT_BACKEND=redis://redis:6379/0
-      - ORION_CONTEXT_BROKER=http://orion:1026
+      - CELERY_RESULT_BACKEND=redis://redis:6379/1
+      - CELERY_OCB_PREDICTIONS_FREQUENCY=3600.0
+      - TRAIN_WEBHOOK=
+      - ORION_HOST=orion
+      - ORION_PORT=1026
+      - FIWARE_SERVICE=blackbox
+      - FIWARE_SERVICEPATH=/
 
   mongo:
     image: mongo:3.6
     command: --nojournal
     expose:
-      - '27017'
+      - "27017"
     volumes:
       - mongo:/data
     networks:
-      - orion-net
+      - blackbox-net
 
   orion:
     image: fiware/orion
     depends_on:
       - mongo
     expose:
-      - '1026'
+      - "1026"
     ports:
-      - '1026:1026'
+      - "1026:1026"
     networks:
-      - orion-net
+      - blackbox-net
     command: -dbhost mongo -logLevel DEBUG
 
 volumes:
   redis:
-  models:
   mongo:
 
 networks:
   blackbox-net:
-  orion-net:
-
