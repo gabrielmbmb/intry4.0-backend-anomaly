@@ -115,9 +115,11 @@ def train_task(self, model_id, data, models_parameters):
     try:
         requests.post(f"http://{flask_app.config['TRAIN_WEBHOOK']}/{model_id}/finished")
     except requests.exceptions.ConnectionError:
-        print("Could not notify the web hook")
+        print("Could not notify the web hook!")
+    except requests.exceptions.InvalidURL:
+        print("The webhook URL provided is not valid!")
 
-    return {"current": 100, "total": 100, "status": "TASK ENDED"}
+    return {"current": 100, "total": 100, "status": "TRAIN ENDED"}
 
 
 @celery.task(name=CELERY_PREDICT_TASK)
@@ -153,12 +155,15 @@ def predict_task(model_id, data):
 
     # Make the predictions
     predictions = blackbox.flag_anomaly(df)
-    predictions = {key: value.tolist() for key, value in predictions.items()}
+    predictions = {
+        key: {"type": "Array", "value": value.tolist()}
+        for key, value in predictions.items()
+    }
 
     # Send it to OCB
     url = (
         f"http://{flask_app.config['ORION_HOST']}:{flask_app.config['ORION_PORT']}"
-        f"/v2/entities/urn:ngsi-ld:BlackboxModel:{model_id}/attrs"
+        f"/v2/entities"
     )
 
     headers = {
@@ -167,8 +172,11 @@ def predict_task(model_id, data):
         "Content-Type": "application/json",
     }
 
+    data = {"id": f"urn:ngsi-ld:BlackboxModel:{model_id}", "type": "BlackboxModel"}
+    data = {**data, **predictions}
+
     try:
-        response = requests.post(url, headers, json=predictions)
+        requests.post(url, headers=headers, json={**data, **predictions})
     except requests.exceptions.RequestException:
         # If the predictions could not be sent to the OCB, store it in MongoDB
         print(
