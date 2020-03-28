@@ -122,10 +122,10 @@ class BlackboxModelMethods(Resource):
     def post(self, model_id):
         """Create a Blackbox model"""
         payload = ml_ns.payload
-        newModel = BlackboxModel(
+        new_model = BlackboxModel(
             model_id=model_id, models=payload["models"], columns=payload["columns"],
         )
-        newModel.save()
+        new_model.save()
         return (
             {"message": f"Blackbox model with id {model_id} has been created"},
             200,
@@ -249,7 +249,7 @@ class TrainMethods(Resource):
             (
                 {
                     "message": "A task to train the model has been started",
-                    "task_status": f"http://{request.host}/{ml_ns.path}/task/{task.id}",
+                    "task_status": f"http://{request.host}{ml_ns.path}/task/{task.id}",
                 }
             ),
             202,
@@ -293,7 +293,7 @@ class PredictMethods(Resource):
                 {
                     "message": "A task to predict anomalies with Blackbox model with "
                     f"id {model_id} has been started",
-                    "task_status": f"http://{request.host}/{ml_ns.path}/task/{task.id}",
+                    "task_status": f"http://{request.host}{ml_ns.path}/task/{task.id}",
                 }
             ),
             202,
