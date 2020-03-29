@@ -24,7 +24,7 @@ class AnomalyModel(metaclass=ABCMeta):
     @abstractmethod
     def predict(self, X):
         """
-        This method should implement all the logic to predict a value in order to 
+        This method should implement all the logic to predict a value in order to
         flag as anomaly.
         """
         pass

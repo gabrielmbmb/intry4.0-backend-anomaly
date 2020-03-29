@@ -1,5 +1,5 @@
 # Available models in Blackbox. Have to do this in a separate file because if not then
-# the TensorFlow backend will be initialized in modules that is not necessary. 
+# the TensorFlow backend will be initialized in modules that is not necessary.
 AVAILABLE_MODELS = [
     "pca_mahalanobis",
     "autoencoder",
