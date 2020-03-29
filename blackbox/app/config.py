@@ -39,7 +39,7 @@ class BaseConfig(object):
     )
 
     # Train ended webhook
-    TRAIN_WEBHOOK = os.getenv("TRAIN_WEBHOOK", "localhost")
+    TRAIN_WEBHOOK = os.getenv("TRAIN_WEBHOOK", "localhost:6789")
 
     # Orion Context Broker
     ORION_HOST = os.getenv("ORION_HOST", "localhost")
