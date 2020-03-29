@@ -187,3 +187,5 @@ def predict_task(model_id, data):
             predictions=predictions, model=blackbox_model
         )
         blackbox_prediction.save()
+
+    return {"current": 100, "total": 100, "status": "PREDICT ENDED"}
