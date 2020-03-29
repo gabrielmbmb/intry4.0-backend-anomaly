@@ -25,8 +25,6 @@ class BlackBoxAnomalyDetection:
         verbose (bool): verbose mode. Defaults to False.
 
     Raises:
-        NotAnomalyModelClass: when trying to add a model that is not an instance of
-            AnomalyModel.
         KeyError: when trying to add a model that does not exist.
     """
 
