@@ -2,13 +2,13 @@ language: python
 
 services:
   - docker
+  - mongodb # before_script sleep 15 seconds to avoid mongo not initialized errors
 
 cache: pip
 
 before_install:
   - python --version
   - pip install --upgrade pip
-  - docker build -t platinum/blackbox .
 
 install:
   - pip install .
@@ -23,15 +23,25 @@ jobs:
       python: 3.7
       script: flake8 blackbox/
 
+    - stage: Build Docker
+      script:
+        - docker build -t platinum/blackbox .
+
     - stage: Python Tests
       language: python
       name: Python 3.6 test
       python: 3.6
-      script: python -m unittest discover tests
+      before_script:
+        - sleep 15
+      script:
+        - pytest
 
     - language: python
       name: Python 3.7 test & coverage
       python: 3.7
-      script: pytest
+      before_script:
+        - sleep 15
+      script:
+        - pytest
       after_success:
         - codecov -t $CODECOV_TOKEN
