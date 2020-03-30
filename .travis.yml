@@ -34,4 +34,4 @@ jobs:
       python: 3.7
       script: pytest
       after_success:
-        - codecov
+        - codecov -t $CODECOV_TOKEN
