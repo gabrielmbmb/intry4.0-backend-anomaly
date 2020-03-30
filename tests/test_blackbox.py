@@ -1,6 +1,9 @@
-from unittest import TestCase
+import copy
+import pytest
+import pandas as pd
 from keras.regularizers import l1
-from blackbox.blackbox import BlackBoxAnomalyDetection, NotAnomalyModelClass
+from blackbox.blackbox import BlackBoxAnomalyDetection
+from blackbox.models.base_model import ModelNotTrained
 from blackbox.models.unsupervised import (
     AnomalyPCAMahalanobis,
     AnomalyAutoencoder,
@@ -11,117 +14,81 @@ from blackbox.models.unsupervised import (
     AnomalyKNN,
     AnomalyLOF,
 )
-from blackbox.models.base_model import ModelNotTrained
-from blackbox.utils.csv import CSVReader
 
 
-class TestBlackBoxAnomalyDetection(TestCase):
+class TestBlackBoxAnomalyDetection:
     """Tests for Blackbox"""
 
-    def setUp(self) -> None:
-        self.model = BlackBoxAnomalyDetection(scaler="minmax", verbose=True)
-        self.model.add_model(AnomalyPCAMahalanobis(verbose=True))
-        self.model.add_model(
-            AnomalyAutoencoder(verbose=True, hidden_neurons=[4, 2, 2, 4])
+    @pytest.fixture(scope="class", autouse=True)
+    def setup(self) -> None:
+        cls = type(self)
+        cls.model = BlackBoxAnomalyDetection(scaler="minmax", verbose=True)
+        cls.train_df = pd.read_csv("./tests/test_csv/no_anomaly_data.csv", index_col=0)
+        cls.predict_df = pd.read_csv(
+            "./tests/test_csv/all_data_anomalies_included.csv", index_col=0
         )
-        self.model.add_model(AnomalyKMeans(verbose=True))
-        self.model.add_model(AnomalyOneClassSVM(verbose=True))
-        self.model.add_model(AnomalyIsolationForest(verbose=True))
-        self.model.add_model(AnomalyGaussianDistribution(verbose=True))
-        self.model.add_model(AnomalyKNN(verbose=True))
-        self.model.add_model(AnomalyLOF(verbose=True))
-
-        self.model_name = BlackBoxAnomalyDetection(scaler="standard", verbose=True)
-        self.model_name.add_model(AnomalyPCAMahalanobis(verbose=True), "PCAMahalanobis")
-        self.model_name.add_model(
-            AnomalyAutoencoder(
-                kernel_regularizer=l1(0.0), verbose=True, hidden_neurons=[4, 2, 2, 4]
-            ),
-            "Autoencoder",
-        )
-        self.model_name.add_model(AnomalyKMeans(n_clusters=20, verbose=True), "KMeans")
-        self.model_name.add_model(AnomalyOneClassSVM(verbose=True), "OneClassSVM")
-        self.model_name.add_model(
-            AnomalyIsolationForest(verbose=True), "IsolationForest"
-        )
-        self.model_name.add_model(
-            AnomalyGaussianDistribution(verbose=True), "GaussianDistribution"
-        )
-        self.model_name.add_model(AnomalyKNN(verbose=True), "KNearestNeighbors")
-        self.model_name.add_model(AnomalyLOF(verbose=True), "LocalOutlierFactor")
 
     def test_add_model(self):
-        """Tests that models are correctly added to the Blackbox"""
-        self.assertIsInstance(
-            self.model.models["AnomalyPCAMahalanobis"], AnomalyPCAMahalanobis
+        """Tests that models are correctly added to the Blackbox."""
+        self.model.add_model("pca_mahalanobis")
+        self.model.add_model(
+            "autoencoder",
+            **{"hidden_neurons": [4, 2, 2, 4], "kernel_regularizer": l1(0.0)},
         )
-        self.assertIsInstance(
-            self.model.models["AnomalyAutoencoder"], AnomalyAutoencoder
-        )
-        self.assertIsInstance(self.model.models["AnomalyKMeans"], AnomalyKMeans)
-        self.assertIsInstance(
-            self.model.models["AnomalyOneClassSVM"], AnomalyOneClassSVM
-        )
-        self.assertIsInstance(
-            self.model.models["AnomalyIsolationForest"], AnomalyIsolationForest
-        )
-        self.assertIsInstance(
-            self.model.models["AnomalyGaussianDistribution"],
-            AnomalyGaussianDistribution,
-        )
-        self.assertIsInstance(
-            self.model.models["AnomalyKNN"], AnomalyKNN,
-        )
-        self.assertIsInstance(
-            self.model.models["AnomalyLOF"], AnomalyLOF,
-        )
+        self.model.add_model("kmeans")
+        self.model.add_model("one_class_svm")
+        self.model.add_model("gaussian_distribution")
+        self.model.add_model("isolation_forest")
+        self.model.add_model("knearest_neighbors")
+        self.model.add_model("local_outlier_factor")
 
-        self.assertIsInstance(
-            self.model_name.models["PCAMahalanobis"], AnomalyPCAMahalanobis
+        assert isinstance(self.model.models["pca_mahalanobis"], AnomalyPCAMahalanobis)
+        assert isinstance(self.model.models["autoencoder"], AnomalyAutoencoder)
+        assert isinstance(self.model.models["kmeans"], AnomalyKMeans)
+        assert isinstance(self.model.models["one_class_svm"], AnomalyOneClassSVM)
+        assert isinstance(self.model.models["isolation_forest"], AnomalyIsolationForest)
+        assert isinstance(
+            self.model.models["gaussian_distribution"], AnomalyGaussianDistribution,
         )
-        self.assertIsInstance(self.model_name.models["Autoencoder"], AnomalyAutoencoder)
-        self.assertIsInstance(self.model_name.models["KMeans"], AnomalyKMeans)
-        self.assertIsInstance(self.model_name.models["OneClassSVM"], AnomalyOneClassSVM)
-        self.assertIsInstance(
-            self.model_name.models["IsolationForest"], AnomalyIsolationForest
-        )
-        self.assertIsInstance(
-            self.model_name.models["GaussianDistribution"], AnomalyGaussianDistribution
-        )
-        self.assertIsInstance(self.model_name.models["KNearestNeighbors"], AnomalyKNN)
-        self.assertIsInstance(self.model_name.models["LocalOutlierFactor"], AnomalyLOF)
+        assert isinstance(self.model.models["knearest_neighbors"], AnomalyKNN,)
+        assert isinstance(self.model.models["local_outlier_factor"], AnomalyLOF,)
 
-    def test_add_model_no_class_anomaly(self):
-        """Tests that an error is raised if an instance of a class that doesn't inherit 
-        from AnomalyClassModel is added to the blackbox"""
-        bb = BlackBoxAnomalyDetection()
-        self.assertRaises(NotAnomalyModelClass, bb.add_model, 1)
+        with pytest.raises(KeyError):
+            self.model.add_model("foo")
 
-    def test_train_save_load_predict_model(self):
-        """Tests training, saving, loading and predicting  a Blackbox"""
-        reader = CSVReader("./test_csv/no_anomaly_data.csv")  # read csv
-        df = reader.get_df()
+    def test_model_not_trained(self):
+        """Tests that ModelNotTrained is raised."""
+        with pytest.raises(ModelNotTrained):
+            self.model.flag_anomaly(self.predict_df)
 
-        reader2 = CSVReader("./test_csv/all_data_anomalies_included.csv")
-        df2 = reader2.get_df()
-
-        print(df.shape, df2.shape)
+    def test_train_model(self):
+        """Tests training a Blackbox model."""
 
         def cb_function(progress, message):
             print(message, "Progress: ", progress)
 
-        self.assertRaises(ModelNotTrained, self.model.flag_anomaly, df2)
+        copy_model = copy.copy(self.model)
+        copy_model.scaler = "standard"
+        copy_model.train_models(self.train_df, y=None, cb_func=cb_function)
+        self.model.train_models(self.train_df, y=None, cb_func=cb_function)
 
-        self.model.train_models(df, y=None, cb_func=cb_function)  # train model
+    def test_predict_model(self):
+        """Tests predicting with a Blackbox model"""
+        results = self.model.flag_anomaly(self.predict_df)
 
-        # save the whole Blackbox and one by one each model
-        self.model.save_blackbox()
-        self.model.save_models()
+    def test_save_load_model(self):
+        """Tests saving and loading a Blackbox model."""
+        pickled = self.model.save()
+        assert isinstance(pickled, bytes)
 
-        # load the whole Blackbox and one by one each model
-        self.model.load_blackbox()
-        self.model.load_models()
+        new_model = BlackBoxAnomalyDetection()
+        new_model.load(pickled)
 
-        # predict
-        results = self.model.flag_anomaly(df2)
-        print(results)
+        assert all(
+            [
+                type(model1) == type(model2)
+                for model1, model2 in zip(self.model.models, new_model.models)
+            ]
+        )
+        assert type(self.model.scaler) == type(new_model.scaler)
+        assert self.model.verbose == new_model.verbose
