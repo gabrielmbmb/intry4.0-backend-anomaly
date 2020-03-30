@@ -18,6 +18,9 @@ install:
 jobs:
   include:
     - stage: Python Lint
+      language: python
+      name: Lint
+      python: 3.7
       script: flake8 blackbox/
 
     - stage: Python Tests
