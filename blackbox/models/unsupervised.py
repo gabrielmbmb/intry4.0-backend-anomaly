@@ -56,8 +56,6 @@ class AnomalyPCAMahalanobis(AnomalyModel):
             X (numpy.ndarray or pandas.DataFrame): training data
             y (numpy.ndarray or pandas.DataFrame): training labels. Ignored.
         """
-        if isinstance(X, pd.DataFrame):
-            X = X.values
 
         self._X = self._pca.fit_transform(X)
         self._distances = self.mahalanobis_distance(self._X)
@@ -118,8 +116,6 @@ class AnomalyPCAMahalanobis(AnomalyModel):
         Returns:
             numpy.ndarray: distance between each row of x and the data distribution.
         """
-        if isinstance(X, pd.DataFrame):
-            X = X.values
 
         if self._cov is None:
             self._cov = np.cov(self._X, rowvar=False)
@@ -248,8 +244,6 @@ class AnomalyAutoencoder(AnomalyModel):
             X (numpy.ndarray or pandas.DataFrame): training data.
             y (numpy.ndarray or pandas.DataFrame): training labels. Ignored.
         """
-        if isinstance(X, pd.DataFrame):
-            X = X.values
 
         # Verify that number of neurons doesn't exceeds the number of features
         self._n_features = X.shape[1]
@@ -464,8 +458,6 @@ class AnomalyKMeans(AnomalyModel):
             X (numpy.ndarray or pandas.DataFrame): training data
             y (numpy.ndarray or pandas.DataFrame): training labels. Ignored.
         """
-        if isinstance(X, pd.DataFrame):
-            X = X.values
 
         if self._n_clusters is None:
             if self._verbose:
@@ -683,8 +675,6 @@ class AnomalyOneClassSVM(AnomalyModel):
             X (numpy.ndarray or pandas.DataFrame): training data.
             y (numpy.ndarray or pandas.DataFrame): training labels. Ignored.
         """
-        if isinstance(X, pd.DataFrame):
-            X = X.values
 
         self._svm.fit(X)
 
@@ -747,8 +737,6 @@ class AnomalyGaussianDistribution(AnomalyModel):
             X (numpy.ndarray or pandas.DataFrame): training data.
             y (numpy.ndarray or pandas.DataFrame): training labels.
         """
-        if isinstance(X, pd.DataFrame):
-            X = X.values
 
         if isinstance(y, pd.DataFrame):
             y = y.values
@@ -772,8 +760,6 @@ class AnomalyGaussianDistribution(AnomalyModel):
         Returns:
             numpy.ndarray: probabilities.
         """
-        if isinstance(X, pd.DataFrame):
-            X = X.values
 
         return self.calculate_probability(X)
 
@@ -801,8 +787,6 @@ class AnomalyGaussianDistribution(AnomalyModel):
         Args:
             X (numpy.ndarray or pandas.DataFrame): data
         """
-        if isinstance(X, pd.DataFrame):
-            X = X.values
 
         num_samples = X.shape[0]
         num_features = X.shape[1]
@@ -977,8 +961,6 @@ class AnomalyIsolationForest(AnomalyModel):
             X (numpy.ndarray or pandas.DataFrame): training data
             y (numpy.ndarray or pandas.DataFrame): training labels. Ignored.
         """
-        if isinstance(X, pd.DataFrame):
-            X = X.values
 
         if self._verbose:
             print("Training the Isolation Forest model...")
@@ -1073,8 +1055,6 @@ class AnomalyLOF(AnomalyModel):
             X (numpy.ndarray or pandas.DataFrame): training data.
             y (numpy.ndarray or pandas.DataFrame): training labels. Ignored.
         """
-        if isinstance(X, pd.DataFrame):
-            X = X.values
 
         if self._verbose:
             print("Training the Local Outlier Factor model...")
@@ -1189,8 +1169,6 @@ class AnomalyKNN(AnomalyModel):
             X (numpy.ndarray or pandas.DataFrame): training data.
             y (numpy.ndarray or pandas.DataFrame): training labels. Ignored.
         """
-        if isinstance(X, pd.DataFrame):
-            X = X.values
 
         if self._verbose:
             print("Training the k-Nearest Neighbors model...")
