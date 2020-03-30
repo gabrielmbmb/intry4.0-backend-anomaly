@@ -45,13 +45,12 @@ class BlackBoxAnomalyDetection:
         self.verbose = verbose
         self.scaler_model = None
 
-    def add_model(self, model, name=None, **kwargs) -> None:
+    def add_model(self, model, **kwargs) -> None:
         """
         Adds an Anomaly Detection Model to the blackbox.
 
         Args:
             model (str): Anomaly Detection model.
-            name (str): name of the model. Defaults to '<ClassName>'.
             **kwargs: Parameters of Anomaly Detection model.
 
         Raises:
@@ -65,13 +64,10 @@ class BlackBoxAnomalyDetection:
                 f"{', '.join(AVAILABLE_MODELS)}"
             )
 
-        if name is None:
-            name = model_to_add.__class__.__name__
-
         if self.verbose:
-            print(f"Adding model {model_to_add.__class__.__name__} to the Blackbox...")
+            print(f"Adding model {model} to the Blackbox...")
 
-        self.models[name] = model_to_add
+        self.models[model] = model_to_add
 
     def scale_data(self, X) -> np.ndarray:
         """
@@ -179,6 +175,7 @@ class BlackBoxAnomalyDetection:
             pickled_blackbox = pickle.dumps(data_to_pickle)
         except pickle.PicklingError as e:
             print("PicklingError: ", str(e))
+            return None
 
         return pickled_blackbox
 
@@ -188,14 +185,22 @@ class BlackBoxAnomalyDetection:
 
         Args:
             pickled_blackbox (bytes): pickle with Blackbox to load.
+
+        Raises:
+            KeyError: if pickle does not contains attribute key.
         """
         loaded_data = None
 
         try:
             loaded_data = pickle.loads(pickled_blackbox)
         except pickle.UnpicklingError as e:
+            loaded_data = None
             print("UnpicklingError: ", str(e))
 
-        self.models = loaded_data["models"]
-        self.scaler = loaded_data["scaler"]
-        self.verbose = loaded_data["verbose"]
+        if loaded_data:
+            try:
+                self.models = loaded_data["models"]
+                self.scaler = loaded_data["scaler"]
+                self.verbose = loaded_data["verbose"]
+            except KeyError:
+                print("Keys not found in pickle!")
