@@ -17,6 +17,7 @@ RUN python -m pip install --user --no-warn-script-location -r blackbox/requireme
 # Install the app
 ADD --chown=worker:worker . blackbox/
 WORKDIR "/home/worker/blackbox/"
+RUN python -m pip install --user --no-warn-script-location .
 
 ENV PATH="/home/worker/.local/bin:${PATH}"
 
