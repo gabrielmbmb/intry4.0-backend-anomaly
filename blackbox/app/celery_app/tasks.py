@@ -119,7 +119,7 @@ def train_task(self, model_id, data, models_parameters):
     except requests.exceptions.InvalidURL:
         print("The webhook URL provided is not valid!")
 
-    return {"current": 100, "total": 100, "status": "TRAIN ENDED"}
+    return {"current": 100, "total": 100, "status": "Train ended"}
 
 
 @celery.task(name=CELERY_PREDICT_TASK)
@@ -172,11 +172,24 @@ def predict_task(model_id, data):
         "Content-Type": "application/json",
     }
 
-    data = {"id": f"urn:ngsi-ld:BlackboxModel:{model_id}", "type": "BlackboxModel"}
+    entity_id = f"urn:ngsi-ld:BlackboxModel:{model_id}"
+    data = {"id": entity_id, "type": "BlackboxModel"}
     data = {**data, **predictions}
 
     try:
-        requests.post(url, headers=headers, json={**data, **predictions})
+        request = requests.post(url, headers=headers, json={**data, **predictions})
+
+        # entity is already created, update it
+        if request.status_code == 422:
+            print(
+                f"Entity {entity_id} already exists in OCB. Updating it values instead..."
+            )
+            url = (
+                f"http://{flask_app.config['ORION_HOST']}:{flask_app.config['ORION_PORT']}"
+                f"/v2/entities/{entity_id}/attrs"
+            )
+            requests.post(url, headers=headers, json=predictions)
+
     except requests.exceptions.RequestException:
         # If the predictions could not be sent to the OCB, store it in MongoDB
         print(
@@ -188,4 +201,4 @@ def predict_task(model_id, data):
         )
         blackbox_prediction.save()
 
-    return {"current": 100, "total": 100, "status": "PREDICT ENDED"}
+    return {"current": 100, "total": 100, "status": "Prediction ended", "result": data}
