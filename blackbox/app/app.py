@@ -26,14 +26,21 @@ def create_app(config=None, **kwargs):
     """
     app = Flask(__name__.split(".")[0], **kwargs)
 
-    env_flask_config = os.getenv("FLASK_ENV")
+    env_flask_config = os.getenv("FLASK_ENV", None)
     if not env_flask_config and not config:
         flask_config = "production"
     elif config is None:
         flask_config = env_flask_config
     else:
         if env_flask_config:
-            pass
+            assert config == env_flask_config, (
+                f"The value of the config passed to the function create_app and "
+                "FLASK_ENV does not match. Please rerun the app without passing config "
+                "or without setting FLASK_ENV or setting the same value for both config"
+                " and FLASK_ENV"
+            )
+        else:
+            flask_config = config
 
     try:
         app.config.from_object(CONFIG_NAME_MAPPER[flask_config])
@@ -45,7 +52,6 @@ def create_app(config=None, **kwargs):
         )
         sys.exit(1)
 
-    app.config.from_object(config)
     register_extensions(app)
     register_commands(app)
     init_celery(celery, app)
