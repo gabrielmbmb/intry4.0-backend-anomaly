@@ -4,3 +4,4 @@ black==19.10b0
 pytest==5.4.1
 pytest-cov==2.8.1
 codecov==2.0.22
+mongomock==3.19.0

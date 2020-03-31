@@ -1,6 +1,5 @@
 import copy
 import pytest
-import pandas as pd
 from keras.regularizers import l1
 from blackbox.blackbox import BlackBoxAnomalyDetection
 from blackbox.models.base_model import ModelNotTrained
@@ -23,10 +22,10 @@ class TestBlackBoxAnomalyDetection:
     def setup(self) -> None:
         cls = type(self)
         cls.model = BlackBoxAnomalyDetection(scaler="minmax", verbose=True)
-        cls.train_df = pd.read_csv("./tests/test_csv/no_anomaly_data.csv", index_col=0)
-        cls.predict_df = pd.read_csv(
-            "./tests/test_csv/all_data_anomalies_included.csv", index_col=0
-        )
+        # cls.train_df = pd.read_csv("./tests/csv/no_anomaly_data.csv", index_col=0)
+        # cls.predict_df = pd.read_csv(
+        #     "./tests/csv/all_data_anomalies_included.csv", index_col=0
+        # )
 
     def test_add_model(self):
         """Tests that models are correctly added to the Blackbox."""
@@ -56,25 +55,51 @@ class TestBlackBoxAnomalyDetection:
         with pytest.raises(KeyError):
             self.model.add_model("foo")
 
-    def test_model_not_trained(self):
-        """Tests that ModelNotTrained is raised."""
-        with pytest.raises(ModelNotTrained):
-            self.model.flag_anomaly(self.predict_df)
+    def test_model_not_trained(self, predict_df):
+        """
+        Tests that ModelNotTrained is raised.
 
-    def test_train_model(self):
-        """Tests training a Blackbox model."""
+        Args:
+            predict_df(pandas.core.frame.DataFrame): predict DataFrame from pytest
+                fixture.
+        """
+        with pytest.raises(ModelNotTrained):
+            self.model.flag_anomaly(predict_df)
+
+    def test_train_model(self, train_df):
+        """
+        Tests training a Blackbox model.
+
+        Args:
+            train_df(pandas.core.frame.DataFrame): training DataFrame from pytest
+                fixture.
+        """
 
         def cb_function(progress, message):
             print(message, "Progress: ", progress)
 
         copy_model = copy.copy(self.model)
         copy_model.scaler = "standard"
-        copy_model.train_models(self.train_df, y=None, cb_func=cb_function)
-        self.model.train_models(self.train_df, y=None, cb_func=cb_function)
+        copy_model.train_models(train_df, y=None, cb_func=cb_function)
+        self.model.train_models(train_df, y=None, cb_func=cb_function)
 
-    def test_predict_model(self):
-        """Tests predicting with a Blackbox model"""
-        results = self.model.flag_anomaly(self.predict_df)
+    def test_predict_model(self, predict_df):
+        """
+        Tests predicting with a Blackbox model.
+
+        Args:
+            predict_df(pandas.core.frame.DataFrame): predict DataFrame from pytest
+                fixture.
+        """
+        results = self.model.flag_anomaly(predict_df)
+        assert isinstance(results, dict)
+        assert len(results) == len(self.model.models)
+        assert all(
+            [
+                len(model_result) == predict_df.shape[0]
+                for model_result in results.values()
+            ]
+        )
 
     def test_save_load_model(self):
         """Tests saving and loading a Blackbox model."""
