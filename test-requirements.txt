@@ -1,5 +1,6 @@
-coverage==4.5.4
+coverage==5.0.4
 flake8==3.7.9
 black==19.10b0
 pytest==5.4.1
 pytest-cov==2.8.1
+codecov==2.0.22

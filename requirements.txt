@@ -17,3 +17,4 @@ celery==4.4.2
 blinker==1.4
 tensorflow==1.14
 redis==3.4.1
+.
