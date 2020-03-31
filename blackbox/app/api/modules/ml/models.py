@@ -29,6 +29,8 @@ class BlackboxModel(Document):
     trained = BooleanField(default=False)
     saved = BinaryField()
 
+    meta = {"allow_inheritance": True}
+
     def to_dict(self):
         return {
             "model_id": self.model_id,
@@ -62,6 +64,8 @@ class BlackboxPrediction(Document):
     prediction_date = DateTimeField(default=datetime.datetime.utcnow())
     predictions = DictField(required=True)
     model = ReferenceField(BlackboxModel, reverse_delete_rule=CASCADE, required=True)
+
+    meta = {"allow_inheritance": True}
 
     def to_dict(self):
         return {
