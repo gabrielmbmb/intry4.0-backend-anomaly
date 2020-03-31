@@ -1,5 +1,4 @@
 import os
-import sys
 from flask import Flask
 from blackbox.app.celery_app.celery import celery, init_celery
 from blackbox.app.extensions import cors, cache, db, api
@@ -45,12 +44,15 @@ def create_app(config=None, **kwargs):
     try:
         app.config.from_object(CONFIG_NAME_MAPPER[flask_config])
     except ImportError:
-        app.logger.error(
+        raise ImportError(
+            f"Configuration import is broken: {flask_config}. Rerun the app and try again..."
+        )
+    except KeyError:
+        raise KeyError(
             f"Invalid Flask configuration: {flask_config}. Rerun the app but first "
             f"define the environment variable FLASK_CONFIG with one of the "
             f"values: {', '.join(CONFIG_NAME_MAPPER.keys())} "
         )
-        sys.exit(1)
 
     register_extensions(app)
     register_commands(app)
