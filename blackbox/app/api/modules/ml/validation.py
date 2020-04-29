@@ -16,7 +16,9 @@ def validate_data(columns, data, model_columns) -> Union[dict, None]:
     errors = {"columns": "", "data": ""}
 
     # Check that columns provided are the same as the ones in the model
-    if not all(column in model_columns for column in columns):
+    if not all(column in model_columns for column in columns) or not all(
+        model_column in columns for model_column in model_columns
+    ):
         errors["columns"] += (
             "The provided columns are not the same as those previously created in the "
             "Blackbox model."
