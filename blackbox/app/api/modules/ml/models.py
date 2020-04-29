@@ -93,12 +93,14 @@ BlackboxModelApi = Model(
             description="Name of the Machine Learning and Mathematical models inside "
             "the Blackbox model",
             required=True,
+            min_items=1,
             example=AVAILABLE_MODELS,
         ),
         "columns": fields.List(
             fields.String,
             description="Name of the columns provided to the Blackbox model",
             required=True,
+            min_items=1,
             example=["pressure", "temperature", "humidity"],
         ),
         "trained": fields.Boolean(
@@ -115,12 +117,14 @@ BlackboxModelPatchApi = Model(
             description="Name of the Machine Learning and Mathematical models inside "
             "the Blackbox model",
             required=False,
+            min_items=1,
             example=AVAILABLE_MODELS,
         ),
         "columns": fields.List(
             fields.String,
             description="Name of the columns provided to the Blackbox model",
             required=False,
+            min_items=1,
             example=["pressure", "temperature", "humidity"],
         ),
     },
@@ -143,6 +147,7 @@ BlackboxAutoencoderApi = Model(
         "hidden_neurons": fields.List(
             fields.Integer,
             description="Neural Network layers and the number of neurons in each layer.",
+            min_items=3,
             default=[32, 16, 16, 32],
             example=[32, 16, 16, 32],
         ),
@@ -399,13 +404,15 @@ BlackboxDataApi = Model(
             fields.String,
             description="Name of the columns provided to the Blackbox model",
             required=True,
+            min_items=1,
             example=["pressure", "temperature", "humidity"],
         ),
         "data": fields.List(
-            fields.List(fields.Arbitrary),
+            fields.List(fields.Arbitrary, min_items=1),
             description="List containing the training rows. Each row must have 1 value "
             "for each column indicated in columns ",
             required=True,
+            min_items=1,
             example=[
                 [60.63, 167.9, 13.64],
                 [66.22, 145.3, 14.67],
