@@ -1129,6 +1129,7 @@ class AnomalyKNN(AnomalyModel):
     """
 
     from sklearn.neighbors import NearestNeighbors
+    from sklearn.neighbors import BallTree, KDTree
 
     TRAIN_PARAMS = ["_knn", "_distances", "_threshold"]
 
@@ -1148,18 +1149,22 @@ class AnomalyKNN(AnomalyModel):
         self._n_neighbors = n_neighbors
         self._score_func = score_func
         self._contamination = contamination
+        self._leaf_size = leaf_size
+        self._metric = metric
+        self._algorithm = algorithm
         self._knn = self.NearestNeighbors(
             n_neighbors=n_neighbors,
             radius=radius,
-            leaf_size=leaf_size,
-            metric=metric,
+            leaf_size=self._leaf_size,
+            metric=self._metric,
             p=p,
-            algorithm=algorithm,
+            algorithm=self._algorithm,
             n_jobs=n_jobs,
         )
         self._distances = None
         self._threshold = None
         self._verbose = verbose
+        self.tree_ = None
 
     def train(self, X, y=None):
         """
@@ -1174,6 +1179,20 @@ class AnomalyKNN(AnomalyModel):
             print("Training the k-Nearest Neighbors model...")
 
         self._knn.fit(X)
+
+        # In some cases, _tree is None
+        if self._knn._tree is not None:
+            self.tree_ = self._knn._tree
+        else:
+            if self._algorithm == "kd_tree":
+                self.tree_ = self.KDTree(
+                    X, leaf_size=self._leaf_size, metric=self._metric
+                )
+            else:
+                self.tree_ = self.BallTree(
+                    X, leaf_size=self._leaf_size, metric=self._metric
+                )
+
         distances, _ = self._knn.kneighbors(
             n_neighbors=self._n_neighbors, return_distance=True
         )
@@ -1197,7 +1216,7 @@ class AnomalyKNN(AnomalyModel):
 
         for i in range(n_samples):
             sample_features = np.array([X[i]])
-            distances, _ = self._knn._tree.query(sample_features, k=self._n_neighbors)
+            distances, _ = self.tree_.query(sample_features, k=self._n_neighbors)
             score = self.get_dist_by_score_func(distances)
             scores[i] = score
 
