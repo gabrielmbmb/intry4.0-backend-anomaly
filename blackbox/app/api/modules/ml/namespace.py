@@ -175,7 +175,7 @@ class BlackboxModelMethods(Resource):
         )
 
     @ml_ns.doc(description="Update a Blackbox model")
-    @ml_ns.expect(BlackboxModelApi, validate=True)
+    @ml_ns.expect(BlackboxModelPatchApi, validate=True)
     @ml_ns.response(code=200, description="Success", model=BlackboxResponseApi)
     @ml_ns.response(
         code=400,
