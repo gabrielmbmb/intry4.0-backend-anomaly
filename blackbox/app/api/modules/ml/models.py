@@ -209,7 +209,7 @@ BlackboxAutoencoderApi = Model(
         "epochs": fields.Integer(
             description="Number of times that all the batches will be processed in the "
             " Neural Network",
-            defualt=100,
+            default=100,
             example=100,
         ),
         "batch_size": fields.Integer(description="Batch size", default=32, example=32),
@@ -234,7 +234,7 @@ BlackboxKMeansApi = Model(
     {
         "n_clusters": fields.Integer(
             description="Number of clusters for the K-Means algorithm",
-            defualt=None,
+            default=None,
             example=None,
         ),
         "max_cluster_elbow": fields.Integer(
