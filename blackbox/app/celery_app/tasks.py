@@ -114,7 +114,7 @@ def train_task(self, model_id, data, models_parameters):
     # Webhook
     try:
         requests.post(
-            f"http://{flask_app.config['TRAIN_WEBHOOK']}/{model_id}/train/finished/"
+            f"{flask_app.config['TRAIN_WEBHOOK']}/{model_id}/train/finished/"
         )
     except requests.exceptions.ConnectionError:
         print("Could not notify the web hook!")

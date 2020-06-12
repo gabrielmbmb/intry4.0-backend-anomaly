@@ -5,7 +5,7 @@ class BaseConfig(object):
     DEBUG = False
     TESTING = False
     SECRET_KEY = "some secret key here"
-    # SERVER_NAME = os.getenv("SERVER_NAME", "localhost")
+    SERVER_IP = os.getenv("SERVER_IP", "localhost")
 
     # API
     API_NAME = "PLATINUM - Blackbox Anomaly Detection"

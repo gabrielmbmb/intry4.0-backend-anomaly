@@ -1,4 +1,5 @@
-from flask import request
+from flask import request, url_for
+from flask import current_app as app
 from flask_restx import Namespace, Resource
 from flask_mongoengine import DoesNotExist, MultipleObjectsReturned, ValidationError
 from mongoengine.errors import NotUniqueError
@@ -249,7 +250,7 @@ class TrainMethods(Resource):
             (
                 {
                     "message": "A task to train the model has been started",
-                    "task_status": f"http://{request.host}{ml_ns.path}/task/{task.id}",
+                    "task_status": f"http://{app.config['SERVER_IP']}{ml_ns.path}/task/{task.id}",
                 }
             ),
             202,
