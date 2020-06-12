@@ -1,4 +1,4 @@
-from flask import request, url_for
+from flask import request
 from flask import current_app as app
 from flask_restx import Namespace, Resource
 from flask_mongoengine import DoesNotExist, MultipleObjectsReturned, ValidationError
