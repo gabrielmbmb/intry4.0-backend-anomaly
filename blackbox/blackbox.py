@@ -154,7 +154,7 @@ class BlackBoxAnomalyDetection:
 
         results = {}
         for model_name, model in self.models.items():
-            results[model_name] = model.flag_anomaly(X)
+            results[model_name] = model.flag_anomaly(X).tolist()
 
         return results
 

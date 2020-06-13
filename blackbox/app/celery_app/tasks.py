@@ -12,52 +12,52 @@ flask_app = create_app()
 init_celery(celery, flask_app)
 
 
-@celery.on_after_configure.connect
-def setup_periodic_tasks(sender, **kwargs):
-    sender.add_periodic_task(
-        flask_app.config["CELERY_OCB_PREDICTIONS_FREQUENCY"],
-        send_predictions_to_ocb.s(),
-    )
+# @celery.on_after_configure.connect
+# def setup_periodic_tasks(sender, **kwargs):
+#     sender.add_periodic_task(
+#         flask_app.config["CELERY_OCB_PREDICTIONS_FREQUENCY"],
+#         send_predictions_to_ocb.s(),
+#     )
 
 
-@celery.task
-def send_predictions_to_ocb():
-    """
-    Celery's periodic task to try to send past predictions (that could not be sent in
-    the moment the prediction was made) to Orion Context Broker.
-    """
+# @celery.task
+# def send_predictions_to_ocb():
+#     """
+#     Celery's periodic task to try to send past predictions (that could not be sent in
+#     the moment the prediction was made) to Orion Context Broker.
+#     """
 
-    blackbox_predictions = BlackboxPrediction.objects()
+#     blackbox_predictions = BlackboxPrediction.objects()
 
-    if blackbox_predictions:
-        print("Sending past predictions to OCB...")
+#     if blackbox_predictions:
+#         print("Sending past predictions to OCB...")
 
-        entities = []
-        for prediction in blackbox_predictions:
-            entity_info = {
-                "id": f"urn:ngsi-ld:BlackboxModel:{prediction.model.model_id}",
-                "type": "BlackboxModel",
-            }
-            entities.append({**entity_info, **prediction.predictions})
+#         entities = []
+#         for prediction in blackbox_predictions:
+#             entity_info = {
+#                 "id": f"urn:ngsi-ld:BlackboxModel:{prediction.model.model_id}",
+#                 "type": "BlackboxModel",
+#             }
+#             entities.append({**entity_info, **prediction.predictions})
 
-        url = (
-            f"http://{flask_app.config['ORION_HOST']}:{flask_app.config['ORION_PORT']}"
-            f"/v2/op/update"
-        )
+#         url = (
+#             f"http://{flask_app.config['ORION_HOST']}:{flask_app.config['ORION_PORT']}"
+#             f"/v2/op/update"
+#         )
 
-        headers = {
-            "fiware-service": flask_app.config["FIWARE_SERVICE"],
-            "fiware-servicepath": flask_app.config["FIWARE_SERVICEPATH"],
-            "Content-Type": "application/json",
-        }
+#         headers = {
+#             "fiware-service": flask_app.config["FIWARE_SERVICE"],
+#             "fiware-servicepath": flask_app.config["FIWARE_SERVICEPATH"],
+#             "Content-Type": "application/json",
+#         }
 
-        data = {"actionType": "APPEND", "entities": entities}
+#         data = {"actionType": "APPEND", "entities": entities}
 
-        try:
-            requests.post(url, headers, json=data)
-            blackbox_predictions.objects().delete()
-        except requests.exceptions.RequestException:
-            print("Could not sent the past predictions to OCB...")
+#         try:
+#             requests.post(url, headers, json=data)
+#             blackbox_predictions.objects().delete()
+#         except requests.exceptions.RequestException:
+#             print("Could not sent the past predictions to OCB...")
 
 
 @celery.task(name=CELERY_TRAIN_TASK, bind=True)
@@ -157,50 +157,23 @@ def predict_task(model_id, data):
 
     # Make the predictions
     predictions = blackbox.flag_anomaly(df)
-    predictions = {
-        key: {"type": "Array", "value": value.tolist()}
-        for key, value in predictions.items()
-    }
-
-    # Send it to OCB
-    url = (
-        f"http://{flask_app.config['ORION_HOST']}:{flask_app.config['ORION_PORT']}"
-        f"/v2/entities"
-    )
-
-    headers = {
-        "fiware-service": flask_app.config["FIWARE_SERVICE"],
-        "fiware-servicepath": flask_app.config["FIWARE_SERVICEPATH"],
-        "Content-Type": "application/json",
-    }
-
-    entity_id = f"urn:ngsi-ld:BlackboxModel:{model_id}"
-    data = {"id": entity_id, "type": "BlackboxModel"}
-    data = {**data, **predictions}
 
     try:
-        request = requests.post(url, headers=headers, json={**data, **predictions})
-
-        # entity is already created, update it
-        if request.status_code == 422:
-            print(
-                f"Entity {entity_id} already exists in OCB. Updating it values instead..."
-            )
-            url = (
-                f"http://{flask_app.config['ORION_HOST']}:{flask_app.config['ORION_PORT']}"
-                f"/v2/entities/{entity_id}/attrs"
-            )
-            requests.post(url, headers=headers, json=predictions)
-
-    except requests.exceptions.RequestException:
-        # If the predictions could not be sent to the OCB, store it in MongoDB
-        print(
-            "Could not send the predictions to Orion Context Broker... Storing it in "
-            "MongoDB"
+        response = requests.post(
+            f"{flask_app.config['TRAIN_WEBHOOK']}/{model_id}/predict/result/",
+            json=predictions
         )
-        blackbox_prediction = BlackboxPrediction(
-            predictions=predictions, model=blackbox_model
-        )
-        blackbox_prediction.save()
+    except requests.exceptions.ConnectionError:
+        print("Could not send new predictions to the web hook!")
+    except requests.exceptions.InvalidURL:
+        print("The webhook URL provided is not valid!")
 
-    return {"current": 100, "total": 100, "status": "Prediction ended", "result": data}
+    if response.status_code != 200:
+        print("New predictions not received!")
+
+    return {
+        "current": 100, 
+        "total": 100, 
+        "status": "Prediction ended", 
+        "result": predictions
+    }
