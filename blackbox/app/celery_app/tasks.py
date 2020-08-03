@@ -60,7 +60,7 @@ def train_task(self, model_id, data, models_parameters):
 
     # Save pickle in MongoDB
     blackbox_model.trained = True
-    blackbox_model.saved.put(pickle)
+    blackbox_model.saved.replace(pickle)
     blackbox_model.save()
 
     # Webhook
