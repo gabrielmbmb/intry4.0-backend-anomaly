@@ -4,7 +4,7 @@ from flask_restx.model import Model
 from flask_restx import fields
 from flask_mongoengine import Document
 from mongoengine.fields import (
-    BinaryField,
+    FileField,
     StringField,
     ListField,
     DateTimeField,
@@ -27,7 +27,7 @@ class BlackboxModel(Document):
     models = ListField(StringField(), required=True)
     columns = ListField(StringField(), required=True)
     trained = BooleanField(default=False)
-    saved = BinaryField()
+    saved = FileField()
 
     meta = {"allow_inheritance": True}
 
