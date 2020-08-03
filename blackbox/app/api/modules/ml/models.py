@@ -436,6 +436,13 @@ BlackboxTrainApi = BlackboxDataApi.inherit(
             default=-1,
             example=-1,
         ),
+        "scaler": fields.String(
+            description="Scaler used to scale the data before training and predicting",
+            default="minmax",
+            example="minmax",
+            enum=["minmax", "standard"],
+            required=True,
+        ),
         "pca_mahalanobis": fields.Nested(BlackboxPCAMahalanobisApi),
         "autoencoder": fields.Nested(BlackboxAutoencoderApi),
         "kmeans": fields.Nested(BlackboxKMeansApi),
