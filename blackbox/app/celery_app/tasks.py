@@ -60,7 +60,7 @@ def train_task(self, model_id, data, models_parameters):
 
     # Save pickle in MongoDB
     blackbox_model.trained = True
-    blackbox_model.saved = pickle
+    blackbox_model.saved.put(pickle)
     blackbox_model.save()
 
     # Webhook
@@ -105,7 +105,8 @@ def predict_task(model_id, data):
 
     # Retrieve Blackbox model from MongoDB
     blackbox = BlackBoxAnomalyDetection()
-    blackbox.load(blackbox_model.saved)
+    loaded = blackbox_model.saved.read()
+    blackbox.load(loaded)
 
     # Make the predictions
     predictions = blackbox.flag_anomaly(df)
