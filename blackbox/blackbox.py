@@ -20,8 +20,8 @@ class BlackBoxAnomalyDetection:
         Anomaly Detections models.
 
     Args:
-        scaler (str): scaler that will be to scale the data before training. Available
-            scalers are 'minmax' and 'standard'. Defaults to 'minmax.
+        scaler (str): scaler that will be used to scale the data before training.
+            Available scalers are 'minmax' and 'standard'. Default to 'minmax'.
         verbose (bool): verbose mode. Defaults to False.
 
     Raises:
@@ -71,10 +71,9 @@ class BlackBoxAnomalyDetection:
 
     def scale_data(self, X) -> np.ndarray:
         """
-        Scales the data before training or making a prediction with a Min Max Scaler
-        which is sensitive to outliers. The first time that the function is called, the
-        scaler will be fitted with the data passed. Then, the trained scaler will be
-        used to scale the data.
+        Scales the data before training or making a prediction with a scaler. The first
+        time that the function is called, the scaler will be fitted with the data
+        passed. Then, the trained scaler will be used to scale the data.
 
         Args:
             X (numpy.ndarray or pandas.DataFrame): data to be scaled.

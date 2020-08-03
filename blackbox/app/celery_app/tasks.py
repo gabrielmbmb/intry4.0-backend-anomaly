@@ -13,7 +13,7 @@ init_celery(celery, flask_app)
 
 
 @celery.task(name=CELERY_TRAIN_TASK, bind=True)
-def train_task(self, model_id, data, models_parameters):
+def train_task(self, model_id, data, models_parameters, scaler):
     """
     Celery's task which will create the training DataFrame and train a Blackbox model.
 
@@ -21,6 +21,7 @@ def train_task(self, model_id, data, models_parameters):
         model_id (str): Blackbox model id.
         data (dict): containing the keys columns and data.
         models_parameters (dict): each key is a model and has the model parameters.
+        scaler (str): the scaler.
 
     Returns:
         dict: status of the task.
@@ -46,7 +47,7 @@ def train_task(self, model_id, data, models_parameters):
         }
 
     # Create Blackbox
-    blackbox = BlackBoxAnomalyDetection(verbose=True)
+    blackbox = BlackBoxAnomalyDetection(scaler=scaler, verbose=True)
 
     # Add models to the Blackbox
     for model in models_parameters.keys():

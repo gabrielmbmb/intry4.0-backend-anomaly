@@ -233,6 +233,9 @@ class TrainMethods(Resource):
         # Training data
         data = {"columns": payload["columns"], "data": payload["data"]}
 
+        # Scaler
+        scaler = payload["scaler"]
+
         # Models parameters
         models_parameters = {}
         for model in blackbox_model.models:
@@ -243,7 +246,7 @@ class TrainMethods(Resource):
 
         # Create training task
         task = celery.send_task(
-            CELERY_TRAIN_TASK, args=[model_id, data, models_parameters],
+            CELERY_TRAIN_TASK, args=[model_id, data, models_parameters, scaler],
         )
 
         return (
