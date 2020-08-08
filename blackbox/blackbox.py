@@ -143,8 +143,8 @@ class BlackBoxAnomalyDetection:
             X (numpy.ndarray or pandas.DataFrame or list): data.
 
         Returns:
-            numpy.ndarray: list containing list of bool indicating if the data point is
-                an anomaly.
+            dict: in which keys are the model name and the values a list of the
+                predictions made by the model.
         """
         if isinstance(X, list):
             X = np.array(X)

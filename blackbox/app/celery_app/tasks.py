@@ -66,13 +66,13 @@ def train_task(self, model_id, data, models_parameters, scaler):
 
     # Webhook
     try:
-        requests.post(
-            f"{flask_app.config['TRAIN_WEBHOOK']}/{model_id}/train/finished/"
-        )
+        requests.post(f"{flask_app.config['TRAIN_WEBHOOK']}/{model_id}/train/finished/")
     except requests.exceptions.ConnectionError:
         print("Could not notify the web hook!")
     except requests.exceptions.InvalidURL:
         print("The webhook URL provided is not valid!")
+    except Exception:
+        print("An error has ocurred sending notification to web hook!")
 
     return {"current": 100, "total": 100, "status": "Train ended"}
 
@@ -85,14 +85,17 @@ def predict_task(model_id, data):
 
     Args:
         model_id (str): Blackbox model id.
-        data (dict): containing the keys columns and data.
+        data (dict): containing the keys columns, data and id (optional).
 
     Returns:
         dict: status of the task.
     """
 
-    # Create DataFrame
-    df = pd.read_json(json.dumps(data), orient="split")
+    # Create DataFrame. Get the keys "columns" and "data" to create the DataFrame. If
+    # the data dictionary param is passed directly it could result in a error because
+    # it could contains the ID which is not accepted by the `read_json` function.
+    df_data = {key: data[key] for key in ["columns", "data"]}
+    df = pd.read_json(json.dumps(df_data), orient="split")
 
     # Get Blackbox model info
     try:
@@ -112,22 +115,28 @@ def predict_task(model_id, data):
     # Make the predictions
     predictions = blackbox.flag_anomaly(df)
 
+    if data.get("id"):
+        predictions["id"] = data.get("id")
+
+    response = None
     try:
         response = requests.post(
             f"{flask_app.config['TRAIN_WEBHOOK']}/{model_id}/predict/result/",
-            json=predictions
+            json=predictions,
         )
     except requests.exceptions.ConnectionError:
         print("Could not send new predictions to the web hook!")
     except requests.exceptions.InvalidURL:
         print("The webhook URL provided is not valid!")
+    except Exception:
+        print("An error has ocurred sending predictions to web hook!")
 
-    if response.status_code != 200:
+    if response and response.status_code != 200:
         print("New predictions not received!")
 
     return {
         "current": 100,
         "total": 100,
         "status": "Prediction ended",
-        "result": predictions
+        "result": predictions,
     }

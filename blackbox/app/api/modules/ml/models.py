@@ -400,6 +400,9 @@ BlackboxKNNApi = Model(
 BlackboxDataApi = Model(
     "BlackboxData",
     {
+        "id": fields.String(
+            description="An ID optionally sent by the client in order to identify a prediction later"
+        ),
         "columns": fields.List(
             fields.String,
             description="Name of the columns provided to the Blackbox model",
