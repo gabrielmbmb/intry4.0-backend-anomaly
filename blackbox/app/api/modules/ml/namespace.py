@@ -287,7 +287,11 @@ class PredictMethods(Resource):
             return {"errors": errors, "message": "Input payload validation error"}, 400
 
         # Data to predict
-        data = {"columns": payload["columns"], "data": payload["data"]}
+        data = {
+            "id": payload.get("id"),
+            "columns": payload["columns"],
+            "data": payload["data"],
+        }
 
         # Create predicting task
         task = celery.send_task(CELERY_PREDICT_TASK, args=[model_id, data])
