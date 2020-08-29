@@ -41,4 +41,4 @@ jobs:
     - stage: Build Docker
       name: Build Docker
       script:
-        - docker build -t platinum/blackbox .
+        - docker build -t gmartinbdev/blackbox .

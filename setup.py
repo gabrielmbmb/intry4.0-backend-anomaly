@@ -11,7 +11,7 @@ setuptools.setup(
     author_email="gmartin_b@usal.es",
     description="A package that implements several algorithms to detect anomalies",
     long_description_content_type="text/markdown",
-    url="https://github.com/bisite/PLATINUM-anomaly-detection",
+    url="https://github.com/gabrielmbmb/intry4.0-backend-anomaly",
     packages=setuptools.find_packages(),
     data_files=[],
     classifiers=[
@@ -22,9 +22,9 @@ setuptools.setup(
         "Framework :: Flask",
     ],
     python_requires=">=3.6",
-    keywords="PLATINUM, anomaly-detection",
+    keywords="anomaly-detection",
     project_urls={
-        "Bug Reports": "https://github.com/bisite/PLATINUM-anomaly-detection/issues",
-        "Source": "https://github.com/bisite/PLATINUM-anomaly-detection",
+        "Bug Reports": "https://github.com/gabrielmbmb/intry4.0-backend-anomalyissues",
+        "Source": "https://github.com/gabrielmbmb/intry4.0-backend-anomaly",
     },
 )

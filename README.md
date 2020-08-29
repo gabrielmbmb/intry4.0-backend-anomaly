@@ -1,11 +1,8 @@
-# PLATINUM - Blackbox Anomaly Detection
-
-[![Platinum](https://platinum.usal.es/themes/startupgrowth_lite/logo.png)
-](https://platinum.usal.es)
+# InTry 4.0 - Blackbox Anomaly Detection
 
 [![made-with-python](https://img.shields.io/badge/Made%20with-Python-1f425f.svg)](https://www.python.org/)
-[![Build Status](https://travis-ci.com/gabrielmbmb/platinum-blackbox-anomaly.svg?token=Ym8dypMsw2NFNbxtSMrV&branch=master)](https://travis-ci.com/gabrielmbmb/platinum-blackbox-anomaly)
-[![codecov](https://codecov.io/gh/gabrielmbmb/platinum-blackbox-anomaly/branch/master/graph/badge.svg?token=lAfRL6ePBZ)](https://codecov.io/gh/gabrielmbmb/platinum-blackbox-anomaly)
+[![Build Status](https://travis-ci.com/gabrielmbmb/intry4.0-backend-anomaly.svg?token=Ym8dypMsw2NFNbxtSMrV&branch=master)](https://travis-ci.com/gabrielmbmb/intry4.0-backend-anomaly)
+[![codecov](https://codecov.io/gh/gabrielmbmb/intry4.0-backend-anomaly/branch/master/graph/badge.svg?token=X3X0NB0PE6)](https://codecov.io/gh/gabrielmbmb/intry4.0-backend-anomaly)
 ![Black](https://img.shields.io/badge/code%20style-black-000000.svg)
 
 This package is a 'Blackbox' model that implements several anomaly detection algorithms.
@@ -80,4 +77,4 @@ The app loads the following settings from the environment variables:
 
 ## Authors
 
-- **Gabriel Martín Blázquez**, from [BISITE](https://bisite.usal.es) - gmartin_b@usal.es
+- **Gabriel Martín Blázquez** - gmartin_b@usal.es

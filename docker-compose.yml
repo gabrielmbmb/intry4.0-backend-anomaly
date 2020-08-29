@@ -13,7 +13,7 @@ services:
 
   celery:
     build: .
-    image: "platinum/blackbox:0.3.0"
+    image: "gmartinbdev/blackbox:0.3.0"
     depends_on:
       - redis
     command: celery worker -A blackbox.app.celery_app.tasks -l info --beat
@@ -33,7 +33,7 @@ services:
       - FIWARE_SERVICEPATH=/
 
   blackbox:
-    image: "platinum/blackbox:0.3.0"
+    image: "gmartinbdev/blackbox:0.3.0"
     depends_on:
       - celery
     ports:

@@ -8,7 +8,7 @@ class BaseConfig(object):
     SERVER_IP = os.getenv("SERVER_IP", "localhost")
 
     # API
-    API_NAME = "PLATINUM - Blackbox Anomaly Detection"
+    API_NAME = "InTry 4.0 - Blackbox Anomaly Detection"
     API_DESC = "An API to call the Blackbox Anomaly Detection model"
 
     # Cache
