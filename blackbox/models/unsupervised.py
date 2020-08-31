@@ -119,7 +119,10 @@ class AnomalyPCAMahalanobis(AnomalyModel):
 
         if self._cov is None:
             self._cov = np.cov(self._X, rowvar=False)
-            self._inv_cov = np.linalg.inv(self._cov)
+            try:
+                self._inv_cov = np.linalg.inv(self._cov)
+            except np.linalg.LinAlgError:
+                self._inv_cov = np.linalg.pinv(self._cov)
 
         if self._mean_data is None:
             self._mean_data = np.mean(self._X)
